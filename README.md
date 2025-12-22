@@ -52,4 +52,12 @@ gition/
 - **Backend**: FastAPI, GitPython
 - **Infra**: Docker, Nginx, MySQL
 
+## 🗺️ Roadmap
+
+| Milestone | Feature | Status |
+| :--- | :--- | :--- |
+| v0.2 | Graph View (Commit/Branch Visualization) | 🔵 Planned |
+| v0.2 | Real-time Collaboration | 🔵 Planned |
+| v0.3 | Custom CI/CD Pipelines | 🔵 Planned |
+
 [MIT License](LICENSE)
