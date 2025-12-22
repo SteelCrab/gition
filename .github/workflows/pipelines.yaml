@@ -59,7 +59,7 @@ jobs:
         run: npm run build
 
       - name: 📤 Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: frontend-dist
           path: dist/
@@ -101,7 +101,7 @@ jobs:
           pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=70
 
       - name: 📊 Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: backend-coverage
