@@ -36,9 +36,13 @@ class TestIsCloned:
     """Test is_cloned function"""
     
     def test_not_cloned_nonexistent_path(self):
-        """Test returns error for non-existent repository"""
+        """Test returns False for non-existent repository"""
         result = is_cloned("nonexistent_user", "nonexistent_repo")
-        assert result.get("cloned") == False or result.get("status") == "error"
+        # is_cloned can return bool or dict depending on implementation
+        if isinstance(result, bool):
+            assert result == False
+        else:
+            assert result.get("cloned") == False or result.get("status") == "error"
 
 
 class TestListFiles:
