@@ -1,59 +1,214 @@
 # Gition
 
 > Git + Notion = **Gition**  
-> All-in-One Collaboration Platform for Developers.
+> All-in-One Collaboration Platform for Developers
 
-Gition integrates Git repositories, block-based documentation, and CI/CD pipelines into a single, seamless workflow.
+Git 저장소, 블록 기반 문서, CI/CD를 하나로 통합한 오픈소스 개발 플랫폼
 
-## 🪴 Key Features
+## Why Gition?
 
-| Category | Highlights | Status |
-| :--- | :--- | :--- |
-| **Repo** | Listing, Fast Cloning, Branch Switching, Commits | 🟢 |
-| **Editor** | Notion-style Block Editor, Dark Theme, Search | 🟢 |
-| **DevOps** | Actions CI/CD, Gitleaks Security, API Coverage | 🟡 |
-| **Sync** | GitHub Issues & PR Integration | 🔵 |
+Developers constantly switch between tools for **coding → documentation → deployment**.  
+Gition solves this by combining everything into **one platform**.
 
-## 🛠️ Quick Start
+| Problem | Traditional | Gition |
+|---------|-------------|--------|
+| Code and docs are separate | GitHub + Notion separately | Single workspace |
+| No doc version control | Manual backup or none | Git-based auto versioning |
+| CI/CD status check | Tab switching required | Real-time display in docs |
 
-### 1. Configure Environment
-Create a `.env` file:
-```env
-GITHUB_CLIENT_ID=your_id
-GITHUB_CLIENT_SECRET=your_secret
-MYSQL_ROOT_PASSWORD=your_pass
+## Features
+
+### ✅ Implemented
+
+| Category | Features |
+|----------|----------|
+| **Auth** | GitHub OAuth 2.0, Session management |
+| **Repository** | List all repos, Clone, Filter (Public/Private), Status tracking |
+| **File Browser** | Directory navigation, File tree, Size display, Type icons |
+| **Editor** | Dark theme (VS Code style), Binary file detection |
+| **Branch** | View all branches, Switch branches, Current branch indicator |
+| **Commits** | History view, SHA/Author/Date, Insertions/Deletions stats |
+| **Search** | Filename search, Content search, Highlighted results |
+| **Issues & PRs** | View open issues/PRs, Labels, Branch info |
+
+### 🔜 Upcoming
+
+- [ ] Markdown rendering
+- [ ] Create/Edit Issues
+- [ ] Create Pull Requests  
+- [ ] CI/CD Pipeline visualization
+- [ ] 🔗 Graph View (문서 간 연결 시각화)
+
+## Roadmap
+
+```mermaid
+gantt
+    title Gition Development Roadmap
+    dateFormat  YYYY-MM
+    section MVP
+        GitHub OAuth & Repo Clone     :done, 2024-01, 2024-02
+        File Browser & Editor         :done, 2024-02, 2024-03
+        Branch & Commit History       :done, 2024-03, 2024-04
+        Issues & PRs View             :done, 2024-04, 2024-05
+    section v1.0
+        Gition Docs (.gition/)        :active, 2024-05, 2024-06
+        Graph View                    :2024-06, 2024-07
+        Markdown Rendering            :2024-07, 2024-08
+    section v2.0
+        CI/CD Visualization           :2024-08, 2024-09
+        Create Issues/PRs             :2024-09, 2024-10
+        Kubernetes Deployment         :2024-10, 2024-11
 ```
 
-### 2. Launch Services
+### Milestone Progress
+
+| Milestone | Status | Progress |
+|-----------|--------|----------|
+| **MVP** | ✅ Complete | ████████████ 100% |
+| **v1.0** | 🔄 In Progress | ██████░░░░░░ 50% |
+| **v2.0** | ⏳ Planned | ░░░░░░░░░░░░ 0% |
+
+### 🔗 Graph View (Upcoming)
+
+Obsidian 스타일의 문서 연결 그래프 시각화
+
+```mermaid
+flowchart TB
+    subgraph GraphView["🔗 Graph View"]
+        A((architecture.md))
+        B((api-design.md))
+        C((meeting-notes.md))
+        D((todo.md))
+        E((database.md))
+        
+        A --- B
+        A --- E
+        B --- E
+        C --- D
+        A --- C
+    end
+```
+
+**Features**
+- 문서 간 `[[링크]]` 연결 시각화
+- 노드 클릭 시 해당 문서로 이동
+- 연결된 문서 하이라이트
+- 줌/팬 인터랙션
+
+## Tech Stack
+
+### MVP (Current)
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | React + Vite + Tailwind CSS |
+| Backend | Python FastAPI + GitPython |
+| Database | MySQL |
+| Auth | GitHub OAuth 2.0 |
+| Infra | Docker Compose + Nginx |
+
+### Production (Future)
+
+| Layer | Technology |
+|-------|------------|
+| Backend | Rust (Axum) + Python (FastAPI) |
+| Git Engine | gitoxide / libgit2 |
+| Infra | Kubernetes + Helm + ArgoCD |
+
+## Quick Start
+
+### Prerequisites
+
+- Docker & Docker Compose
+- GitHub OAuth App
+
+### 1. GitHub OAuth Setup
+
+1. GitHub Settings → Developer settings → OAuth Apps → New
+2. Configure:
+   - **Homepage URL**: `http://localhost`
+   - **Callback URL**: `http://localhost/api/auth/github/callback`
+3. Copy Client ID & Secret
+
+### 2. Environment
+
 ```bash
+# .env
+GITHUB_CLIENT_ID=your_client_id
+GITHUB_CLIENT_SECRET=your_client_secret
+MYSQL_ROOT_PASSWORD=your_password
+```
+
+### 3. Run
+
+```bash
+git clone https://github.com/your-username/gition.git
+cd gition
 docker-compose up --build -d
+open http://localhost
 ```
 
-### 3. Open
-Go to [http://localhost](http://localhost)
+## API Reference
 
-## 🤖 GitHub Workflows
-- **CI/CD Pipeline**: Automated testing, linting (flake8), and Docker image builds.
-- **PR Semantic Lint**: Enforces conventional PR titles (e.g., `feat:`, `fix:`) for clean history.
-- **Auto Labeler**: Automatically assigns `frontend` or `backend` labels based on file changes.
-- **Dependabot**: Automated dependency updates with patch/minor auto-merge support.
+### Auth
+```
+GET  /api/auth/github          # OAuth URL
+GET  /api/auth/github/callback # OAuth callback
+```
 
-## 🏗️ Project Structure
-```text
+### Repositories
+```
+GET  /api/repos                # List repositories
+```
+
+### Git Operations
+```
+POST   /api/git/clone          # Clone repo
+POST   /api/git/pull           # Pull changes
+GET    /api/git/files          # List files
+GET    /api/git/file           # Get file content
+GET    /api/git/status         # Clone status
+DELETE /api/git/repo           # Delete repo
+GET    /api/git/search         # Search files
+GET    /api/git/commits        # Commit history
+GET    /api/git/branches       # List branches
+POST   /api/git/checkout       # Switch branch
+```
+
+### GitHub API
+```
+GET  /api/github/issues        # Get issues
+GET  /api/github/pulls         # Get PRs
+```
+
+## Project Structure
+
+```
 gition/
-├── frontend/  # React + Vite
-├── backend/   # Python FastAPI
-├── .github/   # CI/CD Pipelines
-└── mysql/     # DB Initialization
+├── frontend/           # React + Vite
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── lib/
+│   └── package.json
+├── backend/            # Python FastAPI
+│   ├── api/
+│   ├── services/
+│   ├── models/
+│   └── main.py
+├── docker-compose.yml
+├── nginx.conf
+└── README.md
 ```
 
-## 🔋 Tech Stack
-- **Frontend**: React, Tailwind CSS
-- **Backend**: FastAPI, GitPython
-- **Infra**: Docker, Nginx, MySQL
+## Contributing
 
-## 🗺️ Roadmap
+1. Fork this repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-See [ROADMAP.md](ROADMAP.md) for detailed milestone progress.
+## License
 
 [MIT License](LICENSE)
