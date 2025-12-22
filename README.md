@@ -20,29 +20,40 @@ An open-source development platform that integrates Git repositories, block-base
 | Open Source | 🔺 | ❌ | ❌ | ✅ |
 | Context Switching | When writing docs | When checking code | Always | **None** |
 
-## Features
+## Project Milestones
 
-### ✅ Implemented
+### 🟢 Milestone 1: Core Identity & Authentication
+*Complete*
+- **GitHub OAuth 2.0 Integration**: Secure user authentication and session management.
+- **Repository Management**: Dynamic listing, filtering, and local cloning of public/private repositories.
+- **Clone Status Tracking**: Real-time persistence of repository sync status.
 
-| Category | Features |
-|----------|----------|
-| **Auth** | GitHub OAuth 2.0, Session management |
-| **Repository** | List all repos, Clone, Filter (Public/Private), Status tracking |
-| **File Browser** | Directory navigation, File tree, Size display, Type icons |
-| **Editor** | Dark theme (VS Code style), Binary file detection |
-| **Branch** | View all branches, Switch branches, Current branch indicator |
-| **Commits** | History view, SHA/Author/Date, Insertions/Deletions stats |
-| **Search** | Filename search, Content search, Highlighted results |
-| **Issues & PRs** | View open issues/PRs, Labels, Branch info |
-| **CI/CD** | GitHub Actions pipeline, Security scan (gitleaks), Docker build |
-| **Testing** | Backend API tests (70%+ coverage), pytest + flake8 |
+### 🟢 Milestone 2: Advanced File Navigation
+*Complete*
+- **Recursive File Tree**: High-performance navigation through complex directory structures.
+- **Notion-style Editor**: Dark-themed, VS Code-inspired code editing environment.
+- **Binary Detection**: Automated identification of non-text assets.
 
-### 🔜 Upcoming
+### 🟡 Milestone 3: Repository Insights
+*Active*
+- **Interactive Commit History**: Detailed SHA, author, and insertion/deletion statistics.
+- **Branch Strategy**: Seamless visualization and switching between local/remote branches.
+- **Intelligent Search**: Global filename and content search with highlighted results.
+- **GitHub Sync**: Integrated view for repository Issues and Pull Requests.
 
-- [ ] Markdown rendering (react-markdown)
-- [ ] Create/Edit Issues
-- [ ] Create Pull Requests
-- [ ] GitHub Actions status visualization
+### 🔵 Milestone 4: DevOps & Assurance
+*In Progress*
+- **CI/CD Automation**: Automated build and test pipelines via GitHub Actions.
+- **Security Scanning**: Native Gitleaks integration for secret and password detection.
+- **Dockerization**: Containerized multi-service architecture with Nginx reverse proxy.
+- **Quality Gates**: Automated backend API testing with 70%+ coverage enforcement.
+
+### 🔜 Future Roadmap
+- **Markdown Rendering**: Rich preview for README and project documentation.
+- **Bi-directional Integration**: Create and edit GitHub Issues directly from Gition.
+- **Pipeline Monitoring**: Real-time visualization of GitHub Actions workflow status.
+- **Performance Engine**: Transformation of backend to Rust (Axum) with `gitoxide` integration.
+
 
 ## Tech Stack
 
