@@ -17,7 +17,7 @@ const dir = '/repo';
 export const initRepo = async () => {
     try {
         await fs.promises.mkdir(dir);
-    } catch (e) {
+    } catch (_e) {
         // Directory might already exist
     }
 
@@ -32,7 +32,7 @@ export const initRepo = async () => {
 export const cloneRepo = async (url) => {
     try {
         await fs.promises.mkdir(dir);
-    } catch (e) {
+    } catch (_e) {
         // Directory might already exist
     }
 

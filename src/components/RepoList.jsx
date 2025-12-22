@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { GitBranch, Lock, Globe, Star, RefreshCw, Loader2, ChevronDown, ChevronRight, ExternalLink, Download, FolderOpen, File, Folder, Search, X } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { GitBranch, Lock, Globe, RefreshCw, Loader2, ChevronDown, ChevronRight, ExternalLink, Download, FolderOpen, File, Folder, Search, X } from 'lucide-react';
 
 const RepoList = ({ onRepoSelect }) => {
     const [repos, setRepos] = useState([]);
@@ -13,7 +13,7 @@ const RepoList = ({ onRepoSelect }) => {
     const [repoFiles, setRepoFiles] = useState({});
     const [loadingFiles, setLoadingFiles] = useState({});
 
-    const fetchRepos = async () => {
+    const fetchRepos = useCallback(async () => {
         setLoading(true);
         setError(null);
 
@@ -38,14 +38,14 @@ const RepoList = ({ onRepoSelect }) => {
                 // Check clone status for each repo
                 checkCloneStatuses(data.repos);
             }
-        } catch (err) {
+        } catch (_err) {
             setError('Failed to fetch repositories');
         } finally {
             setLoading(false);
         }
-    };
+    }, [checkCloneStatuses]);
 
-    const checkCloneStatuses = async (repoList) => {
+    const checkCloneStatuses = useCallback(async (repoList) => {
         const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
         if (!userId) return;
 
@@ -59,15 +59,15 @@ const RepoList = ({ onRepoSelect }) => {
                     if (data.cloned) {
                         statuses[repo.name] = 'cloned';
                     }
-                } catch (err) {
+                } catch (_err) {
                     // Ignore errors, just means not cloned
                 }
             })
         );
         setCloneStatus(prev => ({ ...prev, ...statuses }));
-    };
+    }, []);
 
-    const fetchFiles = async (repoName) => {
+    const fetchFiles = useCallback(async (repoName) => {
         const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
         if (!userId) return;
 
@@ -78,16 +78,16 @@ const RepoList = ({ onRepoSelect }) => {
             if (data.status === 'success') {
                 setRepoFiles(prev => ({ ...prev, [repoName]: data.files }));
             }
-        } catch (err) {
-            console.error('Failed to fetch files:', err);
+        } catch (_err) {
+            console.error('Failed to fetch files:', _err);
         } finally {
             setLoadingFiles(prev => ({ ...prev, [repoName]: false }));
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchRepos();
-    }, []);
+    }, [fetchRepos]);
 
     // Filter repos by search query and visibility filter
     const filteredRepos = repos.filter(repo => {
@@ -148,7 +148,7 @@ const RepoList = ({ onRepoSelect }) => {
             } else {
                 setCloneStatus(prev => ({ ...prev, [repo.name]: 'error' }));
             }
-        } catch (err) {
+        } catch (_err) {
             setCloneStatus(prev => ({ ...prev, [repo.name]: 'error' }));
         }
     };

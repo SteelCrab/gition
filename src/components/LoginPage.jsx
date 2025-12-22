@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Github, Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { Github, Loader2 } from 'lucide-react';
 
 const LoginPage = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
 
     const handleGitHubLogin = () => {
-        setIsLoading(true);
+        setLoading(true);
         // Use relative URL - nginx will proxy to backend
         window.location.href = '/auth/github';
     };
@@ -33,14 +31,14 @@ const LoginPage = () => {
                 <div className="space-y-6">
                     <button
                         onClick={handleGitHubLogin}
-                        disabled={isLoading}
+                        disabled={loading}
                         className={`
                             w-full h-14 bg-black text-white rounded-[10px] flex items-center justify-center gap-3 text-[16px] font-semibold 
                             hover:bg-[#2c2c2c] transition-all duration-200 transform active:scale-[0.98] shadow-lg
-                            ${isLoading ? 'opacity-80 cursor-not-allowed' : ''}
+                            ${loading ? 'opacity-80 cursor-not-allowed' : ''}
                         `}
                     >
-                        {isLoading ? (
+                        {loading ? (
                             <Loader2 size={20} className="animate-spin" />
                         ) : (
                             <>
@@ -58,7 +56,7 @@ const LoginPage = () => {
                 </div>
 
                 <div className="text-center text-[#9b9a97] text-[12px] leading-[1.6] max-w-[300px] mx-auto">
-                    By continuing, you agree to Gition's <a href="#" className="underline hover:text-[#37352f]">Terms of Service</a> and <a href="#" className="underline hover:text-[#37352f]">Privacy Policy</a>.
+                    By continuing, you agree to Gition&apos;s <a href="#" className="underline hover:text-[#37352f]">Terms of Service</a> and <a href="#" className="underline hover:text-[#37352f]">Privacy Policy</a>.
                 </div>
             </div>
 
