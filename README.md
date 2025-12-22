@@ -3,7 +3,7 @@
 > Git + Notion = **Gition**  
 > All-in-One Collaboration Platform for Developers
 
-Git 저장소, 블록 기반 문서, CI/CD를 하나로 통합한 오픈소스 개발 플랫폼
+An open-source platform that integrates Git repositories, block-based documentation, and CI/CD into one seamless workflow.
 
 ## Why Gition?
 
@@ -37,7 +37,6 @@ Gition solves this by combining everything into **one platform**.
 - [ ] Create/Edit Issues
 - [ ] Create Pull Requests  
 - [ ] CI/CD Pipeline visualization
-- [ ] 🔗 Graph View (문서 간 연결 시각화)
 
 ## Roadmap
 
@@ -68,32 +67,7 @@ gantt
 | **v1.0** | 🔄 In Progress | ██████░░░░░░ 50% |
 | **v2.0** | ⏳ Planned | ░░░░░░░░░░░░ 0% |
 
-### 🔗 Graph View (Upcoming)
 
-Obsidian 스타일의 문서 연결 그래프 시각화
-
-```mermaid
-flowchart TB
-    subgraph GraphView["🔗 Graph View"]
-        A((architecture.md))
-        B((api-design.md))
-        C((meeting-notes.md))
-        D((todo.md))
-        E((database.md))
-        
-        A --- B
-        A --- E
-        B --- E
-        C --- D
-        A --- C
-    end
-```
-
-**Features**
-- 문서 간 `[[링크]]` 연결 시각화
-- 노드 클릭 시 해당 문서로 이동
-- 연결된 문서 하이라이트
-- 줌/팬 인터랙션
 
 ## Tech Stack
 
