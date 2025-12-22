@@ -1,0 +1,30 @@
+# Labeler configuration
+
+frontend:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'frontend/**/*'
+    - 'src/**/*'
+    - 'public/**/*'
+    - 'index.html'
+    - 'package.json'
+    - 'vite.config.ts'
+
+backend:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'backend/**/*'
+    - 'requirements.txt'
+
+docs:
+- changed-files:
+  - any-glob-to-any-file:
+    - 'README.md'
+    - 'docs/**/*'
+
+ci:
+- changed-files:
+  - any-glob-to-any-file:
+    - '.github/workflows/**/*'
+    - 'Dockerfile'
+    - 'docker-compose.yml'
