@@ -19,15 +19,15 @@
     "react-router-dom": "^7.11.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
+    "@eslint/js": "^9.39.2",
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.17.0",
-    "eslint-plugin-react-hooks": "^5.1.0",
-    "eslint-plugin-react-refresh": "^0.4.16",
-    "globals": "^15.13.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^15.15.0",
     "tailwindcss": "^4.1.18",
     "vite": "^6.0.3"
   }
