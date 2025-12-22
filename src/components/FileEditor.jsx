@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { File, Folder, ChevronRight, ChevronDown, Save, X, Loader2, ArrowLeft } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { File, Folder, ChevronRight, X, Loader2, ArrowLeft } from 'lucide-react';
 
 const FileEditor = ({ userId, repoName, onClose }) => {
     const [currentPath, setCurrentPath] = useState('');
@@ -8,18 +8,10 @@ const FileEditor = ({ userId, repoName, onClose }) => {
     const [fileContent, setFileContent] = useState('');
     const [originalContent, setOriginalContent] = useState('');
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
+    const [_saving, _setSaving] = useState(false);
     const [error, setError] = useState(null);
-    const [expandedFolders, setExpandedFolders] = useState({});
 
-    // Load files on mount
-    useEffect(() => {
-        if (userId && repoName) {
-            loadFiles('');
-        }
-    }, [userId, repoName]);
-
-    const loadFiles = async (path) => {
+    const loadFiles = useCallback(async (path) => {
         setLoading(true);
         setError(null);
         try {
@@ -31,12 +23,19 @@ const FileEditor = ({ userId, repoName, onClose }) => {
             } else {
                 setError(data.message);
             }
-        } catch (err) {
+        } catch (_err) {
             setError('Failed to load files');
         } finally {
             setLoading(false);
         }
-    };
+    }, [userId, repoName]);
+
+    // Load files on mount
+    useEffect(() => {
+        if (userId && repoName) {
+            loadFiles('');
+        }
+    }, [userId, repoName, loadFiles]);
 
     const loadFileContent = async (filePath) => {
         setLoading(true);
@@ -56,7 +55,7 @@ const FileEditor = ({ userId, repoName, onClose }) => {
             } else {
                 setError(data.message);
             }
-        } catch (err) {
+        } catch (_err) {
             setError('Failed to load file');
         } finally {
             setLoading(false);
@@ -83,22 +82,6 @@ const FileEditor = ({ userId, repoName, onClose }) => {
     };
 
     const hasChanges = fileContent !== originalContent;
-
-    const getFileExtension = (filename) => {
-        const ext = filename.split('.').pop().toLowerCase();
-        return ext;
-    };
-
-    const getLanguageFromExtension = (ext) => {
-        const languages = {
-            js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
-            py: 'python', rb: 'ruby', java: 'java', go: 'go', rs: 'rust',
-            html: 'html', css: 'css', scss: 'scss', json: 'json',
-            md: 'markdown', yaml: 'yaml', yml: 'yaml', sql: 'sql',
-            sh: 'bash', bash: 'bash', dockerfile: 'dockerfile',
-        };
-        return languages[ext] || 'plaintext';
-    };
 
     if (!userId || !repoName) {
         return (

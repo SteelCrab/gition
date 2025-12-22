@@ -1,69 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import {
-    Search,
-    Bell,
-    Settings,
     FileText,
     Code,
     Terminal,
-    ChevronDown,
-    ChevronRight,
     Plus,
-    Clock,
-    Share2,
-    MessageSquare,
-    Check,
-    MoreHorizontal,
     GitBranch,
-    Box,
-    CheckCircle,
-    Play,
     Loader2,
     Menu,
     LogOut,
-    UserCircle,
 } from 'lucide-react';
 import {
     CodeBlock,
     SlashMenuItem,
-    TabItem,
-    FileItem,
-    FolderItem,
     TextBlock,
-    CodeSpan,
     PipelineBlock,
-    LogStep,
     LoginPage,
     AuthCallback,
     RepoList,
     SearchPanel,
-    FileEditor,
     FileBrowser,
     CommitHistory,
     BranchSelector,
     IssuesPRs,
 } from './components';
-import { initRepo, cloneRepo, listFiles, readFile, writeFile } from './lib/git';
+import { initRepo, cloneRepo, listFiles, readFile } from './lib/git';
 
 const MainEditor = () => {
     const navigate = useNavigate();
     const [leftPanelOpen, setLeftPanelOpen] = useState(false);
-    const [rightPanelOpen, setRightPanelOpen] = useState(false);
+    const [_rightPanelOpen, _setRightPanelOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
-    const [activeTab, setActiveTab] = useState('pipeline');
+    const [_activeTab, _setActiveTab] = useState('pipeline');
     const [showSlashMenu, setShowSlashMenu] = useState(false);
     const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
     const [isCloning, setIsCloning] = useState(false);
-    const [repoFiles, setRepoFiles] = useState([]);
+    const [_repoFiles, setRepoFiles] = useState([]);
     const [sidebarTab, setSidebarTab] = useState('repos'); // repos, files, search
     const [selectedRepo, setSelectedRepo] = useState(null);
-    const [showFileEditor, setShowFileEditor] = useState(false);
+    const [_showFileEditor, _setShowFileEditor] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileContent, setFileContent] = useState('');
     const [loadingFile, setLoadingFile] = useState(false);
     const [readmeContent, setReadmeContent] = useState(null);
     const [loadingReadme, setLoadingReadme] = useState(false);
+    const [blocks, setBlocks] = useState([
+        { id: '1', type: 'text', content: 'Welcome to gition. This repository demonstrates the power of combining Git version control with a rich block editor and integrated CI/CD pipelines.' },
+        { id: '2', type: 'code', language: 'bash', filename: 'CLI installation', content: 'git clone https://github.com/gition/gition.git\ncd gition && pnpm install\npnpm dev' },
+        { id: '3', type: 'text', content: 'Below is an interactive pipeline block. Trigger builds and deployments directly from this document.' },
+        { id: '4', type: 'pipeline', label: 'production-rollout (isomorphic-git)' }
+    ]);
 
     useEffect(() => {
         const mediaQuery = window.matchMedia('(min-width: 1024px)');
@@ -72,16 +58,16 @@ const MainEditor = () => {
             setIsMobile(!e.matches);
             if (!e.matches) {
                 setLeftPanelOpen(false);
-                setRightPanelOpen(false);
+                _setRightPanelOpen(false);
             } else {
                 setLeftPanelOpen(true);
-                setRightPanelOpen(true);
+                _setRightPanelOpen(true);
             }
         };
 
         setIsMobile(!mediaQuery.matches);
         setLeftPanelOpen(mediaQuery.matches);
-        setRightPanelOpen(mediaQuery.matches);
+        _setRightPanelOpen(mediaQuery.matches);
 
         mediaQuery.addEventListener('change', handleChange);
         return () => mediaQuery.removeEventListener('change', handleChange);
@@ -112,7 +98,7 @@ const MainEditor = () => {
                     }
                 }
                 setReadmeContent(null);
-            } catch (err) {
+            } catch (_err) {
                 setReadmeContent(null);
             } finally {
                 setLoadingReadme(false);
@@ -120,12 +106,6 @@ const MainEditor = () => {
         };
         loadReadme();
     }, [selectedRepo]);
-    const [blocks, setBlocks] = useState([
-        { id: '1', type: 'text', content: 'Welcome to gition. This repository demonstrates the power of combining Git version control with a rich block editor and integrated CI/CD pipelines.' },
-        { id: '2', type: 'code', language: 'bash', filename: 'CLI installation', content: 'git clone https://github.com/gition/gition.git\ncd gition && pnpm install\npnpm dev' },
-        { id: '3', type: 'text', content: 'Below is an interactive pipeline block. Trigger builds and deployments directly from this document.' },
-        { id: '4', type: 'pipeline', label: 'production-rollout (isomorphic-git)' }
-    ]);
 
     const userEmail = localStorage.getItem('userEmail') || 'guest@gition.com';
 
@@ -162,7 +142,7 @@ const MainEditor = () => {
         setShowSlashMenu(false);
     };
 
-    const handleClone = async (url) => {
+    const handleClone = useCallback(async (url) => {
         setIsCloning(true);
         try {
             await cloneRepo(url);
@@ -175,12 +155,12 @@ const MainEditor = () => {
                     { id: 'readme-content', type: 'text', content: content }
                 ]);
             }
-        } catch (err) {
-            console.error('Clone failed:', err);
+        } catch (_err) {
+            console.error('Clone failed:', _err);
         } finally {
             setIsCloning(false);
         }
-    };
+    }, []);
 
     return (
         <div className="flex h-screen bg-white text-[#37352f] overflow-hidden relative" onClick={() => setShowSlashMenu(false)}>
@@ -203,14 +183,14 @@ const MainEditor = () => {
                 <div className="px-3 py-2 mt-2 flex items-center justify-between hover:bg-black/5 cursor-pointer rounded-[3px] mx-2 group">
                     <div className="flex items-center gap-2 overflow-hidden">
                         <div className="w-5 h-5 bg-[#37352f] text-white rounded-[3px] flex items-center justify-center font-bold text-[11px] shrink-0">G</div>
-                        <span className="font-semibold text-[14px] truncate">{userEmail.split('@')[0]}'s Workspace</span>
+                        <span className="font-semibold text-[14px] truncate">{userEmail.split('@')[0]}&apos;s Workspace</span>
                     </div>
                     <button onClick={handleLogout} className="lg:opacity-0 group-hover:opacity-100 p-1 hover:bg-black/5 rounded transition-all text-[#787774]" title="Log out">
                         <LogOut size={14} />
                     </button>
                     {isMobile && (
                         <button onClick={() => setLeftPanelOpen(false)} className="lg:hidden p-1 text-[#37352f]/40">
-                            <Menu size={16} /> {/* Reusing Menu icon as Close/X equivalent usually looks okay or use X */}
+                            <Menu size={16} />
                         </button>
                     )}
                 </div>
@@ -295,7 +275,7 @@ const MainEditor = () => {
                                     } else if (data.binary) {
                                         setFileContent('[Binary file - cannot display]');
                                     }
-                                } catch (err) {
+                                } catch (_err) {
                                     setFileContent('Error loading file');
                                 } finally {
                                     setLoadingFile(false);
@@ -319,7 +299,7 @@ const MainEditor = () => {
                         <SearchPanel
                             userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                             repoName={selectedRepo?.name}
-                            onFileSelect={async (path, line) => {
+                            onFileSelect={async (path, _line) => {
                                 if (!selectedRepo) return;
                                 setSelectedFile({ path, name: path.split('/').pop() });
                                 setLoadingFile(true);
@@ -330,7 +310,7 @@ const MainEditor = () => {
                                     if (data.status === 'success' && !data.binary) {
                                         setFileContent(data.content || '');
                                     }
-                                } catch (err) {
+                                } catch (_err) {
                                     setFileContent('Error loading file');
                                 } finally {
                                     setLoadingFile(false);
@@ -364,7 +344,7 @@ const MainEditor = () => {
                             <BranchSelector
                                 userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                                 repoName={selectedRepo.name}
-                                onBranchChange={(branch) => {
+                                onBranchChange={(_branch) => {
                                     // Reload README when branch changes
                                     setReadmeContent(null);
                                     setLoadingReadme(true);
@@ -449,20 +429,20 @@ const MainEditor = () => {
                     ) : (
                         <div className="max-w-[800px] mx-auto px-12 sm:px-24 py-16">
                             <h1 className="text-[40px] font-bold text-[#37352f] mb-2" contentEditable suppressContentEditableWarning>Gition</h1>
-                            <p className="text-[18px] text-[#787774] mb-8 font-medium">개발자를 위한 올인원 협업 플랫폼</p>
+                            <p className="text-[18px] text-[#787774] mb-8 font-medium">Developer&apos;s All-in-One Collaboration Platform</p>
 
                             <div className="space-y-1">
                                 {blocks.map(block => (
                                     block.type === 'text' ? <TextBlock key={block.id} id={block.id} content={block.content} onUpdate={handleUpdateBlock} /> :
                                         block.type === 'code' ? <CodeBlock key={block.id} id={block.id} {...block} onUpdate={handleUpdateBlock} /> :
-                                            block.type === 'pipeline' ? <PipelineBlock key={block.id} id={block.id} label={block.label} /> : null
+                                            block.type === 'pipeline' ? <PipelineBlock key={block.id} label={block.label} /> : null
                                 ))}
                             </div>
 
                             <div className="mt-12 relative group">
                                 <div className="flex items-center gap-2 cursor-pointer" onClick={(e) => { e.stopPropagation(); setShowSlashMenu(!showSlashMenu); }}>
                                     <Plus size={18} className="text-[#37352f]/30" />
-                                    <span className="text-[14px] text-[#37352f]/30">Click to add blocks, or type "/" for commands</span>
+                                    <span className="text-[14px] text-[#37352f]/30">Click to add blocks, or type &quot;/&quot; for commands</span>
                                 </div>
                                 {isCloning && (
                                     <div className="absolute inset-0 bg-white/80 z-[70] flex items-center justify-center">
