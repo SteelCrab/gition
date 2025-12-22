@@ -1,0 +1,44 @@
+services:
+  frontend:
+    build: .
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-backend
+    restart: unless-stopped
+
+  auth-backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    volumes:
+      - repos_data:/repos
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ***REMOVED***
+      MYSQL_DATABASE: gition
+      MYSQL_USER: ***REMOVED***
+      MYSQL_PASSWORD: ***REMOVED***
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p***REMOVED***" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  repos_data:
