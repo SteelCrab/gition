@@ -6,20 +6,34 @@ const AuthCallback = () => {
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
+        const userDataStr = urlParams.get('user');
 
-        if (code) {
-            // In a real app, you'd exchange this code for a token on the backend
-            // For this demo, we'll simulate a successful login
-            setTimeout(() => {
+        if (userDataStr) {
+            try {
+                const userData = JSON.parse(userDataStr);
+
+                // Store user data in localStorage
                 localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userEmail', 'collab@gition.com');
-                localStorage.setItem('userLogin', 'github-collaborator');
-                localStorage.setItem('githubToken', 'gh_mock_token_12345');
-                navigate('/');
-            }, 1000);
+                localStorage.setItem('userEmail', userData.email);
+                localStorage.setItem('userLogin', userData.login);
+                localStorage.setItem('userName', userData.name);
+                localStorage.setItem('userId', userData.id);
+                localStorage.setItem('userAvatar', userData.avatar_url);
+                localStorage.setItem('githubToken', userData.access_token);
+
+                // Redirect to dashboard
+                navigate('/', { replace: true });
+            } catch (error) {
+                console.error('Failed to parse user data:', error);
+                navigate('/login', { replace: true });
+            }
         } else {
-            navigate('/login');
+            // Check if there's an error from the backend
+            const error = urlParams.get('error');
+            if (error) {
+                console.error('Auth error from backend:', error);
+            }
+            navigate('/login', { replace: true });
         }
     }, [navigate]);
 
@@ -27,7 +41,7 @@ const AuthCallback = () => {
         <div className="min-h-screen flex items-center justify-center bg-[#f7f6f3]">
             <div className="text-center space-y-4">
                 <div className="w-12 h-12 border-4 border-[#37352f] border-t-transparent rounded-full animate-spin mx-auto"></div>
-                <p className="text-[#37352f] font-medium">Authenticating with GitHub...</p>
+                <p className="text-[#37352f] font-medium text-[16px]">Finalizing setup...</p>
             </div>
         </div>
     );
