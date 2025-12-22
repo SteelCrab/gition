@@ -5,7 +5,7 @@
 
 Gition integrates Git repositories, block-based documentation, and CI/CD pipelines into a single, seamless workflow.
 
-## � Key Features
+## 🪴 Key Features
 
 | Category | Highlights | Status |
 | :--- | :--- | :--- |
