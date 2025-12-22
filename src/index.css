@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* Custom Properties - Notion Palette */
+:root {
+  --color-bg-sidebar: #fbfbfa;
+  --color-bg-main: #ffffff;
+  --color-border: #efefef;
+  --color-text-main: #37352f;
+  --color-text-secondary: #787774;
+  --color-accent: #2383e2;
+  --color-hover: rgba(55, 53, 47, 0.08);
+  --sidebar-width: 240px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  background: var(--color-bg-main);
+  color: var(--color-text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(55, 53, 47, 0.16);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(55, 53, 47, 0.24);
+}
+
+/* Layout Utilities */
+.notion-sidebar {
+  background: var(--color-bg-sidebar);
+  border-right: 1px solid var(--color-border);
+}
+
+.notion-border {
+  border-color: var(--color-border);
+}
+
+/* Minimalist Button */
+.btn-notion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 14px;
+  transition: background 0.1s ease;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.btn-notion:hover {
+  background: var(--color-hover);
+}
+
+.btn-notion-primary {
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+/* Code Block - Mono */
+.notion-code {
+  background: #f7f6f3;
+  border-radius: 3px;
+  border: 1px solid var(--color-border);
+  padding: 24px 32px;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Selection */
+::selection {
+  background: rgba(35, 131, 226, 0.28);
+}
+
+/* Animations - Subtle */
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 15, 0.6);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 3px;
+  width: 100%;
+  max-width: 540px;
+  box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 5px 10px, rgba(15, 15, 15, 0.2) 0px 15px 40px;
+}
