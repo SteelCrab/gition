@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
+import requests
 import os
 import json
 from urllib.parse import urlencode
