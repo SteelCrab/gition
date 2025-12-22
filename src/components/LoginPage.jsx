@@ -5,6 +5,7 @@ const LoginPage = () => {
     const [loading, setLoading] = useState(false);
 
     const handleGitHubLogin = () => {
+        console.log('GitHub login button clicked, redirecting to /auth/github...');
         setLoading(true);
         // Use relative URL - nginx will proxy to backend
         window.location.href = '/auth/github';
