@@ -61,6 +61,46 @@
 
 ---
 
+## v1.0 - Kubernetes Deployment 🔵
+
+### Infrastructure
+- [ ] Helm chart structure (`k8s/charts/gition/`)
+- [ ] Namespace configuration (dev/staging/prod)
+- [ ] Ingress with TLS (cert-manager)
+
+### Workloads
+- [ ] Frontend Deployment (replicas: 2+)
+- [ ] API Deployment (replicas: 3+)
+- [ ] MySQL StatefulSet (Primary-Replica)
+
+### Storage
+- [ ] Multi-PVC sharding strategy
+- [ ] Hash-based workspace routing
+- [ ] PVC per shard (`repos-pvc-1`, `repos-pvc-2`, ...)
+
+### Scaling
+- [ ] HPA for Frontend (CPU 70%)
+- [ ] HPA for API (CPU 70%, Memory 80%)
+
+### GitOps
+- [ ] ArgoCD application configuration
+- [ ] GitHub Actions → Registry → ArgoCD pipeline
+
+### Gition Docs (.gition/)
+- [ ] `.gition/` folder structure
+- [ ] Docs API (`/api/docs/{repo}/*`)
+- [ ] Block → Markdown conversion
+- [ ] .gitignore integration
+
+### Graph View
+- [ ] `[[link]]` syntax parser
+- [ ] `doc_links` table schema
+- [ ] Link API (`/api/links/*`)
+- [ ] D3.js graph visualization
+- [ ] Backlinks support
+
+---
+
 ## Legend
 - ✅ Completed milestone
 - 🟡 In progress
