@@ -13,6 +13,28 @@ const RepoList = ({ onRepoSelect }) => {
     const [repoFiles, setRepoFiles] = useState({});
     const [loadingFiles, setLoadingFiles] = useState({});
 
+    const checkCloneStatuses = useCallback(async (repoList) => {
+        const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
+        if (!userId) return;
+
+        const statuses = {};
+        // Check all repos in parallel
+        await Promise.all(
+            repoList.map(async (repo) => {
+                try {
+                    const response = await fetch(`/api/git/status?user_id=${userId}&repo_name=${repo.name}`);
+                    const data = await response.json();
+                    if (data.cloned) {
+                        statuses[repo.name] = 'cloned';
+                    }
+                } catch (_err) {
+                    // Ignore errors, just means not cloned
+                }
+            })
+        );
+        setCloneStatus(prev => ({ ...prev, ...statuses }));
+    }, []);
+
     const fetchRepos = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -44,28 +66,6 @@ const RepoList = ({ onRepoSelect }) => {
             setLoading(false);
         }
     }, [checkCloneStatuses]);
-
-    const checkCloneStatuses = useCallback(async (repoList) => {
-        const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
-        if (!userId) return;
-
-        const statuses = {};
-        // Check all repos in parallel
-        await Promise.all(
-            repoList.map(async (repo) => {
-                try {
-                    const response = await fetch(`/api/git/status?user_id=${userId}&repo_name=${repo.name}`);
-                    const data = await response.json();
-                    if (data.cloned) {
-                        statuses[repo.name] = 'cloned';
-                    }
-                } catch (_err) {
-                    // Ignore errors, just means not cloned
-                }
-            })
-        );
-        setCloneStatus(prev => ({ ...prev, ...statuses }));
-    }, []);
 
     const fetchFiles = useCallback(async (repoName) => {
         const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
