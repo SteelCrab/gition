@@ -32,6 +32,12 @@ docker-compose up --build -d
 ### 3. Open
 Go to [http://localhost](http://localhost)
 
+## 🤖 GitHub Workflows
+- **CI/CD Pipeline**: Automated testing, linting (flake8), and Docker image builds.
+- **PR Semantic Lint**: Enforces conventional PR titles (e.g., `feat:`, `fix:`) for clean history.
+- **Auto Labeler**: Automatically assigns `frontend` or `backend` labels based on file changes.
+- **Dependabot**: Automated dependency updates with patch/minor auto-merge support.
+
 ## 🏗️ Project Structure
 ```text
 gition/
