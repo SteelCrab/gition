@@ -1,143 +1,96 @@
-import React, { useState, useEffect } from 'react';
-import { File, Folder, ChevronRight, ChevronDown, Loader2, ArrowLeft, RefreshCw, Home } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { ChevronRight, File, Folder, ArrowLeft } from 'lucide-react';
 
 const FileBrowser = ({ userId, repoName, onFileSelect, onBack }) => {
-    const [currentPath, setCurrentPath] = useState('');
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [expandedFolders, setExpandedFolders] = useState({});
+    const [path, setPath] = useState('');
 
-    useEffect(() => {
-        if (userId && repoName) {
-            loadFiles('');
-        }
-    }, [userId, repoName]);
-
-    const loadFiles = async (path) => {
+    const loadFiles = useCallback(async () => {
+        if (!userId || !repoName) return;
         setLoading(true);
-        setError(null);
         try {
             const response = await fetch(`/api/git/files?user_id=${userId}&repo_name=${repoName}&path=${encodeURIComponent(path)}`);
             const data = await response.json();
             if (data.status === 'success') {
-                setFiles(data.files);
-                setCurrentPath(path);
+                setFiles(data.files || []);
             } else {
-                setError(data.message);
+                setError(data.message || 'Failed to load files');
             }
-        } catch (err) {
-            setError('Failed to load files');
+        } catch (_err) {
+            setError('Error connecting to server');
         } finally {
             setLoading(false);
+        }
+    }, [userId, repoName, path]);
+
+    useEffect(() => {
+        loadFiles();
+    }, [loadFiles]);
+
+    const handleBack = () => {
+        if (path === '') {
+            onBack?.();
+        } else {
+            const parts = path.split('/');
+            parts.pop();
+            setPath(parts.join('/'));
         }
     };
 
     const handleFileClick = (file) => {
         if (file.type === 'directory') {
-            loadFiles(file.path);
+            setPath(file.path);
         } else {
-            if (onFileSelect) {
-                onFileSelect(file.path, file.name);
-            }
+            onFileSelect?.(file.path);
         }
     };
-
-    const handleBack = () => {
-        if (currentPath) {
-            const parts = currentPath.split('/');
-            parts.pop();
-            loadFiles(parts.join('/'));
-        } else if (onBack) {
-            onBack();
-        }
-    };
-
-    const getFileIcon = (file) => {
-        if (file.type === 'directory') {
-            return <Folder size={14} className="text-yellow-600" />;
-        }
-
-        const ext = file.name.split('.').pop().toLowerCase();
-        const colors = {
-            js: 'text-yellow-500', jsx: 'text-blue-400', ts: 'text-blue-600', tsx: 'text-blue-500',
-            py: 'text-green-500', json: 'text-yellow-600', md: 'text-gray-500',
-            css: 'text-pink-500', html: 'text-orange-500', sql: 'text-blue-400',
-        };
-        return <File size={14} className={colors[ext] || 'text-gray-400'} />;
-    };
-
-    if (!userId || !repoName) {
-        return (
-            <div className="p-3 text-center text-[12px] text-[#787774]">
-                Select a repository first
-            </div>
-        );
-    }
 
     return (
-        <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="flex items-center gap-1 px-2 py-2 border-b border-[#efefef]">
+        <div className="flex flex-col h-full bg-white">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-[#efefef]">
                 <button
-                    onClick={onBack}
-                    className="p-1 hover:bg-black/5 rounded text-[#787774]"
-                    title="Back to repos"
+                    onClick={handleBack}
+                    className="p-1.5 hover:bg-black/5 rounded text-[#787774]"
                 >
-                    <ArrowLeft size={14} />
+                    <ArrowLeft size={16} />
                 </button>
-                <button
-                    onClick={() => loadFiles('')}
-                    className="p-1 hover:bg-black/5 rounded text-[#787774]"
-                    title="Go to root"
-                >
-                    <Home size={14} />
-                </button>
-                <div className="flex-1 min-w-0 px-1">
-                    <div className="text-[12px] font-medium text-[#37352f] truncate">{repoName}</div>
-                    <div className="text-[10px] text-[#787774] truncate">{currentPath || '/'}</div>
+                <div className="text-[14px] font-medium text-[#37352f] truncate">
+                    {path || '/'}
                 </div>
-                <button
-                    onClick={() => loadFiles(currentPath)}
-                    className="p-1 hover:bg-black/5 rounded text-[#787774]"
-                    title="Refresh"
-                >
-                    <RefreshCw size={12} />
-                </button>
             </div>
 
-            {/* File List */}
-            <div className="flex-1 overflow-y-auto py-1">
+            <div className="flex-1 overflow-y-auto p-2">
                 {loading ? (
-                    <div className="flex items-center justify-center py-4">
-                        <Loader2 size={16} className="animate-spin text-[#787774]" />
+                    <div className="flex items-center justify-center py-8">
+                        <div className="w-5 h-5 border-2 border-[#37352f] border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : error ? (
-                    <div className="p-3 text-center text-[12px] text-red-500">{error}</div>
+                    <div className="p-4 text-center text-red-500 text-[13px]">
+                        {error}
+                    </div>
                 ) : files.length === 0 ? (
-                    <div className="p-3 text-center text-[12px] text-[#787774]">Empty folder</div>
+                    <div className="p-8 text-center text-[#787774] text-[13px]">
+                        No files found
+                    </div>
                 ) : (
-                    <div className="space-y-0.5 px-1">
-                        {currentPath && (
-                            <button
-                                onClick={handleBack}
-                                className="w-full flex items-center gap-2 px-2 py-1 hover:bg-[#f7f6f3] rounded text-left text-[12px] text-[#787774]"
-                            >
-                                <ChevronRight size={12} className="rotate-180" />
-                                <span>..</span>
-                            </button>
-                        )}
+                    <div className="space-y-0.5">
                         {files.map((file, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => handleFileClick(file)}
-                                className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#f7f6f3] rounded text-left group transition-colors"
+                                className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#f7f6f3] rounded-[6px] text-left transition-colors group"
                             >
-                                {getFileIcon(file)}
-                                <span className="flex-1 text-[12px] text-[#37352f] truncate">{file.name}</span>
-                                {file.type === 'directory' && (
-                                    <ChevronRight size={12} className="text-[#787774] opacity-0 group-hover:opacity-100" />
+                                {file.type === 'directory' ? (
+                                    <Folder size={16} className="text-[#787774] shrink-0" />
+                                ) : (
+                                    <File size={16} className="text-[#787774] shrink-0" />
                                 )}
+                                <span className="flex-1 text-[13px] text-[#37352f] truncate">
+                                    {file.name}
+                                </span>
+                                <ChevronRight size={14} className="text-[#787774] opacity-0 group-hover:opacity-100 shrink-0" />
                             </button>
                         ))}
                     </div>

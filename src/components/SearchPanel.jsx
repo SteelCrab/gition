@@ -1,21 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, X, File, FileText, Loader2, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, X, FileText, Loader2, ChevronRight } from 'lucide-react';
 
 const SearchPanel = ({ userId, repoName, onFileSelect }) => {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [searchContent, setSearchContent] = useState(true);
 
-    // Debounced search
     useEffect(() => {
-        if (!query || query.length < 2 || !userId || !repoName) {
+        const searchContent = query.trim();
+        if (searchContent.length < 2) {
             setResults([]);
             return;
         }
 
-        const timeoutId = setTimeout(async () => {
+        const timer = setTimeout(async () => {
             setLoading(true);
             setError(null);
 
@@ -23,11 +22,10 @@ const SearchPanel = ({ userId, repoName, onFileSelect }) => {
                 const params = new URLSearchParams({
                     user_id: userId,
                     repo_name: repoName,
-                    query: query,
-                    content: searchContent.toString()
+                    query: query
                 });
 
-                const response = await fetch(`/api/git/search?${params}`);
+                const response = await fetch(`/api/git/search?${params.toString()}`);
                 const data = await response.json();
 
                 if (data.status === 'success') {
@@ -36,48 +34,29 @@ const SearchPanel = ({ userId, repoName, onFileSelect }) => {
                     setError(data.message);
                     setResults([]);
                 }
-            } catch (err) {
+            } catch (_err) {
+                console.error('Search failed:', _err);
                 setError('Search failed');
                 setResults([]);
             } finally {
                 setLoading(false);
             }
-        }, 300);
+        }, 500);
 
-        return () => clearTimeout(timeoutId);
-    }, [query, userId, repoName, searchContent]);
-
-    const highlightMatch = (text, query) => {
-        if (!text || !query) return text;
-        const regex = new RegExp(`(${query})`, 'gi');
-        const parts = text.split(regex);
-        return parts.map((part, i) =>
-            regex.test(part) ? (
-                <mark key={i} className="bg-yellow-200 text-yellow-900 px-0.5 rounded">{part}</mark>
-            ) : part
-        );
-    };
-
-    if (!userId || !repoName) {
-        return (
-            <div className="p-3 text-center text-[12px] text-[#787774]">
-                Select a repository to search
-            </div>
-        );
-    }
+        return () => clearTimeout(timer);
+    }, [query, userId, repoName]);
 
     return (
-        <div className="flex flex-col h-full">
-            {/* Search Input */}
-            <div className="p-2 border-b border-[#efefef]">
+        <div className="flex flex-col h-full bg-white">
+            <div className="p-3 border-b border-[#efefef]">
                 <div className="relative">
-                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#787774]" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#787774]" size={14} />
                     <input
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search files..."
-                        className="w-full pl-8 pr-8 py-1.5 text-[13px] bg-[#f7f6f3] rounded-[6px] focus:outline-none focus:ring-1 focus:ring-[#37352f]/20"
+                        className="w-full bg-[#f7f6f3] border-none rounded-[6px] pl-9 pr-8 py-1.5 text-[13px] focus:ring-1 focus:ring-[#efefef] outline-none"
                     />
                     {query && (
                         <button
@@ -88,92 +67,47 @@ const SearchPanel = ({ userId, repoName, onFileSelect }) => {
                         </button>
                     )}
                 </div>
-
-                {/* Search Options */}
-                <div className="flex items-center gap-2 mt-2">
-                    <label className="flex items-center gap-1.5 text-[11px] text-[#787774] cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={searchContent}
-                            onChange={(e) => setSearchContent(e.target.checked)}
-                            className="rounded border-gray-300 text-[#37352f] focus:ring-[#37352f]"
-                        />
-                        Search in file contents
-                    </label>
-                </div>
             </div>
 
-            {/* Results */}
             <div className="flex-1 overflow-y-auto">
                 {loading && (
-                    <div className="flex items-center justify-center py-4">
-                        <Loader2 size={16} className="animate-spin text-[#787774]" />
-                        <span className="ml-2 text-[12px] text-[#787774]">Searching...</span>
+                    <div className="p-8 text-center">
+                        <Loader2 className="animate-spin mx-auto text-[#787774]" size={20} />
                     </div>
-                )}
-
-                {error && (
-                    <div className="p-3 text-center text-[12px] text-red-500">
+                ) || error && (
+                    <div className="p-4 text-center text-red-500 text-[12px]">
                         {error}
                     </div>
-                )}
-
-                {!loading && !error && query.length >= 2 && results.length === 0 && (
-                    <div className="p-3 text-center text-[12px] text-[#787774]">
-                        No results found for "{query}"
+                ) || query.length >= 2 && results.length === 0 && !loading && (
+                    <div className="p-8 text-center text-[#787774] text-[13px]">
+                        No results for &quot;{query}&quot;
                     </div>
-                )}
-
-                {!loading && results.length > 0 && (
-                    <div className="divide-y divide-[#efefef]">
-                        {results.map((result, index) => (
-                            <button
-                                key={`${result.path}-${result.line || 0}-${index}`}
-                                onClick={() => onFileSelect && onFileSelect(result.path, result.line)}
-                                className="w-full p-2 text-left hover:bg-[#f7f6f3] transition-colors group"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <FileText size={14} className="text-[#787774] shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-[12px] font-medium text-[#37352f] truncate">
-                                                {result.name}
-                                            </span>
-                                            {result.type === 'content' && result.line && (
-                                                <span className="text-[10px] px-1.5 py-0.5 bg-[#e8e8e8] rounded text-[#787774]">
-                                                    L{result.line}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="text-[11px] text-[#787774] truncate">
-                                            {result.path}
-                                        </div>
-                                        {result.context && (
-                                            <div className="mt-1 text-[11px] text-[#37352f] bg-[#f7f6f3] p-1.5 rounded font-mono truncate">
-                                                {highlightMatch(result.context, query)}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <ChevronRight size={12} className="text-[#787774] opacity-0 group-hover:opacity-100 shrink-0" />
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {!loading && !error && query.length < 2 && (
-                    <div className="p-3 text-center text-[12px] text-[#787774]">
-                        Type at least 2 characters to search
-                    </div>
-                )}
+                ) || results.map((result, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => onFileSelect(result.path, result.line)}
+                        className="w-full text-left p-3 hover:bg-[#f7f6f3] border-b border-[#efefef] transition-colors group"
+                    >
+                        <div className="flex items-center gap-2 mb-1">
+                            <FileText size={14} className="text-[#787774]" />
+                            <span className="text-[13px] font-medium text-[#37352f] truncate">
+                                {result.path}
+                            </span>
+                        </div>
+                        <div className="pl-6">
+                            <div className="text-[11px] text-[#787774] mb-1">
+                                Line {result.line}
+                            </div>
+                            <div className="text-[12px] text-[#37352f] font-mono bg-[#fafafa] p-1.5 rounded border border-[#efefef] truncate">
+                                {result.content.trim()}
+                            </div>
+                        </div>
+                        <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ChevronRight size={14} className="text-[#787774]" />
+                        </div>
+                    </button>
+                ))}
             </div>
-
-            {/* Results Count */}
-            {results.length > 0 && (
-                <div className="p-2 border-t border-[#efefef] text-[11px] text-[#787774]">
-                    {results.length} result{results.length !== 1 ? 's' : ''} found
-                </div>
-            )}
         </div>
     );
 };

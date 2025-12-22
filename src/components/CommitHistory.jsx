@@ -1,121 +1,69 @@
-import React, { useState, useEffect } from 'react';
-import { GitCommit, Loader2, RefreshCw, Plus, Minus, FileText } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { History, GitCommit, Loader2 } from 'lucide-react';
 
 const CommitHistory = ({ userId, repoName }) => {
     const [commits, setCommits] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
 
-    const fetchCommits = async () => {
+    const fetchCommits = useCallback(async () => {
         if (!userId || !repoName) return;
-
         setLoading(true);
-        setError(null);
         try {
-            const response = await fetch(`/api/git/commits?user_id=${userId}&repo_name=${repoName}&max_count=20`);
+            const response = await fetch(`/api/git/commits?user_id=${userId}&repo_name=${repoName}`);
             const data = await response.json();
             if (data.status === 'success') {
-                setCommits(data.commits);
-            } else {
-                setError(data.message);
+                setCommits(data.commits || []);
             }
-        } catch (err) {
-            setError('Failed to load commits');
+        } catch (_err) {
+            console.error('Failed to fetch commits:', _err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [userId, repoName]);
 
     useEffect(() => {
         fetchCommits();
-    }, [userId, repoName]);
+    }, [fetchCommits]);
 
-    const formatDate = (isoString) => {
-        const date = new Date(isoString);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMins / 60);
-        const diffDays = Math.floor(diffHours / 24);
-
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        if (diffDays < 7) return `${diffDays}d ago`;
-        return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+    const formatDate = (timestamp) => {
+        const date = new Date(timestamp * 1000);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
-    if (!userId || !repoName) {
-        return (
-            <div className="p-3 text-center text-[11px] text-[#787774]">
-                Select a repository to view commits
-            </div>
-        );
-    }
-
     return (
-        <div className="flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-3 py-2 border-b border-[#efefef]">
-                <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#37352f]">
-                    <GitCommit size={14} />
-                    <span>Commits</span>
-                </div>
-                <button
-                    onClick={fetchCommits}
-                    disabled={loading}
-                    className="p-1 hover:bg-black/5 rounded text-[#787774]"
-                    title="Refresh"
-                >
-                    <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-                </button>
+        <div className="flex flex-col h-full bg-[#fcfcfc]">
+            <div className="px-3 py-2 border-b border-[#efefef] flex items-center gap-2">
+                <History size={14} className="text-[#787774]" />
+                <span className="text-[12px] font-semibold text-[#787774] uppercase tracking-wider">Commit History</span>
             </div>
 
-            {/* Commit List */}
-            <div className="overflow-y-auto max-h-[200px]">
+            <div className="flex-1 overflow-y-auto p-2">
                 {loading && commits.length === 0 ? (
-                    <div className="flex items-center justify-center py-4">
-                        <Loader2 size={14} className="animate-spin text-[#787774]" />
+                    <div className="flex items-center justify-center py-8">
+                        <Loader2 size={20} className="animate-spin text-[#787774]" />
                     </div>
-                ) : error ? (
-                    <div className="p-2 text-center text-[11px] text-red-500">{error}</div>
                 ) : commits.length === 0 ? (
-                    <div className="p-3 text-center text-[11px] text-[#787774]">No commits found</div>
+                    <div className="py-4 text-center text-[12px] text-[#787774]">
+                        No commits found
+                    </div>
                 ) : (
-                    <div className="divide-y divide-[#efefef]">
-                        {commits.map((commit) => (
-                            <div key={commit.full_sha} className="px-3 py-2 hover:bg-[#f7f6f3] transition-colors">
+                    <div className="space-y-1">
+                        {commits.map((commit, idx) => (
+                            <div key={idx} className="p-2 hover:bg-black/5 rounded-[4px] transition-colors group cursor-default">
                                 <div className="flex items-start gap-2">
-                                    <div className="mt-0.5">
-                                        <GitCommit size={12} className="text-[#787774]" />
-                                    </div>
+                                    <GitCommit size={14} className="mt-0.5 text-[#2383e2] shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-[12px] text-[#37352f] truncate font-medium">
+                                        <div className="text-[13px] text-[#37352f] font-medium leading-tight truncate">
                                             {commit.message}
                                         </div>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-[10px] font-mono text-blue-600 bg-blue-50 px-1 rounded">
-                                                {commit.sha}
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-[10px] text-[#787774] font-mono">
+                                                {commit.hash.substring(0, 7)}
                                             </span>
                                             <span className="text-[10px] text-[#787774]">
-                                                {commit.author}
-                                            </span>
-                                            <span className="text-[10px] text-[#787774]">
-                                                {formatDate(commit.date)}
+                                                {formatDate(commit.timestamp)}
                                             </span>
                                         </div>
-                                        {(commit.stats.insertions > 0 || commit.stats.deletions > 0) && (
-                                            <div className="flex items-center gap-2 mt-1 text-[10px]">
-                                                <span className="flex items-center gap-0.5 text-green-600">
-                                                    <Plus size={10} /> {commit.stats.insertions}
-                                                </span>
-                                                <span className="flex items-center gap-0.5 text-red-600">
-                                                    <Minus size={10} /> {commit.stats.deletions}
-                                                </span>
-                                                <span className="flex items-center gap-0.5 text-[#787774]">
-                                                    <FileText size={10} /> {commit.stats.files}
-                                                </span>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
