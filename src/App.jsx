@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import {
     FileText,
@@ -10,21 +10,52 @@ import {
     Menu,
     LogOut,
 } from 'lucide-react';
-import {
-    CodeBlock,
-    SlashMenuItem,
-    TextBlock,
-    PipelineBlock,
-    LoginPage,
-    AuthCallback,
-    RepoList,
-    SearchPanel,
-    FileBrowser,
-    CommitHistory,
-    BranchSelector,
-    IssuesPRs,
-} from './components';
+import CodeBlock from './components/CodeBlock';
+import SlashMenuItem from './components/SlashMenuItem';
+import TextBlock from './components/TextBlock';
+import PipelineBlock from './components/PipelineBlock';
+import LoginPage from './components/LoginPage';
+import AuthCallback from './components/AuthCallback';
+import RepoList from './components/RepoList';
+import SearchPanel from './components/SearchPanel';
+import FileBrowser from './components/FileBrowser';
+import CommitHistory from './components/CommitHistory';
+import BranchSelector from './components/BranchSelector';
+import IssuesPRs from './components/IssuesPRs';
 import { initRepo, cloneRepo, listFiles, readFile } from './lib/git';
+
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null, errorInfo: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.error("Uncaught error:", error, errorInfo);
+        this.setState({ errorInfo });
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="p-8 font-sans text-red-600">
+                    <h1 className="text-2xl font-bold mb-4">Something went wrong.</h1>
+                    <details className="whitespace-pre-wrap font-mono text-sm p-4 bg-red-50 rounded">
+                        {this.state.error && this.state.error.toString()}
+                        <br />
+                        {this.state.errorInfo && this.state.errorInfo.componentStack}
+                    </details>
+                </div>
+            );
+        }
+
+        return this.props.children;
+    }
+}
 
 const MainEditor = () => {
     const navigate = useNavigate();
@@ -488,19 +519,21 @@ const ProtectedRoute = ({ children }) => {
 const App = () => {
     return (
         <BrowserRouter>
-            <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-                <Route
-                    path="/"
-                    element={
-                        <ProtectedRoute>
-                            <MainEditor />
-                        </ProtectedRoute>
-                    }
-                />
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+            <ErrorBoundary>
+                <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+                    <Route
+                        path="/"
+                        element={
+                            <ProtectedRoute>
+                                <MainEditor />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </ErrorBoundary>
         </BrowserRouter>
     );
 };
