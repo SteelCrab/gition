@@ -54,10 +54,6 @@ gition/
 
 ## 🗺️ Roadmap
 
-| Milestone | Feature | Status |
-| :--- | :--- | :--- |
-| v0.2 | Graph View (Commit/Branch Visualization) | 🔵 Planned |
-| v0.2 | Real-time Collaboration | 🔵 Planned |
-| v0.3 | Custom CI/CD Pipelines | 🔵 Planned |
+See [ROADMAP.md](ROADMAP.md) for detailed milestone progress.
 
 [MIT License](LICENSE)
