@@ -25,8 +25,8 @@ const CommitHistory = ({ userId, repoName }) => {
         fetchCommits();
     }, [fetchCommits]);
 
-    const formatDate = (timestamp) => {
-        const date = new Date(timestamp * 1000);
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
@@ -58,10 +58,10 @@ const CommitHistory = ({ userId, repoName }) => {
                                         </div>
                                         <div className="flex items-center gap-2 mt-1">
                                             <span className="text-[10px] text-[#787774] font-mono">
-                                                {commit.hash.substring(0, 7)}
+                                                {commit.sha ? commit.sha.substring(0, 7) : ''}
                                             </span>
                                             <span className="text-[10px] text-[#787774]">
-                                                {formatDate(commit.timestamp)}
+                                                {formatDate(commit.date)}
                                             </span>
                                         </div>
                                     </div>
