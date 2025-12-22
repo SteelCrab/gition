@@ -34,13 +34,15 @@ An open-source development platform that integrates Git repositories, block-base
 | **Commits** | History view, SHA/Author/Date, Insertions/Deletions stats |
 | **Search** | Filename search, Content search, Highlighted results |
 | **Issues & PRs** | View open issues/PRs, Labels, Branch info |
+| **CI/CD** | GitHub Actions pipeline, Security scan (gitleaks), Docker build |
+| **Testing** | Backend API tests (70%+ coverage), pytest + flake8 |
 
 ### 🔜 Upcoming
 
-- [ ] Markdown rendering
+- [ ] Markdown rendering (react-markdown)
 - [ ] Create/Edit Issues
-- [ ] Create Pull Requests  
-- [ ] CI/CD Pipeline visualization
+- [ ] Create Pull Requests
+- [ ] GitHub Actions status visualization
 
 ## Tech Stack
 
