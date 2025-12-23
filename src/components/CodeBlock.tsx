@@ -1,7 +1,15 @@
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 
-const CodeBlock = ({ id, language, filename, content, onUpdate }) => {
+interface CodeBlockProps {
+    id: string;
+    language?: string;
+    filename?: string;
+    content: string;
+    onUpdate: (id: string, updates: { filename?: string; language?: string; content?: string }) => void;
+}
+
+const CodeBlock = ({ id, language, filename, content, onUpdate }: CodeBlockProps) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {

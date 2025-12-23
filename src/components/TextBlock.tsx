@@ -1,4 +1,10 @@
-const TextBlock = ({ id, content, onUpdate }) => (
+interface TextBlockProps {
+    id: string;
+    content: string;
+    onUpdate: (id: string, newContent: string) => void;
+}
+
+const TextBlock = ({ id, content, onUpdate }: TextBlockProps) => (
     <div className="group relative py-1 my-1">
         <p
             className="text-[16px] text-[#37352f] leading-[1.6] whitespace-pre-wrap outline-none"
