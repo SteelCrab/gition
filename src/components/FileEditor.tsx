@@ -36,6 +36,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { File, Folder, ChevronRight, X, Loader2, ArrowLeft } from 'lucide-react';
 import { FileInfo } from '../types';
+import { bytesToSize } from '../utils/format';
 
 // FileEditor Props interface
 interface FileEditorProps {
@@ -52,7 +53,6 @@ const FileEditor = ({ userId, repoName, onClose }: FileEditorProps) => {
     const [fileContent, setFileContent] = useState('');
     const [originalContent, setOriginalContent] = useState('');
     const [loading, setLoading] = useState(true);
-    const [_saving, _setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     /**
@@ -254,9 +254,7 @@ const FileEditor = ({ userId, repoName, onClose }: FileEditorProps) => {
                                         {/* File size */}
                                         {file.size && (
                                             <span className="text-[11px] text-[#787774]">
-                                                {file.size > 1024
-                                                    ? `${(file.size / 1024).toFixed(1)}KB`
-                                                    : `${file.size}B`}
+                                                {bytesToSize(file.size)}
                                             </span>
                                         )}
 
