@@ -1,16 +1,8 @@
-/**
- * TabItem Component
- * 
- * Description: File tab item in editor header
- * Props:
- *   - name: Filename
- *   - active: Whether tab is currently active
- *   - unsaved: Whether there are unsaved changes
- *   - onClose: Tab close callback
- */
-
 import { FileText, X } from 'lucide-react';
 
+/**
+ * Renders a file tab in the editor header.
+ */
 interface TabItemProps {
     name: string;
     active?: boolean;
@@ -36,7 +28,7 @@ const TabItem = ({ name, active, unsaved, onClose }: TabItemProps) => (
 
         <button
             onClick={(e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // Prevent tab selection when closing
                 onClose();
             }}
             className={`ml-1 p-0.5 rounded hover:bg-black/5 
