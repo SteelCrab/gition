@@ -1,3 +1,22 @@
+# ==============================================================================
+# GitLab Mirror Workflow
+# ==============================================================================
+# Description: Mirror GitHub repository to GitLab (backup and redundancy)
+#
+# Trigger Conditions:
+#   - Automatic execution on push to 'main' branch
+#   - Manual execution possible via workflow_dispatch
+#
+# Required Secrets:
+#   - GITLAB_TOKEN: GitLab Personal Access Token (api, write_repository scope)
+#   - GITLAB_USERNAME: GitLab username
+#
+# Setup Instructions:
+#   1. Create Personal Access Token in GitLab
+#   2. Add to GitHub Settings > Secrets and Variables > Actions
+#   3. Create an empty repository with the same name on GitLab
+# ==============================================================================
+
 name: Mirror to GitLab
 
 on:
@@ -16,10 +35,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Step 2: Push to GitLab
+      # - Add remote if not exists
+      # - Push 'main' branch with --force (GitHub is primary source of truth)
+      # - Push tags without --force to preserve remote-only tags
       - name: 🔄 Push to GitLab
         run: |
           git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/${{ secrets.GITLAB_USERNAME }}/${{ github.event.repository.name }}.git || true
           git push gitlab main --force
-          git push gitlab --tags --force
-        env:
-          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          git push gitlab --tags

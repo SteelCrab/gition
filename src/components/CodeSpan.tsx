@@ -1,3 +1,23 @@
+/**
+ * =============================================================================
+ * CodeSpan Component
+ * =============================================================================
+ * 
+ * Description: Inline code styled text
+ * 
+ * Features:
+ *   - Renders text with code-style background
+ *   - Notion-style red text color
+ *   - Monospace font
+ * 
+ * Props:
+ *   - children: Code text content
+ * 
+ * Usage:
+ *   <CodeSpan>npm install</CodeSpan>
+ * =============================================================================
+ */
+
 import { ReactNode } from 'react';
 
 const CodeSpan = ({ children }: { children: ReactNode }) => (
