@@ -58,6 +58,8 @@ const SearchPanel = ({ userId, repoName, onFileSelect }: SearchPanelProps) => {
             return;
         }
 
+        const controller = new AbortController();
+
         const timer = setTimeout(async () => {
             // Skip search if userId or repoName is missing
             if (!userId || !repoName) {
@@ -75,7 +77,9 @@ const SearchPanel = ({ userId, repoName, onFileSelect }: SearchPanelProps) => {
                     query: searchContent // Use trimmed content
                 });
 
-                const response = await fetch(`/api/git/search?${params.toString()}`);
+                const response = await fetch(`/api/git/search?${params.toString()}`, {
+                    signal: controller.signal
+                });
                 const data = await response.json();
 
                 if (data.status === 'success') {
@@ -84,7 +88,8 @@ const SearchPanel = ({ userId, repoName, onFileSelect }: SearchPanelProps) => {
                     setError(data.message);
                     setResults([]);
                 }
-            } catch (_err) {
+            } catch (_err: any) {
+                if (_err.name === 'AbortError') return;
                 console.error('Search failed:', _err);
                 setError('Search failed');
                 setResults([]);
@@ -93,8 +98,11 @@ const SearchPanel = ({ userId, repoName, onFileSelect }: SearchPanelProps) => {
             }
         }, 500);
 
-        // Cleanup timer on query change
-        return () => clearTimeout(timer);
+        // Cleanup timer and controller on query change
+        return () => {
+            clearTimeout(timer);
+            controller.abort();
+        };
     }, [query, userId, repoName]);
 
     return (
