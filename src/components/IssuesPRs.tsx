@@ -109,9 +109,10 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
             if (Array.isArray(data)) {
                 setIssues(data.filter((issue: Issue) => !issue.pull_request));
             }
-        } catch (_err: any) {
-            console.error('Failed to fetch issues:', _err);
-            setError(_err.message || 'Failed to fetch issues');
+        } catch (err: unknown) {
+            console.error('Failed to fetch issues:', err);
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+            setError(errorMessage);
         } finally {
             setLoading(prev => ({ ...prev, issues: false }));
         }
@@ -145,9 +146,10 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
             if (Array.isArray(data)) {
                 setPRs(data);
             }
-        } catch (_err: any) {
-            console.error('Failed to fetch pulls:', _err);
-            setError(_err.message || 'Failed to fetch pull requests');
+        } catch (err: unknown) {
+            console.error('Failed to fetch pulls:', err);
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+            setError(errorMessage);
         } finally {
             setLoading(prev => ({ ...prev, pulls: false }));
         }
@@ -165,7 +167,9 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
      * @returns Formatted date string (e.g., "Jan 15, 2024")
      */
     const formatDate = (dateString: string) => {
+        if (!dateString) return 'n/a';
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Invalid Date';
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
@@ -183,13 +187,13 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
             {/* Tab switcher */}
             <div className="flex border-b border-[#efefef]">
                 <button
-                    onClick={() => setActiveTab('issues')}
+                    onClick={() => { setActiveTab('issues'); setError(null); }}
                     className={`flex-1 px-4 py-3 text-[13px] font-medium transition-colors ${activeTab === 'issues' ? 'text-[#37352f] border-b-2 border-[#37352f]' : 'text-[#787774] hover:text-[#37352f]'}`}
                 >
                     Issues {issues.length > 0 && `(${issues.length})`}
                 </button>
                 <button
-                    onClick={() => setActiveTab('pulls')}
+                    onClick={() => { setActiveTab('pulls'); setError(null); }}
                     className={`flex-1 px-4 py-3 text-[13px] font-medium transition-colors ${activeTab === 'pulls' ? 'text-[#37352f] border-b-2 border-[#37352f]' : 'text-[#787774] hover:text-[#37352f]'}`}
                 >
                     Pull Requests {pulls.length > 0 && `(${pulls.length})`}
