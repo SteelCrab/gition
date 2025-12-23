@@ -26,9 +26,9 @@ import { CheckCircle, Loader2, Circle } from 'lucide-react';
 
 // LogStep Props interface
 interface LogStepProps {
-    status?: string;    // Status: 'success' | 'running' | undefined
-    label: string;      // Step label
-    time: string;       // Elapsed time
+    status?: 'success' | 'running';     // Literal union for better type safety
+    label: string;                      // Step label
+    time: string;                       // Elapsed time
 }
 
 const LogStep = ({ status, label, time }: LogStepProps) => {
