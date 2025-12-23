@@ -37,6 +37,14 @@
 - [ ] GitHub Actions status display (#2)
 - [ ] Bi-directional sync (GitHub ↔ Gition) (#9)
 
+### Blocks
+- [ ] Issue block - Display GitHub issues inline
+- [ ] PR block - Display Pull Requests inline
+
+### Pages
+- [ ] Landing/Promotion page
+- [ ] Branch page navigation (click branch → new page)
+
 
 
 ---
