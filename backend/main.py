@@ -20,11 +20,11 @@ Run Command:
 ==============================================================================
 """
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
-import requests
+import asyncio
 import os
 import json
 from urllib.parse import urlencode
@@ -37,15 +37,11 @@ load_dotenv()
 app = FastAPI(title="Gition Auth Server")
 
 # CORS middleware configuration
-# - Allow frontend to call backend API
-# - Support both development and production environments
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost,http://localhost:80,http://localhost:5173").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost",      # Nginx proxy
-        "http://localhost:80",   # Explicit port 80
-        "http://localhost:5173"  # Vite dev server
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -165,53 +161,53 @@ async def github_callback(code: str = None, error: str = None):
             "id": user_data.get("id"),
             "login": user_data.get("login"),
             "name": user_data.get("name") or user_data.get("login"),
-            "email": primary_email or f"{user_data.get('login')}@github.com",
-            "avatar_url": user_data.get("avatar_url"),
-            "access_token": access_token  # Used for API calls from frontend
+            "email": primary_email or f"{user_data.get('id')}+{user_data.get('login')}@users.noreply.github.com",
+            "avatar_url": user_data.get("avatar_url")
         }
         
-        # Pass user info via URL parameters
-        encoded_user = urlencode({"user": json.dumps(user_info)})
-        return RedirectResponse(f"{FRONTEND_URL}/auth/callback?{encoded_user}")
+        # Security: Use Secure, HttpOnly cookie instead of URL parameters
+        response = RedirectResponse(f"{FRONTEND_URL}/auth/callback?user={json.dumps(user_info)}")
+        
+        # Determine if we are on HTTPS (for Secure attribute)
+        is_https = FRONTEND_URL.startswith("https")
+        
+        response.set_cookie(
+            key="github_token",
+            value=access_token,
+            httponly=True,
+            secure=is_https,
+            samesite="lax",
+            max_age=60 * 60 * 24 * 7,  # 7 days
+            path="/"
+        )
+        
+        return response
 
 
 # ==============================================================================
 # Repository List API
 # ==============================================================================
 
+def get_token(request: Request) -> str | None:
+    """Helper to extract token from header or cookie"""
+    auth = request.headers.get("Authorization")
+    if auth:
+        return auth.replace("Bearer ", "") if auth.startswith("Bearer ") else auth
+    return request.cookies.get("github_token")
+
+
 @app.get("/api/repos")
 async def get_repos(request: Request):
-    """
-    Fetch user's GitHub repositories
+    token = get_token(request)
+    if not token:
+        return {"error": "Not authenticated", "repos": []}
     
-    Headers:
-        Authorization: Bearer <access_token>
-    
-    Returns:
-        - total: Total repository count
-        - public: Public repository count
-        - private: Private repository count
-        - repos: Repository list (id, name, description, private, etc.)
-    
-    Note:
-        - With 'repo' scope, private repositories are also included
-        - Max 100 repositories (GitHub API limit)
-    """
-    authorization = request.headers.get("Authorization")
-    
-    if not authorization:
-        return {"error": "No authorization token provided", "repos": []}
-    
-    # Extract token from "Bearer <token>" format
-    token = authorization.replace("Bearer ", "") if authorization.startswith("Bearer ") else authorization
-    
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=10.0) as client:
         headers = {
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github.v3+json"
         }
         
-        # Fetch all repositories (owner, collaborator, org member)
         repos_response = await client.get(
             "https://api.github.com/user/repos",
             headers=headers,
@@ -289,7 +285,8 @@ async def api_clone_repo(request: Request):
         if not all([clone_url, access_token, user_id, repo_name]):
             return {"status": "error", "message": "Missing required fields"}
         
-        result = clone_repo(clone_url, access_token, str(user_id), repo_name)
+        # Performance: Use to_thread for blocking Git operations
+        result = await asyncio.to_thread(clone_repo, clone_url, access_token, str(user_id), repo_name)
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -312,14 +309,15 @@ async def api_pull_repo(request: Request):
         if not all([user_id, repo_name]):
             return {"status": "error", "message": "Missing required fields"}
         
-        result = pull_repo(str(user_id), repo_name)
+        # Performance: Use to_thread for blocking Git operations
+        result = await asyncio.to_thread(pull_repo, str(user_id), repo_name)
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
 
 @app.get("/api/git/files")
-async def api_list_files(request: Request, user_id: str, repo_name: str, path: str = ""):
+async def api_list_files(user_id: str, repo_name: str, path: str = ""):
     """
     List files/directories in a cloned repository
     
@@ -331,12 +329,13 @@ async def api_list_files(request: Request, user_id: str, repo_name: str, path: s
     Returns:
         - files: [{name, type, size, path}, ...]
     """
-    result = list_files(user_id, repo_name, path)
+    # Performance: Use to_thread for blocking Git operations
+    result = await asyncio.to_thread(list_files, user_id, repo_name, path)
     return result
 
 
 @app.get("/api/git/file")
-async def api_read_file(request: Request, user_id: str, repo_name: str, path: str):
+async def api_read_file(user_id: str, repo_name: str, path: str):
     """
     Read file content from a cloned repository
     
@@ -349,15 +348,17 @@ async def api_read_file(request: Request, user_id: str, repo_name: str, path: st
         - content: File content (for text files)
         - binary: Whether file is binary
     """
-    result = read_file(user_id, repo_name, path)
+    # Performance: Use to_thread for blocking Git operations
+    result = await asyncio.to_thread(read_file, user_id, repo_name, path)
     return result
 
 
 @app.get("/api/git/status")
 async def api_repo_status(user_id: str, repo_name: str):
     """Check if a repository is cloned"""
+    cloned = await asyncio.to_thread(is_cloned, user_id, repo_name)
     return {
-        "cloned": is_cloned(user_id, repo_name)
+        "cloned": cloned
     }
 
 
@@ -378,7 +379,8 @@ async def api_delete_repo(request: Request):
         if not all([user_id, repo_name]):
             return {"status": "error", "message": "Missing required fields"}
         
-        result = delete_repo(str(user_id), repo_name)
+        # Performance: Use to_thread for blocking Git operations
+        result = await asyncio.to_thread(delete_repo, str(user_id), repo_name)
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -405,7 +407,8 @@ async def api_search_files(
     if not query or len(query) < 2:
         return {"status": "error", "message": "Query must be at least 2 characters", "results": []}
     
-    result = search_files(user_id, repo_name, query, content, min(max_results, 100))
+    # Performance: Use to_thread for blocking Git operations
+    result = await asyncio.to_thread(search_files, user_id, repo_name, query, content, min(max_results, 100))
     return result
 
 
@@ -423,7 +426,8 @@ async def api_get_commits(
         - repo_name: Repository name
         - max_count: Maximum commit count (max: 100)
     """
-    result = get_commits(user_id, repo_name, min(max_count, 100))
+    # Performance: Use to_thread for blocking Git operations
+    result = await asyncio.to_thread(get_commits, user_id, repo_name, min(max_count, 100))
     return result
 
 
@@ -439,7 +443,8 @@ async def api_get_branches(
         - current_branch: Currently checked out branch
         - branches: [{name, type, is_current, commit_sha}, ...]
     """
-    result = get_branches(user_id, repo_name)
+    # Performance: Use to_thread for blocking Git operations
+    result = await asyncio.to_thread(get_branches, user_id, repo_name)
     return result
 
 
@@ -462,7 +467,8 @@ async def api_checkout_branch(request: Request):
         if not all([user_id, repo_name, branch_name]):
             return {"status": "error", "message": "Missing required fields"}
         
-        result = checkout_branch(user_id, repo_name, branch_name)
+        # Performance: Use to_thread for blocking Git operations
+        result = await asyncio.to_thread(checkout_branch, user_id, repo_name, branch_name)
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -489,14 +495,12 @@ async def api_get_issues(request: Request, owner: str, repo: str, state: str = "
     
     Note: Pull Requests also appear in Issues API, so filtering is needed
     """
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
+    token = get_token(request)
+    if not token:
         return {"status": "error", "message": "No authorization token", "issues": []}
     
-    token = auth_header.replace("Bearer ", "")
-    
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
                 f"https://api.github.com/repos/{owner}/{repo}/issues",
                 headers={
@@ -559,14 +563,12 @@ async def api_get_pulls(request: Request, owner: str, repo: str, state: str = "o
     Headers:
         Authorization: Bearer <access_token>
     """
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
+    token = get_token(request)
+    if not token:
         return {"status": "error", "message": "No authorization token", "pulls": []}
     
-    token = auth_header.replace("Bearer ", "")
-    
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
                 f"https://api.github.com/repos/{owner}/{repo}/pulls",
                 headers={
