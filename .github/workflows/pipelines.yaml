@@ -49,10 +49,10 @@ jobs:
       - name: 📚 Install dependencies
         run: npm ci
 
-      - name: � Type Check
+      - name: 📝 Type Check
         run: npx tsc --noEmit
 
-      - name: �🔍 Lint
+      - name: 🔍 Lint
         run: npm run lint --if-present
 
       - name: 🧪 Test
@@ -134,7 +134,7 @@ jobs:
           name: frontend-dist
           path: dist/
 
-      - name: � Convert to lowercase
+      - name: 📝 Convert to lowercase
         id: lowercase
         run: |
           echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
