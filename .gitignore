@@ -34,8 +34,6 @@ coverage/
 # Gition workspace (branch-specific pages)
 .gition/
 
-.md_kr/
-
 # Python
 __pycache__/
 *.pyc
