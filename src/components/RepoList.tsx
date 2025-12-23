@@ -385,7 +385,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
                                                 </div>
                                             ) : repoFiles[repo.name] ? (
                                                 <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
-                                                    {repoFiles[repo.name].map((file, idx) => (
+                                                    {repoFiles[repo.name].map((file) => (
                                                         <div
                                                             key={file.path}
                                                             className="flex items-center gap-2 px-2 py-1 hover:bg-[#f7f6f3] rounded cursor-pointer text-[12px]"
