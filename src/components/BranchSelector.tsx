@@ -139,6 +139,7 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
                     <div
                         className="absolute right-0 mt-1 w-[280px] bg-white border border-[#efefef] rounded-[6px] shadow-lg z-[90] overflow-hidden animate-fadeIn"
                         role="listbox"
+                        tabIndex={-1}
                         onKeyDown={(e) => {
                             if (e.key === 'Escape') {
                                 setIsOpen(false);
@@ -220,6 +221,8 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
                                     <button
                                         key={`${branch.type}-${branch.name}`}
                                         onClick={() => handleBranchSelect(branch)}
+                                        role="option"
+                                        aria-selected={selectedBranch === branch.name}
                                         className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-[4px] text-left text-[12px] hover:bg-[#f7f6f3] transition-colors ${selectedBranch === branch.name ? 'bg-[#f7f6f3] font-medium text-[#37352f]' : 'text-[#787774]'
                                             }`}
                                     >
