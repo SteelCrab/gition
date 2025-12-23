@@ -1,10 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronRight, File, Folder, ArrowLeft } from 'lucide-react';
 
-const FileBrowser = ({ userId, repoName, onFileSelect, onBack }) => {
-    const [files, setFiles] = useState([]);
+interface File {
+    name: string;
+    path: string;
+    type: 'file' | 'directory';
+}
+
+interface FileBrowserProps {
+    userId: string | null;
+    repoName: string;
+    onFileSelect?: (path: string, name: string) => void;
+    onBack?: () => void;
+}
+
+const FileBrowser = ({ userId, repoName, onFileSelect, onBack }: FileBrowserProps) => {
+    const [files, setFiles] = useState<File[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
     const [path, setPath] = useState('');
 
     const loadFiles = useCallback(async () => {
@@ -39,11 +52,11 @@ const FileBrowser = ({ userId, repoName, onFileSelect, onBack }) => {
         }
     };
 
-    const handleFileClick = (file) => {
+    const handleFileClick = (file: File) => {
         if (file.type === 'directory') {
             setPath(file.path);
         } else {
-            onFileSelect?.(file.path);
+            onFileSelect?.(file.path, file.name);
         }
     };
 
