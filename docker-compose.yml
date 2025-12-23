@@ -26,6 +26,8 @@ services:
       - "3002"
     volumes:
       - repos_data:/repos
+    depends_on:
+      - auth-backend
     restart: unless-stopped
 
   mysql:
