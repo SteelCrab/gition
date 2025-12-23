@@ -1,9 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GitBranch, ChevronDown, Loader2 } from 'lucide-react';
 
-const BranchSelector = ({ userId, repoName, onBranchChange }) => {
-    const [branches, setBranches] = useState([]);
-    const [selectedBranch, setSelectedBranch] = useState('main');
+interface Branch {
+    name: string;
+    is_current: boolean;
+    commit_sha?: string;
+    commit_message?: string;
+}
+
+interface BranchSelectorProps {
+    userId: string | null;
+    repoName: string;
+    onBranchChange?: (branchName: string) => void;
+}
+
+const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProps) => {
+    const [branches, setBranches] = useState<Branch[]>([]);
+    const [selectedBranch, setSelectedBranch] = useState<string>('main');
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -14,9 +27,10 @@ const BranchSelector = ({ userId, repoName, onBranchChange }) => {
             const response = await fetch(`/api/git/branches?user_id=${userId}&repo_name=${repoName}`);
             const data = await response.json();
             if (data.status === 'success') {
-                const branchList = data.branches || [];
+                // Determine the currently selected branch from the response or default to the first one
+                const branchList = (data.branches || []) as Branch[];
                 setBranches(branchList);
-                // Set the current branch as selected
+
                 const currentBranch = branchList.find(b => b.is_current);
                 if (currentBranch) {
                     setSelectedBranch(currentBranch.name);
@@ -35,7 +49,7 @@ const BranchSelector = ({ userId, repoName, onBranchChange }) => {
         fetchBranches();
     }, [fetchBranches]);
 
-    const handleBranchSelect = (branch) => {
+    const handleBranchSelect = (branch: Branch) => {
         setSelectedBranch(branch.name);
         setIsOpen(false);
         onBranchChange?.(branch.name);
@@ -81,7 +95,11 @@ const BranchSelector = ({ userId, repoName, onBranchChange }) => {
                                     >
                                         <GitBranch size={12} />
                                         <span className="truncate">{branch.name}</span>
-                                        {branch.is_current && <span className="text-[10px] text-[#37352f] bg-[#e3e2e0] px-1.5 py-0.5 rounded">current</span>}
+                                        {branch.is_current && (
+                                            <span className="ml-auto text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">
+                                                Current
+                                            </span>
+                                        )}
                                     </button>
                                 ))
                             )}
