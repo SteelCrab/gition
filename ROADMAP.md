@@ -29,6 +29,7 @@
 - [x] Search within repository (code search)
 - [ ] Commit/Push from UI
 - [ ] Fix: Commit history overflow hides repo/search panels
+- [ ] Automatic commit for workspaces with pending changes
 
 ### Integrations
 - [x] GitHub Issues display
