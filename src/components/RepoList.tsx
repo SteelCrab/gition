@@ -34,6 +34,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { GitBranch, Lock, Globe, RefreshCw, Loader2, ChevronDown, ChevronRight, ExternalLink, Download, FolderOpen, File, Folder, Search, X } from 'lucide-react';
+import { bytesToSize } from '../utils/format';
 
 // Repository interface
 interface Repository {
@@ -399,7 +400,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
                                                             <span className="truncate text-[#37352f]">{file.name}</span>
                                                             {file.size && (
                                                                 <span className="text-[10px] text-[#787774] ml-auto">
-                                                                    {file.size > 1024 ? `${(file.size / 1024).toFixed(1)}KB` : `${file.size}B`}
+                                                                    {bytesToSize(file.size)}
                                                                 </span>
                                                             )}
                                                         </div>
