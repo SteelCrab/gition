@@ -14,7 +14,15 @@ const BranchSelector = ({ userId, repoName, onBranchChange }) => {
             const response = await fetch(`/api/git/branches?user_id=${userId}&repo_name=${repoName}`);
             const data = await response.json();
             if (data.status === 'success') {
-                setBranches(data.branches || []);
+                const branchList = data.branches || [];
+                setBranches(branchList);
+                // Set the current branch as selected
+                const currentBranch = branchList.find(b => b.is_current);
+                if (currentBranch) {
+                    setSelectedBranch(currentBranch.name);
+                } else if (branchList.length > 0) {
+                    setSelectedBranch(branchList[0].name);
+                }
             }
         } catch (_err) {
             console.error('Failed to fetch branches:', _err);
@@ -28,9 +36,9 @@ const BranchSelector = ({ userId, repoName, onBranchChange }) => {
     }, [fetchBranches]);
 
     const handleBranchSelect = (branch) => {
-        setSelectedBranch(branch);
+        setSelectedBranch(branch.name);
         setIsOpen(false);
-        onBranchChange?.(branch);
+        onBranchChange?.(branch.name);
     };
 
     if (!repoName) return null;
@@ -67,12 +75,13 @@ const BranchSelector = ({ userId, repoName, onBranchChange }) => {
                             ) : (
                                 branches.map((branch) => (
                                     <button
-                                        key={branch}
+                                        key={branch.name}
                                         onClick={() => handleBranchSelect(branch)}
-                                        className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-[2px] text-left text-[13px] hover:bg-[#f7f6f3] transition-colors ${selectedBranch === branch ? 'bg-[#f7f6f3] font-medium text-[#37352f]' : 'text-[#787774]'}`}
+                                        className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-[2px] text-left text-[13px] hover:bg-[#f7f6f3] transition-colors ${selectedBranch === branch.name ? 'bg-[#f7f6f3] font-medium text-[#37352f]' : 'text-[#787774]'}`}
                                     >
                                         <GitBranch size={12} />
-                                        <span className="truncate">{branch}</span>
+                                        <span className="truncate">{branch.name}</span>
+                                        {branch.is_current && <span className="text-[10px] text-[#37352f] bg-[#e3e2e0] px-1.5 py-0.5 rounded">current</span>}
                                     </button>
                                 ))
                             )}
