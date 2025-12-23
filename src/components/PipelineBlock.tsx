@@ -2,7 +2,12 @@ import { Terminal, Box, Play, Loader2, CheckCircle, Search } from 'lucide-react'
 import { useState } from 'react';
 import PipelineStep from './PipelineStep';
 
-const PipelineBlock = ({ label, status: initialStatus = 'idle' }) => {
+interface PipelineBlockProps {
+    label: string;
+    status?: 'idle' | 'running' | 'success';
+}
+
+const PipelineBlock = ({ label, status: initialStatus = 'idle' }: PipelineBlockProps) => {
     const [status, setStatus] = useState(initialStatus);
 
     const handleDeploy = () => {

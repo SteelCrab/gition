@@ -1,11 +1,47 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GitPullRequest, CircleDot, ExternalLink, Loader2 } from 'lucide-react';
 
-const IssuesPRs = ({ owner, repoName }) => {
-    const [issues, setIssues] = useState([]);
-    const [pulls, setPRs] = useState([]);
+interface Label {
+    id: number;
+    name: string;
+    color: string;
+}
+
+interface User {
+    login: string;
+}
+
+interface Issue {
+    id: number;
+    number: number;
+    title: string;
+    html_url: string;
+    created_at: string;
+    labels: Label[];
+    user: User;
+    pull_request?: object;
+}
+
+interface PullRequest {
+    id: number;
+    number: number;
+    title: string;
+    html_url: string;
+    created_at: string;
+    user: User;
+    draft: boolean;
+}
+
+interface IssuesPRsProps {
+    owner: string | null;
+    repoName: string | null;
+}
+
+const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
+    const [issues, setIssues] = useState<Issue[]>([]);
+    const [pulls, setPRs] = useState<PullRequest[]>([]);
     const [loading, setLoading] = useState({ issues: true, pulls: true });
-    const [activeTab, setActiveTab] = useState('issues');
+    const [activeTab, setActiveTab] = useState<'issues' | 'pulls'>('issues');
 
     const fetchIssues = useCallback(async () => {
         if (!owner || !repoName) return;
@@ -15,7 +51,7 @@ const IssuesPRs = ({ owner, repoName }) => {
             const data = await response.json();
             if (Array.isArray(data)) {
                 // Filter out pull requests as GitHub API returns both in issues endpoint
-                setIssues(data.filter(issue => !issue.pull_request));
+                setIssues(data.filter((issue: Issue) => !issue.pull_request));
             }
         } catch (_err) {
             console.error('Failed to fetch issues:', _err);
@@ -45,7 +81,7 @@ const IssuesPRs = ({ owner, repoName }) => {
         fetchPulls();
     }, [fetchIssues, fetchPulls]);
 
-    const formatDate = (dateString) => {
+    const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
@@ -171,5 +207,4 @@ const IssuesPRs = ({ owner, repoName }) => {
         </div>
     );
 };
-
 export default IssuesPRs;
