@@ -54,16 +54,52 @@ class TestReposEndpoint:
         data = response.json()
         assert "error" in data or "repos" in data
     
-    def test_repos_with_invalid_token(self):
-        """Test repos endpoint with invalid token"""
+    @patch("main.httpx.AsyncClient")
+    def test_repos_with_token_success(self, mock_client_class):
+        """Test repos endpoint with valid token success"""
+        from unittest.mock import AsyncMock
+        mock_client = AsyncMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {"id": 1, "name": "repo1", "full_name": "u/r", "description": "d", "private": False, "clone_url": "url", "ssh_url": "surl", "html_url": "curl", "updated_at": "date", "default_branch": "main", "language": "TypeScript", "stargazers_count": 10}
+        ]
+        
+        # Mocking the async get method
+        mock_client.get.return_value = mock_response
+        
+        # Mocking the async context manager
+        mock_client.__aenter__.return_value = mock_client
+        mock_client_class.return_value = mock_client
+        
+        response = client.get(
+            "/api/repos",
+            headers={"Authorization": "Bearer valid_token"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "repos" in data
+        assert len(data["repos"]) == 1
+
+    @patch("main.httpx.AsyncClient")
+    def test_repos_github_error(self, mock_client_class):
+        """Test repos endpoint when GitHub API fails"""
+        from unittest.mock import AsyncMock
+        mock_client = AsyncMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+        
+        mock_client.get.return_value = mock_response
+        mock_client.__aenter__.return_value = mock_client
+        mock_client_class.return_value = mock_client
+        
         response = client.get(
             "/api/repos",
             headers={"Authorization": "Bearer invalid_token"}
         )
         assert response.status_code == 200
         data = response.json()
-        # Should return error or empty repos with invalid token
-        assert "error" in data or "repos" in data
+        assert "error" in data
 
 
 # ============================================
@@ -88,18 +124,33 @@ class TestGitClone:
         data = response.json()
         assert data.get("status") == "error"
     
-    def test_clone_all_params_invalid_url(self):
-        """Test clone with all params but invalid URL"""
+    @patch("main.clone_repo")
+    def test_clone_success(self, mock_clone):
+        """Test successful clone endpoint"""
+        mock_clone.return_value = {"status": "success", "message": "cloned"}
         response = client.post("/api/git/clone", json={
-            "clone_url": "invalid-url",
+            "clone_url": "https://github.com/test/test.git",
             "access_token": "test_token",
             "user_id": "test_user",
             "repo_name": "test_repo"
         })
         assert response.status_code == 200
         data = response.json()
-        # Should fail with invalid URL
-        assert "status" in data
+        assert data.get("status") == "success"
+
+    @patch("main.clone_repo")
+    def test_clone_error(self, mock_clone):
+        """Test clone endpoint with git_ops error"""
+        mock_clone.return_value = {"status": "error", "message": "failed"}
+        response = client.post("/api/git/clone", json={
+            "clone_url": "https://github.com/test/test.git",
+            "access_token": "test_token",
+            "user_id": "test_user",
+            "repo_name": "test_repo"
+        })
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("status") == "error"
 
 
 # ============================================
@@ -113,19 +164,23 @@ class TestGitFiles:
         response = client.get("/api/git/files")
         assert response.status_code in [200, 422]
     
-    def test_files_with_params(self):
-        """Test files endpoint with valid params but non-existent repo"""
+    @patch("main.list_files")
+    def test_files_with_params_success(self, mock_list):
+        """Test files endpoint with valid params success"""
+        mock_list.return_value = {"status": "success", "files": [{"name": "f1", "type": "file"}]}
         response = client.get("/api/git/files?user_id=test&repo_name=test")
         assert response.status_code == 200
         data = response.json()
-        assert data.get("status") == "error" or "files" in data
-    
-    def test_files_with_path(self):
-        """Test files endpoint with path parameter"""
+        assert data.get("status") == "success"
+        assert len(data["files"]) == 1
+
+    @patch("main.list_files")
+    def test_files_with_path_success(self, mock_list):
+        """Test files endpoint with path parameter success"""
+        mock_list.return_value = {"status": "success", "files": []}
         response = client.get("/api/git/files?user_id=test&repo_name=test&path=src")
         assert response.status_code == 200
-        data = response.json()
-        assert "status" in data or "files" in data
+        mock_list.assert_called_with("test", "test", "src")
 
 
 class TestGitFile:
@@ -160,12 +215,14 @@ class TestGitStatus:
         response = client.get("/api/git/status")
         assert response.status_code in [200, 422]
     
-    def test_status_with_params(self):
+    @patch("main.is_cloned")
+    def test_status_with_params(self, mock_cloned):
         """Test status with valid params"""
+        mock_cloned.return_value = True
         response = client.get("/api/git/status?user_id=test&repo_name=test")
         assert response.status_code == 200
         data = response.json()
-        assert "cloned" in data or "status" in data or "error" in data
+        assert data.get("cloned") == True
 
 
 # ============================================
@@ -179,12 +236,14 @@ class TestGitCommits:
         response = client.get("/api/git/commits")
         assert response.status_code in [200, 422]
     
-    def test_commits_with_params(self):
+    @patch("main.get_commits")
+    def test_commits_with_params(self, mock_commits):
         """Test commits with valid params but non-existent repo"""
+        mock_commits.return_value = {"status": "success", "commits": []}
         response = client.get("/api/git/commits?user_id=test&repo_name=test")
         assert response.status_code == 200
         data = response.json()
-        assert "status" in data or "commits" in data
+        assert "commits" in data
     
     def test_commits_with_max_count(self):
         """Test commits with max_count parameter"""
@@ -203,12 +262,14 @@ class TestGitBranches:
         response = client.get("/api/git/branches")
         assert response.status_code in [200, 422]
     
-    def test_branches_with_params(self):
+    @patch("main.get_branches")
+    def test_branches_with_params(self, mock_branches):
         """Test branches with valid params but non-existent repo"""
+        mock_branches.return_value = {"status": "success", "branches": []}
         response = client.get("/api/git/branches?user_id=test&repo_name=test")
         assert response.status_code == 200
         data = response.json()
-        assert "status" in data or "branches" in data
+        assert "branches" in data
 
 
 class TestGitCheckout:
@@ -231,8 +292,10 @@ class TestGitCheckout:
         data = response.json()
         assert data.get("status") == "error"
     
-    def test_checkout_with_all_params(self):
+    @patch("main.checkout_branch")
+    def test_checkout_with_all_params(self, mock_checkout):
         """Test checkout with all params but non-existent repo"""
+        mock_checkout.return_value = {"status": "success"}
         response = client.post("/api/git/checkout", json={
             "user_id": "test",
             "repo_name": "test",
@@ -252,25 +315,30 @@ class TestGitSearch:
         response = client.get("/api/git/search")
         assert response.status_code in [200, 422]
     
-    def test_search_with_params(self):
-        """Test search with valid params"""
+    @patch("main.search_files")
+    def test_search_with_params_success(self, mock_search):
+        """Test search with valid params success"""
+        mock_search.return_value = {"status": "success", "results": [{"type": "filename", "path": "p"}]}
         response = client.get("/api/git/search?user_id=test&repo_name=test&query=test")
         assert response.status_code == 200
         data = response.json()
-        assert "status" in data or "results" in data
+        assert data.get("status") == "success"
+        assert len(data["results"]) == 1
     
     def test_search_short_query(self):
         """Test search with too short query"""
         response = client.get("/api/git/search?user_id=test&repo_name=test&query=a")
         assert response.status_code == 200
         data = response.json()
-        # Should return error for query < 2 chars
-        assert "error" in data.get("message", "").lower() or data.get("status") == "error"
-    
-    def test_search_with_content_flag(self):
+        assert data.get("status") == "error"
+
+    @patch("main.search_files")
+    def test_search_with_content_flag(self, mock_search):
         """Test search with content flag"""
+        mock_search.return_value = {"status": "success", "results": []}
         response = client.get("/api/git/search?user_id=test&repo_name=test&query=test&content=true")
         assert response.status_code == 200
+        mock_search.assert_called_with("test", "test", "test", True, 50)
 
 
 # ============================================
@@ -286,13 +354,17 @@ class TestGitPull:
         data = response.json()
         assert data.get("status") == "error" or "error" in str(data).lower()
     
-    def test_pull_with_params(self):
-        """Test pull with valid params but non-existent repo"""
+    @patch("main.pull_repo")
+    def test_pull_with_params_success(self, mock_pull):
+        """Test pull with valid params success"""
+        mock_pull.return_value = {"status": "success", "message": "pulled"}
         response = client.post("/api/git/pull", json={
             "user_id": "test",
             "repo_name": "test"
         })
         assert response.status_code == 200
+        data = response.json()
+        assert data.get("status") == "success"
 
 
 # ============================================
