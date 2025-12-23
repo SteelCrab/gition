@@ -29,10 +29,6 @@ export const initRepo = async () => {
  * Clones a repository from a URL.
  * @param {string} url - The URL of the repository to clone.
  */
-/**
- * Clones a repository from a URL.
- * @param {string} url - The URL of the repository to clone.
- */
 export const cloneRepo = async (url: string) => {
     try {
         await fs.promises.mkdir(dir);
@@ -68,7 +64,7 @@ export const listFiles = async () => {
  */
 export const readFile = async (filepath: string) => {
     const content = await fs.promises.readFile(`${dir}/${filepath}`, 'utf8');
-    return content as string;
+    return content;
 };
 
 /**
