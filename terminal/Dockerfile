@@ -5,11 +5,16 @@ RUN apk add --no-cache python3 make g++ git bash
 
 WORKDIR /app
 
-COPY package*.json ./
+# Set ownership to node user
+RUN chown -R node:node /app
+
+COPY --chown=node:node package*.json ./
 
 RUN npm install
 
-COPY . .
+COPY --chown=node:node . .
+
+USER node
 
 EXPOSE 3002
 

@@ -31,12 +31,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronRight, File, Folder, ArrowLeft } from 'lucide-react';
 
-// File/folder info interface
-interface FileInfo {
-    name: string;                       // File/folder name
-    path: string;                       // Full path
-    type: 'file' | 'directory';         // Type
-}
+import { FileInfo } from '../types';
 
 // FileBrowser Props interface
 interface FileBrowserProps {
@@ -66,6 +61,7 @@ const FileBrowser = ({ userId, repoName, onFileSelect, onBack }: FileBrowserProp
             const data = await response.json();
             if (data.status === 'success') {
                 setFiles(data.files || []);
+                setError(null); // Clear error on success
             } else {
                 setError(data.message || 'Failed to load files');
             }
@@ -144,9 +140,9 @@ const FileBrowser = ({ userId, repoName, onFileSelect, onBack }: FileBrowserProp
                 ) : (
                     // File/folder list
                     <div className="space-y-0.5">
-                        {files.map((file, idx) => (
+                        {files.map((file) => (
                             <button
-                                key={idx}
+                                key={file.path}
                                 onClick={() => handleFileClick(file)}
                                 className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#f7f6f3] rounded-[6px] text-left transition-colors group"
                             >

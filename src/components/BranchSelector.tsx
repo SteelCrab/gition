@@ -118,6 +118,9 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-1.5 px-2 py-1 hover:bg-black/5 rounded-[3px] transition-colors"
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+                aria-label={`Current branch: ${selectedBranch}. Click to change.`}
             >
                 <GitBranch size={14} className="text-[#787774]" />
                 <span className="text-[13px] font-medium text-[#37352f] truncate max-w-[120px]">
@@ -133,7 +136,16 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
                     <div className="fixed inset-0 z-[80]" onClick={() => { setIsOpen(false); setSearchQuery(''); }} />
 
                     {/* Dropdown panel */}
-                    <div className="absolute right-0 mt-1 w-[280px] bg-white border border-[#efefef] rounded-[6px] shadow-lg z-[90] overflow-hidden animate-fadeIn">
+                    <div
+                        className="absolute right-0 mt-1 w-[280px] bg-white border border-[#efefef] rounded-[6px] shadow-lg z-[90] overflow-hidden animate-fadeIn"
+                        role="listbox"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                                setIsOpen(false);
+                                setSearchQuery('');
+                            }
+                        }}
+                    >
                         {/* Header */}
                         <div className="px-3 py-2 text-[11px] font-semibold text-[#787774] uppercase tracking-wider border-b border-[#efefef] bg-[#fafafa] flex items-center justify-between">
                             <span>Branches</span>
@@ -153,11 +165,13 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
                                     placeholder="Search branches..."
                                     className="w-full pl-7 pr-7 py-1.5 text-[12px] bg-[#f7f6f3] rounded-[4px] focus:outline-none focus:ring-1 focus:ring-[#37352f]/20"
                                     autoFocus
+                                    aria-label="Search branches"
                                 />
                                 {searchQuery && (
                                     <button
                                         onClick={() => setSearchQuery('')}
                                         className="absolute right-2 top-1/2 -translate-y-1/2 text-[#787774] hover:text-[#37352f]"
+                                        aria-label="Clear search"
                                     >
                                         <X size={12} />
                                     </button>

@@ -120,11 +120,13 @@ server.listen(PORT, () => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('Shutting down terminal server...');
-    terminals.forEach(({ pty }) => pty.kill());
-    server.close(() => {
-        console.log('Server closed');
-        process.exit(0);
+['SIGTERM', 'SIGINT'].forEach(signal => {
+    process.on(signal, () => {
+        console.log(`${signal} received. Shutting down terminal server...`);
+        terminals.forEach(({ pty }) => pty.kill());
+        server.close(() => {
+            console.log('Server closed');
+            process.exit(0);
+        });
     });
 });

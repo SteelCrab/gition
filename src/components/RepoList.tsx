@@ -49,12 +49,7 @@ interface Repository {
 }
 
 // Repository file interface
-interface RepoFile {
-    name: string;
-    path: string;
-    type: 'file' | 'directory';
-    size?: number;
-}
+import { FileInfo } from '../types';
 
 // RepoList Props interface
 interface RepoListProps {
@@ -71,7 +66,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedRepo, setExpandedRepo] = useState<number | null>(null);
     const [cloneStatus, setCloneStatus] = useState<Record<string, string>>({});
-    const [repoFiles, setRepoFiles] = useState<Record<string, RepoFile[]>>({});
+    const [repoFiles, setRepoFiles] = useState<Record<string, FileInfo[]>>({});
     const [loadingFiles, setLoadingFiles] = useState<Record<string, boolean>>({});
 
     /**
@@ -392,9 +387,9 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
                                                 <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
                                                     {repoFiles[repo.name].map((file, idx) => (
                                                         <div
-                                                            key={idx}
+                                                            key={file.path}
                                                             className="flex items-center gap-2 px-2 py-1 hover:bg-[#f7f6f3] rounded cursor-pointer text-[12px]"
-                                                            onClick={() => console.log('Open file:', file.path)}
+                                                            onClick={() => {/* TODO: Implement file viewing functionality */ console.log('Open file:', file.path) }}
                                                         >
                                                             {file.type === 'directory' ? (
                                                                 <Folder size={12} className="text-[#787774]" />

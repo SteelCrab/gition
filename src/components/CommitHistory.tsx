@@ -44,6 +44,7 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
     // State management
     const [commits, setCommits] = useState<Commit[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     /**
      * Fetch commit history API call
@@ -52,14 +53,18 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
     const fetchCommits = useCallback(async () => {
         if (!userId || !repoName) return;
         setLoading(true);
+        setError(null);
         try {
             const response = await fetch(`/api/git/commits?user_id=${userId}&repo_name=${repoName}`);
             const data = await response.json();
             if (data.status === 'success') {
                 setCommits(data.commits || []);
+            } else {
+                setError(data.message || 'Failed to fetch commits');
             }
-        } catch (_err) {
+        } catch (_err: any) {
             console.error('Failed to fetch commits:', _err);
+            setError(_err.message || 'Failed to fetch commits');
         } finally {
             setLoading(false);
         }
@@ -92,22 +97,34 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
 
             {/* Commit list */}
             <div className="flex-1 overflow-y-auto p-2">
+                {error && (
+                    <div className="p-3 m-1 bg-red-50 border border-red-100 rounded-[4px] text-[12px] text-red-600">
+                        {error}
+                        <button
+                            onClick={() => fetchCommits()}
+                            className="block mt-1 font-medium hover:underline"
+                        >
+                            Try again
+                        </button>
+                    </div>
+                )}
+
                 {loading && commits.length === 0 ? (
                     // Loading state
                     <div className="flex items-center justify-center py-8">
                         <Loader2 size={20} className="animate-spin text-[#787774]" />
                     </div>
-                ) : commits.length === 0 ? (
+                ) : !error && commits.length === 0 ? (
                     // Empty state
                     <div className="py-4 text-center text-[12px] text-[#787774]">
                         No commits found
                     </div>
-                ) : (
+                ) : !error && (
                     // Commit item list
                     <div className="space-y-1">
-                        {commits.map((commit, idx) => (
+                        {commits.map((commit) => (
                             <div
-                                key={idx}
+                                key={commit.sha}
                                 className="p-2 hover:bg-black/5 rounded-[4px] transition-colors group cursor-default"
                             >
                                 <div className="flex items-start gap-2">

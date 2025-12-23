@@ -107,10 +107,13 @@ def clone_repo(
         # Clean up partial clone on failure
         if repo_path.exists():
             shutil.rmtree(repo_path)
+            
+        # Sanitize error message to prevent token leakage
+        error_msg = str(e).replace(access_token, "***") if access_token else str(e)
         return {
             "status": "error",
             "path": None,
-            "message": f"Clone failed: {str(e)}"
+            "message": f"Clone failed: {error_msg}"
         }
 
 
@@ -260,7 +263,7 @@ def read_file(user_id: str, repo_name: str, file_path: str) -> Dict[str, Any]:
             "status": "success",
             "path": file_path,
             "binary": False,
-            "size": len(content),
+            "size": target_file.stat().st_size,
             "content": content
         }
     except UnicodeDecodeError:

@@ -52,7 +52,7 @@ interface Issue {
     created_at: string;
     labels: Label[];
     user: User;
-    pull_request?: object;  // PRs also appear in issues endpoint
+    pull_request?: unknown; // Use unknown for better type safety
 }
 
 // Pull Request interface
@@ -77,6 +77,7 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
     const [issues, setIssues] = useState<Issue[]>([]);
     const [pulls, setPRs] = useState<PullRequest[]>([]);
     const [loading, setLoading] = useState({ issues: true, pulls: true });
+    const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'issues' | 'pulls'>('issues');
 
     /**
@@ -86,15 +87,31 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
     const fetchIssues = useCallback(async () => {
         if (!owner || !repoName) return;
         setLoading(prev => ({ ...prev, issues: true }));
+        setError(null);
         try {
-            const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}/issues?state=open&per_page=10`);
+            const token = localStorage.getItem('github_token');
+            const headers: HeadersInit = {
+                'Accept': 'application/vnd.github.v3+json',
+            };
+            if (token) headers['Authorization'] = `token ${token}`;
+
+            const response = await fetch(
+                `https://api.github.com/repos/${owner}/${repoName}/issues?state=open&per_page=10`,
+                { headers }
+            );
+
+            if (!response.ok) {
+                if (response.status === 403) throw new Error('API rate limit exceeded. Please log in.');
+                throw new Error('Failed to fetch issues');
+            }
+
             const data = await response.json();
             if (Array.isArray(data)) {
-                // Filter out pull requests as GitHub API returns both in issues endpoint
                 setIssues(data.filter((issue: Issue) => !issue.pull_request));
             }
-        } catch (_err) {
+        } catch (_err: any) {
             console.error('Failed to fetch issues:', _err);
+            setError(_err.message || 'Failed to fetch issues');
         } finally {
             setLoading(prev => ({ ...prev, issues: false }));
         }
@@ -106,14 +123,31 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
     const fetchPulls = useCallback(async () => {
         if (!owner || !repoName) return;
         setLoading(prev => ({ ...prev, pulls: true }));
+        setError(null);
         try {
-            const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}/pulls?state=open&per_page=10`);
+            const token = localStorage.getItem('github_token');
+            const headers: HeadersInit = {
+                'Accept': 'application/vnd.github.v3+json',
+            };
+            if (token) headers['Authorization'] = `token ${token}`;
+
+            const response = await fetch(
+                `https://api.github.com/repos/${owner}/${repoName}/pulls?state=open&per_page=10`,
+                { headers }
+            );
+
+            if (!response.ok) {
+                if (response.status === 403) throw new Error('API rate limit exceeded. Please log in.');
+                throw new Error('Failed to fetch pull requests');
+            }
+
             const data = await response.json();
             if (Array.isArray(data)) {
                 setPRs(data);
             }
-        } catch (_err) {
+        } catch (_err: any) {
             console.error('Failed to fetch pulls:', _err);
+            setError(_err.message || 'Failed to fetch pull requests');
         } finally {
             setLoading(prev => ({ ...prev, pulls: false }));
         }
@@ -133,6 +167,15 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    /**
+     * Validate hex color format (Defense-in-depth)
+     * @param color Hex color without # prefix
+     * @returns true if valid 6-digit hex
+     */
+    const isValidHexColor = (color: string): boolean => {
+        return /^[0-9A-Fa-f]{6}$/.test(color);
     };
 
     return (
@@ -155,17 +198,29 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
 
             {/* Content area */}
             <div className="flex-1 overflow-y-auto">
+                {error && (
+                    <div className="p-4 m-3 bg-red-50 border border-red-100 rounded-[4px] text-[12px] text-red-600">
+                        {error}
+                        <button
+                            onClick={() => activeTab === 'issues' ? fetchIssues() : fetchPulls()}
+                            className="block mt-2 font-medium hover:underline"
+                        >
+                            Try again
+                        </button>
+                    </div>
+                )}
+
                 {activeTab === 'issues' ? (
                     // Issues tab content
                     loading.issues ? (
                         <div className="flex items-center justify-center p-8">
                             <Loader2 size={20} className="animate-spin text-[#787774]" />
                         </div>
-                    ) : issues.length === 0 ? (
+                    ) : !error && issues.length === 0 ? (
                         <div className="p-4 text-center text-[12px] text-[#787774]">
                             No open issues
                         </div>
-                    ) : (
+                    ) : !error && (
                         <div className="divide-y divide-[#efefef]">
                             {issues.map((issue) => (
                                 <a
@@ -196,17 +251,19 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
                                             {issue.labels && issue.labels.length > 0 && (
                                                 <div className="flex flex-wrap gap-1 mt-1.5">
                                                     {issue.labels.map(label => (
-                                                        <span
-                                                            key={label.id}
-                                                            className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-medium border"
-                                                            style={{
-                                                                backgroundColor: `#${label.color}20`,
-                                                                borderColor: `#${label.color}40`,
-                                                                color: `#${label.color}`
-                                                            }}
-                                                        >
-                                                            {label.name}
-                                                        </span>
+                                                        isValidHexColor(label.color) && (
+                                                            <span
+                                                                key={label.id}
+                                                                className="px-1.5 py-0.5 rounded-[2px] text-[9px] font-medium border"
+                                                                style={{
+                                                                    backgroundColor: `#${label.color}20`,
+                                                                    borderColor: `#${label.color}40`,
+                                                                    color: `#${label.color}`
+                                                                }}
+                                                            >
+                                                                {label.name}
+                                                            </span>
+                                                        )
                                                     ))}
                                                 </div>
                                             )}
@@ -223,11 +280,11 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
                         <div className="flex items-center justify-center p-8">
                             <Loader2 size={20} className="animate-spin text-[#787774]" />
                         </div>
-                    ) : pulls.length === 0 ? (
+                    ) : !error && pulls.length === 0 ? (
                         <div className="p-4 text-center text-[12px] text-[#787774]">
                             No open pull requests
                         </div>
-                    ) : (
+                    ) : !error && (
                         <div className="divide-y divide-[#efefef]">
                             {pulls.map((pr) => (
                                 <a
