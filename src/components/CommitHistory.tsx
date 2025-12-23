@@ -62,9 +62,10 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
             } else {
                 setError(data.message || 'Failed to fetch commits');
             }
-        } catch (_err: any) {
-            console.error('Failed to fetch commits:', _err);
-            setError(_err.message || 'Failed to fetch commits');
+        } catch (err: unknown) {
+            console.error('Failed to fetch commits:', err);
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -78,10 +79,12 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
     /**
      * Format date
      * @param dateString ISO date string
-     * @returns "Jan 15" format string
+     * @returns "Jan 15" format string or "Invalid Date"
      */
     const formatDate = (dateString: string) => {
+        if (!dateString) return 'n/a';
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Invalid Date';
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
