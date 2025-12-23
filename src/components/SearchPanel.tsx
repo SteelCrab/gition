@@ -27,13 +27,19 @@ const SearchPanel = ({ userId, repoName, onFileSelect }: SearchPanelProps) => {
         }
 
         const timer = setTimeout(async () => {
+            // Skip search if userId or repoName is missing
+            if (!userId || !repoName) {
+                setResults([]);
+                return;
+            }
+
             setLoading(true);
             setError(null);
 
             try {
                 const params = new URLSearchParams({
-                    user_id: userId || '',
-                    repo_name: repoName || '',
+                    user_id: userId,
+                    repo_name: repoName,
                     query: query
                 });
 
