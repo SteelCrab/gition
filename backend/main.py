@@ -54,7 +54,7 @@ app.add_middleware(
 # GitHub OAuth configuration (loaded from environment variables)
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
-FRONTEND_URL = "http://localhost"  # Redirect URL after authentication
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost")  # Redirect URL after authentication
 
 
 # ==============================================================================
@@ -496,19 +496,20 @@ async def api_get_issues(request: Request, owner: str, repo: str, state: str = "
     token = auth_header.replace("Bearer ", "")
     
     try:
-        response = requests.get(
-            f"https://api.github.com/repos/{owner}/{repo}/issues",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Accept": "application/vnd.github.v3+json"
-            },
-            params={
-                "state": state,
-                "per_page": 50,
-                "sort": "updated",
-                "direction": "desc"
-            }
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"https://api.github.com/repos/{owner}/{repo}/issues",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/vnd.github.v3+json"
+                },
+                params={
+                    "state": state,
+                    "per_page": 50,
+                    "sort": "updated",
+                    "direction": "desc"
+                }
+            )
         
         if response.status_code != 200:
             return {"status": "error", "message": "Failed to fetch issues", "issues": []}
@@ -565,19 +566,20 @@ async def api_get_pulls(request: Request, owner: str, repo: str, state: str = "o
     token = auth_header.replace("Bearer ", "")
     
     try:
-        response = requests.get(
-            f"https://api.github.com/repos/{owner}/{repo}/pulls",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Accept": "application/vnd.github.v3+json"
-            },
-            params={
-                "state": state,
-                "per_page": 50,
-                "sort": "updated",
-                "direction": "desc"
-            }
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"https://api.github.com/repos/{owner}/{repo}/pulls",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/vnd.github.v3+json"
+                },
+                params={
+                    "state": state,
+                    "per_page": 50,
+                    "sort": "updated",
+                    "direction": "desc"
+                }
+            )
         
         if response.status_code != 200:
             return {"status": "error", "message": "Failed to fetch pull requests", "pulls": []}

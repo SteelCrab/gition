@@ -35,14 +35,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { File, Folder, ChevronRight, X, Loader2, ArrowLeft } from 'lucide-react';
-
-// File/folder info interface
-interface FileInfo {
-    name: string;                       // File/folder name
-    path: string;                       // Full path
-    type: 'file' | 'directory';         // Type
-    size?: number;                      // File size (bytes)
-}
+import { FileInfo } from '../types';
 
 // FileEditor Props interface
 interface FileEditorProps {
@@ -240,9 +233,9 @@ const FileEditor = ({ userId, repoName, onClose }: FileEditorProps) => {
                             </div>
                         ) : (
                             <div className="space-y-0.5">
-                                {files.map((file, idx) => (
+                                {files.map((file) => (
                                     <button
-                                        key={idx}
+                                        key={file.path}
                                         onClick={() => handleFileClick(file)}
                                         className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#f7f6f3] rounded-[6px] text-left transition-colors group"
                                     >

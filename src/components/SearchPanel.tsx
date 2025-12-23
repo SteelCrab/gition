@@ -30,12 +30,7 @@
 import { useState, useEffect } from 'react';
 import { Search, X, FileText, Loader2, ChevronRight } from 'lucide-react';
 
-// Search result interface
-interface SearchResult {
-    path: string;       // File path
-    line: number;       // Line number
-    content: string;    // Matching line content
-}
+import { SearchResult } from '../types';
 
 // SearchPanel Props interface
 interface SearchPanelProps {
@@ -77,7 +72,7 @@ const SearchPanel = ({ userId, repoName, onFileSelect }: SearchPanelProps) => {
                 const params = new URLSearchParams({
                     user_id: userId,
                     repo_name: repoName,
-                    query: query
+                    query: searchContent // Use trimmed content
                 });
 
                 const response = await fetch(`/api/git/search?${params.toString()}`);
@@ -129,50 +124,52 @@ const SearchPanel = ({ userId, repoName, onFileSelect }: SearchPanelProps) => {
 
             {/* Results area */}
             <div className="flex-1 overflow-y-auto">
-                {loading && (
+                {loading ? (
                     // Loading state
                     <div className="p-8 text-center">
                         <Loader2 className="animate-spin mx-auto text-[#787774]" size={20} />
                     </div>
-                ) || error && (
+                ) : error ? (
                     // Error state
                     <div className="p-4 text-center text-red-500 text-[12px]">
                         {error}
                     </div>
-                ) || query.length >= 2 && results.length === 0 && !loading && (
+                ) : query.length >= 2 && results.length === 0 ? (
                     // No results
                     <div className="p-8 text-center text-[#787774] text-[13px]">
                         No results for &quot;{query}&quot;
                     </div>
-                ) || results.map((result, idx) => (
-                    // Search result item
-                    <button
-                        key={idx}
-                        onClick={() => onFileSelect(result.path, result.line)}
-                        className="w-full text-left p-3 hover:bg-[#f7f6f3] border-b border-[#efefef] transition-colors group"
-                    >
-                        {/* File path */}
-                        <div className="flex items-center gap-2 mb-1">
-                            <FileText size={14} className="text-[#787774]" />
-                            <span className="text-[13px] font-medium text-[#37352f] truncate">
-                                {result.path}
-                            </span>
-                        </div>
-                        {/* Line number and context */}
-                        <div className="pl-6">
-                            <div className="text-[11px] text-[#787774] mb-1">
-                                Line {result.line}
+                ) : (
+                    // Search result list
+                    results.map((result) => (
+                        // Search result item
+                        <button
+                            key={`${result.path}:${result.line}`}
+                            onClick={() => onFileSelect(result.path, result.line)}
+                            className="w-full text-left p-3 hover:bg-[#f7f6f3] border-b border-[#efefef] transition-colors group"
+                        >
+                            {/* File path */}
+                            <div className="flex items-center gap-2 mb-1">
+                                <FileText size={14} className="text-[#787774]" />
+                                <span className="text-[13px] font-medium text-[#37352f] truncate">
+                                    {result.path}
+                                </span>
                             </div>
-                            <div className="text-[12px] text-[#37352f] font-mono bg-[#fafafa] p-1.5 rounded border border-[#efefef] truncate">
-                                {result.content.trim()}
+                            {/* Line number and context */}
+                            <div className="pl-6">
+                                <div className="text-[11px] text-[#787774] mb-1">
+                                    Line {result.line}
+                                </div>
+                                <div className="text-[12px] text-[#37352f] font-mono bg-[#fafafa] p-1.5 rounded border border-[#efefef] truncate">
+                                    {result.content.trim()}
+                                </div>
                             </div>
-                        </div>
-                        {/* Arrow (visible on hover) */}
-                        <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ChevronRight size={14} className="text-[#787774]" />
-                        </div>
-                    </button>
-                ))}
+                            {/* Arrow (visible on hover) */}
+                            <div className="flex justify-end mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ChevronRight size={14} className="text-[#787774]" />
+                            </div>
+                        </button>
+                    )))}
             </div>
         </div>
     );
