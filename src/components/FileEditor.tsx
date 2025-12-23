@@ -1,17 +1,30 @@
 import { useState, useEffect, useCallback } from 'react';
 import { File, Folder, ChevronRight, X, Loader2, ArrowLeft } from 'lucide-react';
 
-const FileEditor = ({ userId, repoName, onClose }) => {
+interface File {
+    name: string;
+    path: string;
+    type: 'file' | 'directory';
+    size?: number;
+}
+
+interface FileEditorProps {
+    userId: string | null;
+    repoName: string;
+    onClose: () => void;
+}
+
+const FileEditor = ({ userId, repoName, onClose }: FileEditorProps) => {
     const [currentPath, setCurrentPath] = useState('');
-    const [files, setFiles] = useState([]);
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [files, setFiles] = useState<File[]>([]);
+    const [selectedFile, setSelectedFile] = useState<string | null>(null);
     const [fileContent, setFileContent] = useState('');
     const [originalContent, setOriginalContent] = useState('');
     const [loading, setLoading] = useState(true);
     const [_saving, _setSaving] = useState(false);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
 
-    const loadFiles = useCallback(async (path) => {
+    const loadFiles = useCallback(async (path: string) => {
         setLoading(true);
         setError(null);
         try {
@@ -37,7 +50,7 @@ const FileEditor = ({ userId, repoName, onClose }) => {
         }
     }, [userId, repoName, loadFiles]);
 
-    const loadFileContent = async (filePath) => {
+    const loadFileContent = async (filePath: string) => {
         setLoading(true);
         setError(null);
         try {
@@ -62,7 +75,7 @@ const FileEditor = ({ userId, repoName, onClose }) => {
         }
     };
 
-    const handleFileClick = (file) => {
+    const handleFileClick = (file: File) => {
         if (file.type === 'directory') {
             loadFiles(file.path);
         } else {
