@@ -1,6 +1,13 @@
 import { FileText, X } from 'lucide-react';
 
-const TabItem = ({ name, active, unsaved, onClose }) => (
+interface TabItemProps {
+    name: string;
+    active?: boolean;
+    unsaved?: boolean;
+    onClose: () => void;
+}
+
+const TabItem = ({ name, active, unsaved, onClose }: TabItemProps) => (
     <div
         className={`
       flex items-center gap-2 px-3 h-10 text-[14px] cursor-pointer group border-r border-[#efefef]

@@ -1,6 +1,14 @@
 import { ChevronDown, ChevronRight, Folder, FolderOpen } from 'lucide-react';
+import { ReactNode } from 'react';
 
-const FolderItem = ({ name, isOpen, children, onClick }) => (
+interface FolderItemProps {
+    name: string;
+    isOpen: boolean;
+    children?: ReactNode;
+    onClick: () => void;
+}
+
+const FolderItem = ({ name, isOpen, children, onClick }: FolderItemProps) => (
     <div>
         <div
             className="flex items-center gap-2 px-3 py-[3px] text-[14px] cursor-pointer hover:bg-black/5"

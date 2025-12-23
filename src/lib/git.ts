@@ -29,7 +29,11 @@ export const initRepo = async () => {
  * Clones a repository from a URL.
  * @param {string} url - The URL of the repository to clone.
  */
-export const cloneRepo = async (url) => {
+/**
+ * Clones a repository from a URL.
+ * @param {string} url - The URL of the repository to clone.
+ */
+export const cloneRepo = async (url: string) => {
     try {
         await fs.promises.mkdir(dir);
     } catch (_e) {
@@ -62,9 +66,9 @@ export const listFiles = async () => {
  * @param {string} filepath - The path to the file.
  * @returns {Promise<string>} - The file content.
  */
-export const readFile = async (filepath) => {
+export const readFile = async (filepath: string) => {
     const content = await fs.promises.readFile(`${dir}/${filepath}`, 'utf8');
-    return content;
+    return content as string;
 };
 
 /**
@@ -72,7 +76,7 @@ export const readFile = async (filepath) => {
  * @param {string} filepath - The path to the file.
  * @param {string} content - The content to write.
  */
-export const writeFile = async (filepath, content) => {
+export const writeFile = async (filepath: string, content: string) => {
     await fs.promises.writeFile(`${dir}/${filepath}`, content, 'utf8');
 };
 

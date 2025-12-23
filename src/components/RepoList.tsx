@@ -1,23 +1,46 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GitBranch, Lock, Globe, RefreshCw, Loader2, ChevronDown, ChevronRight, ExternalLink, Download, FolderOpen, File, Folder, Search, X } from 'lucide-react';
 
-const RepoList = ({ onRepoSelect }) => {
-    const [repos, setRepos] = useState([]);
+interface Repository {
+    id: number;
+    name: string;
+    description?: string;
+    private: boolean;
+    default_branch: string;
+    html_url: string;
+    clone_url: string;
+    updated_at: string;
+    language?: string;
+}
+
+interface RepoFile {
+    name: string;
+    path: string;
+    type: 'file' | 'directory';
+    size?: number;
+}
+
+interface RepoListProps {
+    onRepoSelect?: (repo: Repository) => void;
+}
+
+const RepoList = ({ onRepoSelect }: RepoListProps) => {
+    const [repos, setRepos] = useState<Repository[]>([]);
     const [stats, setStats] = useState({ total: 0, public: 0, private: 0 });
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const [expandedRepo, setExpandedRepo] = useState(null);
-    const [cloneStatus, setCloneStatus] = useState({});
-    const [repoFiles, setRepoFiles] = useState({});
-    const [loadingFiles, setLoadingFiles] = useState({});
+    const [expandedRepo, setExpandedRepo] = useState<number | null>(null);
+    const [cloneStatus, setCloneStatus] = useState<Record<string, string>>({});
+    const [repoFiles, setRepoFiles] = useState<Record<string, RepoFile[]>>({});
+    const [loadingFiles, setLoadingFiles] = useState<Record<string, boolean>>({});
 
-    const checkCloneStatuses = useCallback(async (repoList) => {
+    const checkCloneStatuses = useCallback(async (repoList: Repository[]) => {
         const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
         if (!userId) return;
 
-        const statuses = {};
+        const statuses: Record<string, string> = {};
         // Check all repos in parallel
         await Promise.all(
             repoList.map(async (repo) => {
@@ -67,7 +90,7 @@ const RepoList = ({ onRepoSelect }) => {
         }
     }, [checkCloneStatuses]);
 
-    const fetchFiles = useCallback(async (repoName) => {
+    const fetchFiles = useCallback(async (repoName: string) => {
         const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
         if (!userId) return;
 
@@ -100,18 +123,18 @@ const RepoList = ({ onRepoSelect }) => {
         return matchesFilter && matchesSearch;
     });
 
-    const formatDate = (dateString) => {
+    const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
-        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
         if (diffDays === 0) return 'Today';
         if (diffDays === 1) return 'Yesterday';
         if (diffDays < 7) return `${diffDays}d ago`;
         return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
     };
 
-    const getLanguageColor = (lang) => {
-        const colors = {
+    const getLanguageColor = (lang: string) => {
+        const colors: Record<string, string> = {
             JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5',
             Java: '#b07219', Rust: '#dea584', Go: '#00ADD8',
             HTML: '#e34c26', CSS: '#563d7c', Ruby: '#701516',
@@ -119,7 +142,7 @@ const RepoList = ({ onRepoSelect }) => {
         return colors[lang] || '#8b8b8b';
     };
 
-    const handleClone = async (repo, e) => {
+    const handleClone = async (repo: Repository, e: React.MouseEvent) => {
         e.stopPropagation();
         if (cloneStatus[repo.name] === 'cloned') {
             fetchFiles(repo.name);

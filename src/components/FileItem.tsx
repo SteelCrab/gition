@@ -1,4 +1,12 @@
-const FileItem = ({ name, active, icon: Icon }) => (
+import { LucideIcon } from 'lucide-react';
+
+interface FileItemProps {
+    name: string;
+    active?: boolean;
+    icon: LucideIcon;
+}
+
+const FileItem = ({ name, active, icon: Icon }: FileItemProps) => (
     <div
         className={`
       flex items-center gap-2 px-3 py-[3px] text-[14px] cursor-pointer transition-colors

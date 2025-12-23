@@ -1,4 +1,13 @@
-const SlashMenuItem = ({ icon: Icon, label, desc, active }) => (
+import { LucideIcon } from 'lucide-react';
+
+interface SlashMenuItemProps {
+    icon: LucideIcon;
+    label: string;
+    desc: string;
+    active?: boolean;
+}
+
+const SlashMenuItem = ({ icon: Icon, label, desc, active }: SlashMenuItemProps) => (
     <div className={`
     flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors
     ${active ? 'bg-[#efefef]' : 'hover:bg-black/5'}

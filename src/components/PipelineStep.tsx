@@ -1,4 +1,13 @@
-const PipelineStep = ({ status, icon, label, subLabel }) => (
+import { ReactNode } from 'react';
+
+interface PipelineStepProps {
+    status?: string;
+    icon: ReactNode;
+    label: string;
+    subLabel: string;
+}
+
+const PipelineStep = ({ status, icon, label, subLabel }: PipelineStepProps) => (
     <div className="flex flex-col items-center">
         <div className={`
       w-10 h-10 rounded-full flex items-center justify-center border transition-all
