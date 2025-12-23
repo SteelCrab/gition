@@ -1,8 +1,30 @@
+# ==============================================================================
+# GitLab Mirror Workflow
+# ==============================================================================
+# 설명: GitHub 저장소를 GitLab으로 미러링 (백업 및 이중화)
+#
+# 동작 조건:
+#   - main 브랜치에 push될 때 자동 실행
+#   - workflow_dispatch로 수동 실행 가능
+#
+# 필요 시크릿:
+#   - GITLAB_TOKEN: GitLab Personal Access Token (api, write_repository 권한)
+#   - GITLAB_USERNAME: GitLab 사용자명
+#
+# 설정 방법:
+#   1. GitLab에서 Personal Access Token 생성
+#   2. GitHub 저장소 Settings > Secrets에 추가
+#   3. GitLab에 동일한 이름의 빈 저장소 생성
+# ==============================================================================
+
 name: Mirror to GitLab
 
 on:
+  # main 브랜치에 push될 때 자동 실행
   push:
     branches: [main]
+  
+  # 수동 실행 버튼 활성화 (Actions 탭에서 실행 가능)
   workflow_dispatch:
 
 jobs:
@@ -11,11 +33,16 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      # Step 1: 전체 Git 히스토리 체크아웃
+      # - fetch-depth: 0 = 모든 커밋/태그 히스토리 가져오기
       - name: 📥 Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
+      # Step 2: GitLab으로 푸시
+      # - remote가 없으면 추가 (|| true로 에러 무시)
+      # - main 브랜치와 모든 태그를 force push
       - name: 🔄 Push to GitLab
         run: |
           git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/${{ secrets.GITLAB_USERNAME }}/${{ github.event.repository.name }}.git || true

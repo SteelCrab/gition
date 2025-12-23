@@ -1,20 +1,48 @@
+# ==============================================================================
+# Dependabot Auto-Merge Workflow
+# ==============================================================================
+# 설명: Dependabot이 생성한 의존성 업데이트 PR을 자동으로 병합
+# 
+# 동작 조건:
+#   - PR 작성자가 dependabot[bot]일 때만 실행
+#   - patch 또는 minor 버전 업데이트만 자동 병합 (major는 수동 검토)
+#
+# 필요 권한:
+#   - contents: write  (병합을 위해 필요)
+#   - pull-requests: write (PR 수정을 위해 필요)
+#
+# 참고: major 업데이트는 호환성 문제가 있을 수 있어 자동 병합하지 않음
+# ==============================================================================
+
 name: Dependabot Auto-Merge
+
+# 트리거: 모든 Pull Request 이벤트
 on: pull_request
 
+# GitHub Actions에 부여할 권한
 permissions:
-  contents: write
-  pull-requests: write
+  contents: write        # 저장소 내용 쓰기 (병합용)
+  pull-requests: write   # PR 수정 권한
 
 jobs:
   dependabot:
     runs-on: ubuntu-latest
+    
+    # 조건: PR 작성자가 dependabot[bot]일 때만 실행
     if: github.event.pull_request.user.login == 'dependabot[bot]'
+    
     steps:
+      # Step 1: Dependabot 메타데이터 가져오기
+      # - 업데이트 유형(patch/minor/major) 확인용
       - name: Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
+      
+      # Step 2: 자동 병합 활성화
+      # - patch/minor 업데이트만 자동 병합
+      # - squash 방식으로 커밋 정리
       - name: Enable auto-merge for Dependabot PRs
         if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
         run: gh pr merge --auto --squash "$PR_URL"
