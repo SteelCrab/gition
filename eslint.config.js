@@ -5,9 +5,28 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default [
-    { ignores: ['dist', 'node_modules'] },
+    { ignores: ['dist', 'node_modules', 'backend/venv'] },
+    // Node.js environment for terminal service
+    {
+        files: ['terminal/**/*.js'],
+        languageOptions: {
+            ecmaVersion: 2020,
+            globals: globals.node,
+            sourceType: 'commonjs',
+        },
+        rules: {
+            ...js.configs.recommended.rules,
+            'no-unused-vars': ['warn', {
+                argsIgnorePattern: '^_',
+                varsIgnorePattern: '^_',
+                caughtErrorsIgnorePattern: '^_'
+            }],
+        },
+    },
+    // Browser environment for React frontend
     {
         files: ['**/*.{js,jsx}'],
+        ignores: ['terminal/**/*.js'],
         languageOptions: {
             ecmaVersion: 2020,
             globals: globals.browser,
