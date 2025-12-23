@@ -20,6 +20,14 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  terminal:
+    build: ./terminal
+    ports:
+      - "3002:3002"
+    volumes:
+      - repos_data:/repos
+    restart: unless-stopped
+
   mysql:
     image: mysql:8.0
     ports:

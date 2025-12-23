@@ -1,16 +1,49 @@
+/**
+ * =============================================================================
+ * IssuesPRs Component
+ * =============================================================================
+ * 
+ * Description: GitHub Issues and Pull Requests display panel
+ * 
+ * Features:
+ *   - Tab switching between Issues and PRs
+ *   - Fetch open issues/PRs from GitHub API
+ *   - Display issue labels with colors
+ *   - Display PR draft status
+ *   - External link to GitHub
+ * 
+ * Props:
+ *   - owner: Repository owner (username or org)
+ *   - repoName: Repository name
+ * 
+ * API:
+ *   - GET github.com/repos/{owner}/{repo}/issues
+ *   - GET github.com/repos/{owner}/{repo}/pulls
+ * 
+ * State:
+ *   - activeTab: Current tab ('issues' | 'pulls')
+ *   - issues: Issues list
+ *   - pulls: Pull requests list
+ *   - loading: Loading state for each tab
+ * =============================================================================
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { GitPullRequest, CircleDot, ExternalLink, Loader2 } from 'lucide-react';
 
+// Label interface
 interface Label {
     id: number;
     name: string;
     color: string;
 }
 
+// User interface
 interface User {
     login: string;
 }
 
+// Issue interface
 interface Issue {
     id: number;
     number: number;
@@ -19,9 +52,10 @@ interface Issue {
     created_at: string;
     labels: Label[];
     user: User;
-    pull_request?: object;
+    pull_request?: object;  // PRs also appear in issues endpoint
 }
 
+// Pull Request interface
 interface PullRequest {
     id: number;
     number: number;
@@ -32,17 +66,23 @@ interface PullRequest {
     draft: boolean;
 }
 
+// IssuesPRs Props interface
 interface IssuesPRsProps {
-    owner: string | null;
-    repoName: string | null;
+    owner: string | null;      // Repository owner
+    repoName: string | null;   // Repository name
 }
 
 const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
+    // State management
     const [issues, setIssues] = useState<Issue[]>([]);
     const [pulls, setPRs] = useState<PullRequest[]>([]);
     const [loading, setLoading] = useState({ issues: true, pulls: true });
     const [activeTab, setActiveTab] = useState<'issues' | 'pulls'>('issues');
 
+    /**
+     * Fetch issues from GitHub API
+     * - Filters out PRs (they appear in issues endpoint too)
+     */
     const fetchIssues = useCallback(async () => {
         if (!owner || !repoName) return;
         setLoading(prev => ({ ...prev, issues: true }));
@@ -60,6 +100,9 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
         }
     }, [owner, repoName]);
 
+    /**
+     * Fetch pull requests from GitHub API
+     */
     const fetchPulls = useCallback(async () => {
         if (!owner || !repoName) return;
         setLoading(prev => ({ ...prev, pulls: true }));
@@ -76,11 +119,17 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
         }
     }, [owner, repoName]);
 
+    // Fetch data on component mount
     useEffect(() => {
         fetchIssues();
         fetchPulls();
     }, [fetchIssues, fetchPulls]);
 
+    /**
+     * Format date for display
+     * @param dateString ISO date string
+     * @returns Formatted date string (e.g., "Jan 15, 2024")
+     */
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -88,6 +137,7 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
 
     return (
         <div className="flex flex-col h-full bg-white border-l border-[#efefef]">
+            {/* Tab switcher */}
             <div className="flex border-b border-[#efefef]">
                 <button
                     onClick={() => setActiveTab('issues')}
@@ -103,8 +153,10 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
                 </button>
             </div>
 
+            {/* Content area */}
             <div className="flex-1 overflow-y-auto">
                 {activeTab === 'issues' ? (
+                    // Issues tab content
                     loading.issues ? (
                         <div className="flex items-center justify-center p-8">
                             <Loader2 size={20} className="animate-spin text-[#787774]" />
@@ -124,11 +176,14 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
                                     className="block px-3 py-2.5 hover:bg-[#f7f6f3] transition-colors"
                                 >
                                     <div className="flex items-start gap-2">
+                                        {/* Issue icon (green) */}
                                         <CircleDot size={14} className="mt-0.5 text-green-600 shrink-0" />
                                         <div className="flex-1 min-w-0">
+                                            {/* Issue title */}
                                             <div className="text-[12px] font-medium text-[#37352f] leading-tight truncate">
                                                 {issue.title}
                                             </div>
+                                            {/* Issue number + date */}
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="text-[10px] text-[#787774]">
                                                     #{issue.number}
@@ -137,6 +192,7 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
                                                     {formatDate(issue.created_at)}
                                                 </span>
                                             </div>
+                                            {/* Labels */}
                                             {issue.labels && issue.labels.length > 0 && (
                                                 <div className="flex flex-wrap gap-1 mt-1.5">
                                                     {issue.labels.map(label => (
@@ -162,6 +218,7 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
                         </div>
                     )
                 ) : (
+                    // Pull Requests tab content
                     loading.pulls ? (
                         <div className="flex items-center justify-center p-8">
                             <Loader2 size={20} className="animate-spin text-[#787774]" />
@@ -181,12 +238,15 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
                                     className="block px-3 py-2.5 hover:bg-[#f7f6f3] transition-colors"
                                 >
                                     <div className="flex items-start gap-2">
+                                        {/* PR icon (gray for draft, green for ready) */}
                                         <GitPullRequest size={14} className={`mt-0.5 shrink-0 ${pr.draft ? 'text-gray-400' : 'text-green-600'}`} />
                                         <div className="flex-1 min-w-0">
+                                            {/* PR title with draft indicator */}
                                             <div className="text-[12px] font-medium text-[#37352f] leading-tight">
                                                 {pr.draft && <span className="text-[#787774]">[Draft] </span>}
                                                 {pr.title}
                                             </div>
+                                            {/* PR number + author */}
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="text-[10px] text-[#787774]">
                                                     #{pr.number}
@@ -207,4 +267,5 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
         </div>
     );
 };
+
 export default IssuesPRs;
