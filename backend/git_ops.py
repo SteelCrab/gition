@@ -498,10 +498,9 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
     """
     Get branch list for a repository
     
-    Args:
-        user_id: User's GitHub ID
-        repo_name: Repository name
-        
+    Note:
+        Performs a git fetch first to ensure remote branches are up to date.
+    
     Returns:
         Dict:
             - status: "success" | "error"
@@ -521,7 +520,13 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
         repo = Repo(repo_path)
         branches = []
         
-        # Current branch (None if detached HEAD)
+        # Fetch latest remote refs first (to see all remote branches)
+        try:
+            repo.remotes.origin.fetch()
+        except Exception as fetch_err:
+            print(f"Warning: fetch failed: {fetch_err}")
+            # Continue anyway with cached refs
+        
         current_branch = repo.active_branch.name if not repo.head.is_detached else None
         
         # Local branches
@@ -534,21 +539,28 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
                 "commit_message": branch.commit.message.strip().split('\n')[0]
             })
         
-        # Remote branches (only those not existing locally)
-        for ref in repo.remotes.origin.refs:
-            # Skip HEAD reference
-            if ref.name.endswith('/HEAD'):
-                continue
-            branch_name = ref.name.replace('origin/', '')
-            # Skip if already exists as local branch
-            if not any(b['name'] == branch_name for b in branches):
-                branches.append({
-                    "name": branch_name,
-                    "type": "remote",
-                    "is_current": False,
-                    "commit_sha": ref.commit.hexsha[:7],
-                    "commit_message": ref.commit.message.strip().split('\n')[0]
-                })
+        # Remote branches (from all remotes, not just origin)
+        for remote in repo.remotes:
+            try:
+                for ref in remote.refs:
+                    # Skip HEAD reference
+                    if ref.name.endswith('/HEAD'):
+                        continue
+                    # Extract branch name (remove remote prefix like 'origin/')
+                    branch_name = ref.name.split('/', 1)[1] if '/' in ref.name else ref.name
+                    # Skip if already exists as local branch
+                    if not any(b['name'] == branch_name and b['type'] == 'local' for b in branches):
+                        # Also skip if already added as remote
+                        if not any(b['name'] == branch_name and b['type'] == 'remote' for b in branches):
+                            branches.append({
+                                "name": branch_name,
+                                "type": "remote",
+                                "is_current": False,
+                                "commit_sha": ref.commit.hexsha[:7],
+                                "commit_message": ref.commit.message.strip().split('\n')[0]
+                            })
+            except Exception as ref_err:
+                print(f"Warning: failed to get refs from {remote.name}: {ref_err}")
         
         return {
             "status": "success",

@@ -11,6 +11,8 @@
 - [x] Repository listing from GitHub API
 - [x] Repository cloning to server
 - [x] Branch listing and switching
+- [x] Git fetch for remote branch sync
+- [x] Show hidden branch list
 - [x] File browser with directory navigation
 
 ### Editor
@@ -26,6 +28,7 @@
 - [x] File content viewer/editor
 - [ ] Search within repository (code search)
 - [ ] Commit/Push from UI
+- [ ] Fix: Commit history overflow hides repo/search panels
 
 ### Integrations
 - [x] GitHub Issues display

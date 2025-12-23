@@ -33,3 +33,7 @@ coverage/
 
 # Gition workspace (branch-specific pages)
 .gition/
+
+# Documentation
+.md_kr/
+
