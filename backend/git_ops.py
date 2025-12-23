@@ -27,27 +27,49 @@ Environment Variables:
 
 import os
 import shutil
+import logging
 from pathlib import Path
 from git import Repo, GitCommandError
 from typing import Dict, Any
 
+# Configure logging
+logger = logging.getLogger(__name__)
+
 # Base path for cloned repositories
-# Mounted as a volume in Docker environment
 REPOS_BASE_PATH = os.getenv("REPOS_PATH", "/repos")
+
+# Standard binary extensions to skip/detect
+BINARY_EXTENSIONS = {
+    '.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf', '.zip', '.tar', '.gz',
+    '.exe', '.dll', '.so', '.dylib', '.woff', '.woff2', '.ttf', '.eot',
+    '.mp3', '.mp4', '.avi', '.mov', '.webm', '.wav', '.pyc', '.o', '.a'
+}
 
 
 def get_repo_path(user_id: str, repo_name: str) -> Path:
     """
-    Get local path for a repository
-    
-    Args:
-        user_id: User's GitHub ID
-        repo_name: Repository name
-        
-    Returns:
-        Path: /repos/{user_id}/{repo_name}
+    Get local path for a repository with path traversal protection
     """
-    return Path(REPOS_BASE_PATH) / str(user_id) / repo_name
+    if not user_id or not repo_name:
+        raise ValueError("Invalid user_id or repo_name")
+
+    # Sanitize: Reject path separators in components
+    if any(sep in str(user_id) for sep in ('/', '\\', '..')):
+        raise ValueError(f"Invalid user_id: {user_id}")
+    if any(sep in repo_name for sep in ('/', '\\', '..')):
+        raise ValueError(f"Invalid repo_name: {repo_name}")
+
+    base_path = Path(REPOS_BASE_PATH).resolve()
+    repo_path = (base_path / str(user_id) / repo_name).resolve()
+
+    # Verify path is still within REPOS_BASE_PATH
+    try:
+        if not repo_path.is_relative_to(base_path):
+            raise ValueError("Path traversal detected")
+    except ValueError:
+        raise ValueError("Path traversal detected")
+
+    return repo_path
 
 
 # ==============================================================================
@@ -230,25 +252,13 @@ def read_file(user_id: str, repo_name: str, file_path: str) -> Dict[str, Any]:
         Binary files (images, PDF, etc.) have content set to None
     """
     repo_path = get_repo_path(user_id, repo_name)
-    target_file = repo_path / file_path
-    
-    if not repo_path.exists():
-        return {"status": "error", "message": "Repository not cloned"}
-    
-    if not target_file.exists():
-        return {"status": "error", "message": "File not found"}
-    
-    if not target_file.is_file():
-        return {"status": "error", "message": "Not a file"}
-    
     try:
-        # Detect binary files by extension
-        binary_extensions = {
-            '.png', '.jpg', '.jpeg', '.gif', '.ico',
-            '.pdf', '.zip', '.tar', '.gz'
-        }
-        
-        if target_file.suffix.lower() in binary_extensions:
+        # Verify target file is within repo path (traversal protection)
+        target_file = (repo_path / file_path).resolve()
+        if not target_file.is_relative_to(repo_path):
+            return {"status": "error", "message": "Access denied: outside repository"}
+
+        if target_file.suffix.lower() in BINARY_EXTENSIONS:
             return {
                 "status": "success",
                 "path": file_path,
@@ -358,13 +368,6 @@ def search_files(
     query_lower = query.lower()
     results = []
     
-    # Binary extensions to skip for content search
-    binary_extensions = {
-        '.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf', '.zip', '.tar', '.gz',
-        '.exe', '.dll', '.so', '.dylib', '.woff', '.woff2', '.ttf', '.eot',
-        '.mp3', '.mp4', '.avi', '.mov', '.webm', '.wav'
-    }
-    
     try:
         # Recursively iterate all files
         for file_path in repo_path.rglob("*"):
@@ -395,7 +398,7 @@ def search_files(
                 continue
             
             # 2. Content search (skip binary files)
-            if search_content and file_path.suffix.lower() not in binary_extensions:
+            if search_content and file_path.suffix.lower() not in BINARY_EXTENSIONS:
                 try:
                     content = file_path.read_text(encoding='utf-8', errors='ignore')
                     lines = content.split('\n')
@@ -527,7 +530,7 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
         try:
             repo.remotes.origin.fetch()
         except Exception as fetch_err:
-            print(f"Warning: fetch failed: {fetch_err}")
+            logger.warning(f"Fetch failed: {fetch_err}")
             # Continue anyway with cached refs
         
         current_branch = repo.active_branch.name if not repo.head.is_detached else None
@@ -563,7 +566,7 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
                                 "commit_message": ref.commit.message.strip().split('\n')[0]
                             })
             except Exception as ref_err:
-                print(f"Warning: failed to get refs from {remote.name}: {ref_err}")
+                logger.warning(f"Failed to get refs from {remote.name}: {ref_err}")
         
         return {
             "status": "success",
