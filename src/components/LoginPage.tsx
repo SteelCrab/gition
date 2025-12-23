@@ -1,9 +1,38 @@
+/**
+ * =============================================================================
+ * LoginPage Component
+ * =============================================================================
+ * 
+ * Description: GitHub OAuth login page
+ * 
+ * Features:
+ *   - Gition logo and branding
+ *   - "Continue with GitHub" button
+ *   - Loading state during redirect
+ * 
+ * Flow:
+ *   1. User clicks login button
+ *   2. Redirect to /auth/github (backend)
+ *   3. Backend redirects to GitHub OAuth
+ *   4. After auth, redirects to AuthCallback
+ * 
+ * State:
+ *   - loading: Redirect in progress
+ * =============================================================================
+ */
+
 import { useState } from 'react';
 import { Github, Loader2 } from 'lucide-react';
 
 const LoginPage = () => {
+    // Loading state (shown during redirect)
     const [loading, setLoading] = useState(false);
 
+    /**
+     * GitHub login handler
+     * - Sets loading state
+     * - Redirects to backend OAuth endpoint
+     */
     const handleGitHubLogin = () => {
         setLoading(true);
         window.location.href = '/auth/github';
@@ -19,7 +48,7 @@ const LoginPage = () => {
                     </div>
                 </div>
 
-                {/* Title */}
+                {/* Title and tagline */}
                 <div className="space-y-2">
                     <h1 className="text-5xl font-bold text-[#37352f]">Gition</h1>
                     <p className="text-[#9b9a97] text-lg">
@@ -27,7 +56,7 @@ const LoginPage = () => {
                     </p>
                 </div>
 
-                {/* Login Button */}
+                {/* GitHub Login Button */}
                 <button
                     onClick={handleGitHubLogin}
                     disabled={loading}

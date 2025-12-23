@@ -26,7 +26,7 @@
 ### Git Operations
 - [x] Commit history viewer
 - [x] File content viewer/editor
-- [ ] Search within repository (code search)
+- [x] Search within repository (code search)
 - [ ] Commit/Push from UI
 - [ ] Fix: Commit history overflow hides repo/search panels
 

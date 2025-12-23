@@ -1,6 +1,42 @@
+/**
+ * =============================================================================
+ * RepoList Component
+ * =============================================================================
+ * 
+ * Description: GitHub repository list with clone/browse functionality
+ * 
+ * Features:
+ *   - Fetch user's repositories (public + private)
+ *   - Search/filter repositories
+ *   - Clone repositories to server
+ *   - Browse cloned repository files
+ *   - Display repository metadata (language, branch, date)
+ * 
+ * Props:
+ *   - onRepoSelect: Callback when repository is selected
+ * 
+ * API:
+ *   - GET /api/repos: Fetch repository list
+ *   - GET /api/git/status: Check clone status
+ *   - POST /api/git/clone: Clone repository
+ *   - GET /api/git/files: Fetch file list
+ * 
+ * State:
+ *   - repos: Repository list
+ *   - stats: Repository counts (total, public, private)
+ *   - filter: Visibility filter (all, public, private)
+ *   - searchQuery: Search query
+ *   - expandedRepo: Currently expanded repository ID
+ *   - cloneStatus: Clone status by repo name
+ *   - repoFiles: File list by repo name
+ * =============================================================================
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { GitBranch, Lock, Globe, RefreshCw, Loader2, ChevronDown, ChevronRight, ExternalLink, Download, FolderOpen, File, Folder, Search, X } from 'lucide-react';
+import { bytesToSize } from '../utils/format';
 
+// Repository interface
 interface Repository {
     id: number;
     name: string;
@@ -13,18 +49,16 @@ interface Repository {
     language?: string;
 }
 
-interface RepoFile {
-    name: string;
-    path: string;
-    type: 'file' | 'directory';
-    size?: number;
-}
+// Repository file interface
+import { FileInfo } from '../types';
 
+// RepoList Props interface
 interface RepoListProps {
     onRepoSelect?: (repo: Repository) => void;
 }
 
 const RepoList = ({ onRepoSelect }: RepoListProps) => {
+    // State management
     const [repos, setRepos] = useState<Repository[]>([]);
     const [stats, setStats] = useState({ total: 0, public: 0, private: 0 });
     const [loading, setLoading] = useState(true);
@@ -33,9 +67,13 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedRepo, setExpandedRepo] = useState<number | null>(null);
     const [cloneStatus, setCloneStatus] = useState<Record<string, string>>({});
-    const [repoFiles, setRepoFiles] = useState<Record<string, RepoFile[]>>({});
+    const [repoFiles, setRepoFiles] = useState<Record<string, FileInfo[]>>({});
     const [loadingFiles, setLoadingFiles] = useState<Record<string, boolean>>({});
 
+    /**
+     * Check clone status for all repositories
+     * - Called after fetching repo list
+     */
     const checkCloneStatuses = useCallback(async (repoList: Repository[]) => {
         const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
         if (!userId) return;
@@ -58,6 +96,9 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         setCloneStatus(prev => ({ ...prev, ...statuses }));
     }, []);
 
+    /**
+     * Fetch repository list from backend
+     */
     const fetchRepos = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -90,6 +131,9 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         }
     }, [checkCloneStatuses]);
 
+    /**
+     * Fetch file list for a cloned repository
+     */
     const fetchFiles = useCallback(async (repoName: string) => {
         const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
         if (!userId) return;
@@ -108,6 +152,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         }
     }, []);
 
+    // Fetch repos on component mount
     useEffect(() => {
         fetchRepos();
     }, [fetchRepos]);
@@ -123,6 +168,9 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         return matchesFilter && matchesSearch;
     });
 
+    /**
+     * Format relative date
+     */
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -130,9 +178,12 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         if (diffDays === 0) return 'Today';
         if (diffDays === 1) return 'Yesterday';
         if (diffDays < 7) return `${diffDays}d ago`;
-        return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
+    /**
+     * Get language color for display
+     */
     const getLanguageColor = (lang: string) => {
         const colors: Record<string, string> = {
             JavaScript: '#f1e05a', TypeScript: '#3178c6', Python: '#3572A5',
@@ -142,6 +193,11 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         return colors[lang] || '#8b8b8b';
     };
 
+    /**
+     * Handle clone button click
+     * - If already cloned, fetch files and select repo
+     * - Otherwise, clone the repository
+     */
     const handleClone = async (repo: Repository, e: React.MouseEvent) => {
         e.stopPropagation();
         if (cloneStatus[repo.name] === 'cloned') {
@@ -176,6 +232,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         }
     };
 
+    // Loading state
     if (loading) {
         return (
             <div className="flex items-center justify-center py-8">
@@ -185,6 +242,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         );
     }
 
+    // Error state
     if (error) {
         return (
             <div className="text-center py-6 px-2">
@@ -247,6 +305,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
                 ) : (
                     filteredRepos.map((repo) => (
                         <div key={repo.id} className="group">
+                            {/* Repository row */}
                             <div
                                 className={`flex items-center gap-2 p-2 rounded-[6px] cursor-pointer transition-all ${expandedRepo === repo.id ? 'bg-[#f7f6f3]' : 'hover:bg-[#f7f6f3]/60'
                                     }`}
@@ -274,10 +333,12 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
                             {/* Expanded Details */}
                             {expandedRepo === repo.id && (
                                 <div className="ml-6 mr-2 mb-2 p-3 bg-white border border-[#efefef] rounded-[8px] space-y-3">
+                                    {/* Description */}
                                     {repo.description && (
                                         <p className="text-[12px] text-[#787774] leading-relaxed">{repo.description}</p>
                                     )}
 
+                                    {/* Metadata badges */}
                                     <div className="flex flex-wrap gap-2 text-[11px]">
                                         <span className="flex items-center gap-1 px-2 py-0.5 bg-[#f7f6f3] rounded-full text-[#787774]">
                                             <GitBranch size={10} />{repo.default_branch}
@@ -315,7 +376,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
                                         </button>
                                     </div>
 
-                                    {/* File List */}
+                                    {/* File List (for cloned repos) */}
                                     {cloneStatus[repo.name] === 'cloned' && (
                                         <div className="mt-3 border-t border-[#efefef] pt-3">
                                             <div className="text-[11px] font-medium text-[#787774] mb-2">Files</div>
@@ -325,11 +386,11 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
                                                 </div>
                                             ) : repoFiles[repo.name] ? (
                                                 <div className="space-y-0.5 max-h-[200px] overflow-y-auto">
-                                                    {repoFiles[repo.name].map((file, idx) => (
+                                                    {repoFiles[repo.name].map((file) => (
                                                         <div
-                                                            key={idx}
+                                                            key={file.path}
                                                             className="flex items-center gap-2 px-2 py-1 hover:bg-[#f7f6f3] rounded cursor-pointer text-[12px]"
-                                                            onClick={() => console.log('Open file:', file.path)}
+                                                            onClick={() => {/* TODO: Implement file viewing functionality */ console.log('Open file:', file.path) }}
                                                         >
                                                             {file.type === 'directory' ? (
                                                                 <Folder size={12} className="text-[#787774]" />
@@ -339,7 +400,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
                                                             <span className="truncate text-[#37352f]">{file.name}</span>
                                                             {file.size && (
                                                                 <span className="text-[10px] text-[#787774] ml-auto">
-                                                                    {file.size > 1024 ? `${(file.size / 1024).toFixed(1)}KB` : `${file.size}B`}
+                                                                    {bytesToSize(file.size)}
                                                                 </span>
                                                             )}
                                                         </div>
