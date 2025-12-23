@@ -24,17 +24,27 @@ import BranchSelector from './components/BranchSelector';
 import IssuesPRs from './components/IssuesPRs';
 import { initRepo, cloneRepo, listFiles, readFile } from './lib/git';
 
-class ErrorBoundary extends React.Component {
-    constructor(props) {
+interface ErrorBoundaryProps {
+    children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+    hasError: boolean;
+    error: Error | null;
+    errorInfo: React.ErrorInfo | null;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    constructor(props: ErrorBoundaryProps) {
         super(props);
         this.state = { hasError: false, error: null, errorInfo: null };
     }
 
-    static getDerivedStateFromError(error) {
+    static getDerivedStateFromError(error: Error) {
         return { hasError: true, error };
     }
 
-    componentDidCatch(error, errorInfo) {
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
         console.error("Uncaught error:", error, errorInfo);
         this.setState({ errorInfo });
     }
@@ -57,6 +67,27 @@ class ErrorBoundary extends React.Component {
     }
 }
 
+interface Repository {
+    id: number;
+    name: string;
+    description?: string;
+    private: boolean;
+    default_branch: string;
+    html_url: string;
+    clone_url: string;
+    updated_at: string;
+    language?: string;
+}
+
+interface Block {
+    id: string;
+    type: 'text' | 'code' | 'pipeline';
+    content?: string;
+    language?: string;
+    filename?: string;
+    label?: string;
+}
+
 const MainEditor = () => {
     const navigate = useNavigate();
     const [leftPanelOpen, setLeftPanelOpen] = useState(false);
@@ -66,16 +97,16 @@ const MainEditor = () => {
     const [showSlashMenu, setShowSlashMenu] = useState(false);
     const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
     const [isCloning, setIsCloning] = useState(false);
-    const [_repoFiles, setRepoFiles] = useState([]);
+    const [_repoFiles, setRepoFiles] = useState<string[]>([]);
     const [sidebarTab, setSidebarTab] = useState('repos'); // repos, files, search
-    const [selectedRepo, setSelectedRepo] = useState(null);
+    const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
     const [_showFileEditor, _setShowFileEditor] = useState(false);
-    const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedFile, setSelectedFile] = useState<{ path: string; name: string } | null>(null);
     const [fileContent, setFileContent] = useState('');
     const [loadingFile, setLoadingFile] = useState(false);
-    const [readmeContent, setReadmeContent] = useState(null);
+    const [readmeContent, setReadmeContent] = useState<string | null>(null);
     const [loadingReadme, setLoadingReadme] = useState(false);
-    const [blocks, setBlocks] = useState([
+    const [blocks, setBlocks] = useState<Block[]>([
         { id: '1', type: 'text', content: 'Welcome to gition. This repository demonstrates the power of combining Git version control with a rich block editor and integrated CI/CD pipelines.' },
         { id: '2', type: 'code', language: 'bash', filename: 'CLI installation', content: 'git clone https://github.com/gition/gition.git\ncd gition && pnpm install\npnpm dev' },
         { id: '3', type: 'text', content: 'Below is an interactive pipeline block. Trigger builds and deployments directly from this document.' },
@@ -85,7 +116,7 @@ const MainEditor = () => {
     useEffect(() => {
         const mediaQuery = window.matchMedia('(min-width: 1024px)');
 
-        const handleChange = (e) => {
+        const handleChange = (e: MediaQueryListEvent) => {
             setIsMobile(!e.matches);
             if (!e.matches) {
                 setLeftPanelOpen(false);
@@ -155,17 +186,17 @@ const MainEditor = () => {
         navigate('/login');
     };
 
-    const handleUpdateBlock = (id, updates) => {
+    const handleUpdateBlock = (id: string, updates: Partial<Block> | string) => {
         setBlocks(prev => prev.map(block =>
             block.id === id ? { ...block, ...(typeof updates === 'string' ? { content: updates } : updates) } : block
         ));
     };
 
-    const handleAddBlock = (type) => {
-        const newBlock = {
+    const handleAddBlock = (type: 'text' | 'code' | 'pipeline') => {
+        const newBlock: Block = {
             id: Date.now().toString(),
             type,
-            content: type === 'text' ? '' : type === 'code' ? '// Start coding...' : '',
+            content: type === 'text' ? '' : type === 'code' ? '// Start coding...' : undefined,
             ...(type === 'code' ? { language: 'javascript', filename: 'new-file.js' } : {}),
             ...(type === 'pipeline' ? { label: 'new-pipeline' } : {})
         };
@@ -173,7 +204,7 @@ const MainEditor = () => {
         setShowSlashMenu(false);
     };
 
-    const handleClone = useCallback(async (url) => {
+    const handleClone = useCallback(async (url: string) => {
         setIsCloning(true);
         try {
             await cloneRepo(url);
@@ -332,7 +363,7 @@ const MainEditor = () => {
                             repoName={selectedRepo?.name}
                             onFileSelect={async (path, _line) => {
                                 if (!selectedRepo) return;
-                                setSelectedFile({ path, name: path.split('/').pop() });
+                                setSelectedFile({ path, name: path.split('/').pop() || path });
                                 setLoadingFile(true);
                                 try {
                                     const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
@@ -464,9 +495,9 @@ const MainEditor = () => {
 
                             <div className="space-y-1">
                                 {blocks.map(block => (
-                                    block.type === 'text' ? <TextBlock key={block.id} id={block.id} content={block.content} onUpdate={handleUpdateBlock} /> :
-                                        block.type === 'code' ? <CodeBlock key={block.id} id={block.id} {...block} onUpdate={handleUpdateBlock} /> :
-                                            block.type === 'pipeline' ? <PipelineBlock key={block.id} label={block.label} /> : null
+                                    block.type === 'text' && block.content !== undefined ? <TextBlock key={block.id} id={block.id} content={block.content} onUpdate={handleUpdateBlock} /> :
+                                        block.type === 'code' && block.content !== undefined ? <CodeBlock key={block.id} id={block.id} content={block.content} language={block.language || 'text'} filename={block.filename || ''} onUpdate={handleUpdateBlock} /> :
+                                            block.type === 'pipeline' && block.label !== undefined ? <PipelineBlock key={block.id} label={block.label} /> : null
                                 ))}
                             </div>
 
@@ -511,7 +542,7 @@ const MainEditor = () => {
     );
 };
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     return isAuthenticated ? children : <Navigate to="/login" replace />;
 };

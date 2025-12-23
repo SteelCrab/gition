@@ -1,8 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { History, GitCommit, Loader2 } from 'lucide-react';
 
-const CommitHistory = ({ userId, repoName }) => {
-    const [commits, setCommits] = useState([]);
+interface Commit {
+    message: string;
+    sha: string;
+    date: string;
+}
+
+interface CommitHistoryProps {
+    userId: string | null;
+    repoName: string;
+}
+
+const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
+    const [commits, setCommits] = useState<Commit[]>([]);
     const [loading, setLoading] = useState(false);
 
     const fetchCommits = useCallback(async () => {
@@ -25,7 +36,7 @@ const CommitHistory = ({ userId, repoName }) => {
         fetchCommits();
     }, [fetchCommits]);
 
-    const formatDate = (dateString) => {
+    const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
