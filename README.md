@@ -8,8 +8,8 @@ An open-source platform that integrates Git repositories, block-based documentat
 ![Gition Mockup](docs/images/mockup.png)
 
 <div style="display: flex; gap: 10px;">
-  <img src="docs/images/mockup_branch.png" width="48%" />
-  <img src="docs/images/mockup_ci.png" width="48%" />
+  <img src="docs/images/mockup_branch.png" alt="Gition branch management UI mockup" width="48%" />
+  <img src="docs/images/mockup_ci.png" alt="Gition CI/CD integration mockup" width="48%" />
 </div>
 
 ## Why Gition?
