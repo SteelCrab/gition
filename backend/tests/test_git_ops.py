@@ -154,13 +154,15 @@ class TestReadFile:
         result = read_file("user", "repo", "file.txt")
         assert result["status"] == "error"
 
+    @patch("git_ops.Path.stat")
     @patch("git_ops.Path.read_text")
     @patch("git_ops.Path.is_file")
     @patch("git_ops.Path.exists")
-    def test_read_text_success(self, mock_exists, mock_is_file, mock_read_text):
+    def test_read_text_success(self, mock_exists, mock_is_file, mock_read_text, mock_stat):
         mock_exists.return_value = True
         mock_is_file.return_value = True
         mock_read_text.return_value = "hello world"
+        mock_stat.return_value.st_size = 11
         
         # Mock suffix for binary check
         with patch("git_ops.Path.suffix", ".txt"):
@@ -168,6 +170,7 @@ class TestReadFile:
             assert result["status"] == "success"
             assert result["content"] == "hello world"
             assert result["binary"] == False
+            assert result["size"] == 11
 
     @patch("git_ops.Path.is_file")
     @patch("git_ops.Path.exists")
