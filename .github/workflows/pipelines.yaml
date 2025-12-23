@@ -1,37 +1,70 @@
+# ==============================================================================
+# CI/CD Pipeline - Main Workflow
+# ==============================================================================
+# 설명: Gition 프로젝트의 메인 CI/CD 파이프라인
+#
+# 파이프라인 구조:
+#   1. Security Scan  -> 시크릿 유출 검사 (Gitleaks)
+#   2. Frontend       -> Node.js 빌드/테스트/린트
+#   3. Backend        -> Python 린트/테스트 (70% 커버리지)
+#   4. Docker Build   -> 프론트엔드/백엔드 이미지 빌드 & 푸시
+#   5. Deploy         -> 프로덕션 배포 (main 브랜치만)
+#
+# 트리거:
+#   - main 브랜치에 push 시
+#   - main 브랜치로 PR 생성 시
+#
+# 아티팩트:
+#   - frontend-dist: 프론트엔드 빌드 결과물
+#   - backend-coverage: 백엔드 테스트 커버리지 리포트
+# ==============================================================================
+
 name: CI/CD Pipeline
 
 on:
+  # main 브랜치에 push될 때 실행
   push:
     branches: [main]
+  
+  # main 브랜치로의 PR에서 실행
   pull_request:
     branches: [main]
 
+# 전역 환경 변수
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  REGISTRY: ghcr.io                      # GitHub Container Registry
+  IMAGE_NAME: ${{ github.repository }}   # 저장소 이름 (owner/repo)
 
 jobs:
   # ============================================
-  # Security Scan - Secret Detection
+  # Job 1: Security Scan - 시크릿 유출 검사
   # ============================================
+  # Gitleaks를 사용하여 코드에 실수로 커밋된 API 키,
+  # 비밀번호, 토큰 등을 감지
   security:
     name: 🔒 Security Scan
     runs-on: ubuntu-latest
     
     steps:
+      # 전체 Git 히스토리 체크아웃 (시크릿 스캔에 필요)
       - name: 📥 Checkout
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # 모든 커밋 히스토리 가져오기
 
+      # Gitleaks: 시크릿 패턴 스캔
+      # - 감지 시 워크플로우 실패
+      # - .gitleaks.toml로 규칙 커스터마이징 가능
       - name: 🔍 Gitleaks Secret Scan
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ============================================
-  # Frontend Build & Test
+  # Job 2: Frontend Build & Test
   # ============================================
+  # Node.js 환경에서 프론트엔드 빌드, 린트, 테스트 실행
+  # 빌드 결과물은 아티팩트로 저장되어 Docker 빌드에 사용
   frontend:
     name: 🎨 Frontend
     runs-on: ubuntu-latest
@@ -40,37 +73,49 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v6
 
+      # Node.js 설정 (버전 20, npm 캐시 활성화)
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'npm'      # node_modules 캐싱으로 속도 향상
 
+      # 의존성 설치 (npm ci = clean install, lock 파일 기준)
       - name: 📚 Install dependencies
         run: npm ci
 
+      # TypeScript 타입 체크 (컴파일 없이)
+      # 타입 오류가 있으면 워크플로우 실패
       - name: 📝 Type Check
         run: npx tsc --noEmit
 
+      # ESLint 린트 검사
+      # --if-present: lint 스크립트가 없으면 건너뜀
       - name: 🔍 Lint
         run: npm run lint --if-present
 
+      # Jest/Vitest 테스트 실행
       - name: 🧪 Test
         run: npm test --if-present
 
+      # Vite 프로덕션 빌드
       - name: 🏗️ Build
         run: npm run build
 
+      # 빌드 결과물을 아티팩트로 업로드
+      # Docker 빌드 단계에서 다운로드하여 사용
       - name: 📤 Upload build artifacts
         uses: actions/upload-artifact@v6
         with:
           name: frontend-dist
           path: dist/
-          retention-days: 7
+          retention-days: 7  # 7일 후 자동 삭제
 
   # ============================================
-  # Backend Build & Test
+  # Job 3: Backend Build & Test
   # ============================================
+  # Python 환경에서 백엔드 린트, 테스트 실행
+  # 테스트 커버리지 70% 미만 시 실패
   backend:
     name: 🐍 Backend
     runs-on: ubuntu-latest
@@ -79,6 +124,7 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v6
 
+      # Python 설정 (버전 3.11, pip 캐시 활성화)
       - name: 🐍 Setup Python
         uses: actions/setup-python@v6
         with:
@@ -86,40 +132,50 @@ jobs:
           cache: 'pip'
           cache-dependency-path: backend/requirements.txt
 
+      # 의존성 설치 + 테스트/린트 도구
       - name: 📚 Install dependencies
         run: |
           cd backend
           pip install -r requirements.txt
           pip install pytest pytest-cov flake8 httpx requests
 
+      # Flake8 린트 검사 (2단계)
+      # 1단계: 심각한 오류만 검사 (E9, F63, F7, F82)
+      # 2단계: 전체 검사 (경고만, 실패하지 않음)
       - name: 🔍 Lint with flake8
         run: |
           cd backend
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
+      # Pytest 테스트 + 커버리지 측정
+      # --cov-fail-under=70: 70% 미만 시 실패
       - name: 🧪 Test with pytest (70% coverage required)
         run: |
           cd backend
           pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing --cov-fail-under=70
 
+      # 커버리지 리포트 아티팩트 업로드
       - name: 📊 Upload coverage report
         uses: actions/upload-artifact@v6
-        if: always()
+        if: always()  # 테스트 실패해도 업로드
         with:
           name: backend-coverage
           path: backend/coverage.xml
           retention-days: 7
 
   # ============================================
-  # Docker Build
+  # Job 4: Docker Build & Push
   # ============================================
+  # 프론트엔드/백엔드 Docker 이미지 빌드 후 GHCR에 푸시
+  # main 브랜치 push 시에만 실행 (PR에서는 스킵)
   docker:
     name: 🐳 Docker Build
     runs-on: ubuntu-latest
-    needs: [frontend, backend]
-    if: github.event_name == 'push'
+    needs: [frontend, backend]  # frontend, backend 성공 후 실행
+    if: github.event_name == 'push'  # push 이벤트만 (PR 제외)
     
+    # GHCR 푸시를 위한 권한
     permissions:
       contents: read
       packages: write
@@ -128,21 +184,27 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v6
 
+      # 프론트엔드 빌드 아티팩트 다운로드
+      # Job 2에서 업로드한 dist/ 폴더
       - name: 📥 Download frontend artifacts
         uses: actions/download-artifact@v7
         with:
           name: frontend-dist
           path: dist/
 
+      # GitHub 리포지토리 이름을 소문자로 변환
+      # Docker 태그는 소문자만 허용
       - name: 📝 Convert to lowercase
         id: lowercase
         run: |
           echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
           echo "repo=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-      - name: �🐳 Set up Docker Buildx
+      # Docker Buildx 설정 (멀티플랫폼 빌드 지원)
+      - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # GHCR 로그인
       - name: 🔐 Login to Container Registry
         uses: docker/login-action@v3
         with:
@@ -150,6 +212,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Docker 메타데이터 추출 (태그, 라벨)
       - name: 📋 Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -160,6 +223,8 @@ jobs:
             type=sha,prefix=
             type=raw,value=latest,enable={{is_default_branch}}
 
+      # 프론트엔드 이미지 빌드 & 푸시
+      # 태그: ghcr.io/owner/repo-frontend:sha
       - name: 🏗️ Build and push Frontend
         uses: docker/build-push-action@v6
         with:
@@ -167,9 +232,11 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ghcr.io/${{ steps.lowercase.outputs.owner }}/${{ steps.lowercase.outputs.repo }}-frontend:${{ github.sha }}
-          cache-from: type=gha
+          cache-from: type=gha      # GitHub Actions 캐시 사용
           cache-to: type=gha,mode=max
 
+      # 백엔드 이미지 빌드 & 푸시
+      # 태그: ghcr.io/owner/repo-backend:sha
       - name: 🏗️ Build and push Backend
         uses: docker/build-push-action@v6
         with:
@@ -181,24 +248,31 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ============================================
-  # Deploy (Optional)
+  # Job 5: Deploy (프로덕션 배포)
   # ============================================
+  # main 브랜치에서만 실행되는 배포 단계
+  # TODO: 실제 배포 명령어 추가 필요
   deploy:
     name: 🚀 Deploy
     runs-on: ubuntu-latest
-    needs: [docker]
-    if: github.ref == 'refs/heads/main'
+    needs: [docker]          # Docker 빌드 성공 후 실행
+    if: github.ref == 'refs/heads/main'  # main 브랜치만
     
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v6
 
+      # 배포 명령어 실행
+      # TODO: 실제 환경에 맞게 수정 필요
+      # 예: kubectl apply, docker-compose pull, SSH 배포 등
       - name: 🚀 Deploy to server
         run: |
           echo "🚀 Deploying to production..."
           echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          # Add your deployment commands here
-          # e.g., kubectl apply, docker-compose pull, etc.
+          # 아래에 실제 배포 명령어 추가
+          # 예시:
+          # - kubectl set image deployment/frontend frontend=ghcr.io/...
+          # - ssh user@server 'docker-compose pull && docker-compose up -d'
 
       - name: ✅ Deployment complete
         run: echo "✅ Deployment successful!"

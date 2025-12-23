@@ -1,23 +1,51 @@
+# ==============================================================================
+# PR Title Lint Workflow (Conventional Commits)
+# ==============================================================================
+# 설명: PR 제목이 Conventional Commits 형식을 따르는지 검증
+#
+# Conventional Commits 형식: <type>: <description>
+#   예: feat: 새로운 기능 추가
+#   예: fix: 버그 수정
+#   예: docs: 문서 업데이트
+#
+# 허용되는 타입:
+#   - feat: 새로운 기능
+#   - fix: 버그 수정
+#   - chore: 빌드/설정 변경
+#   - docs: 문서 변경
+#   - style: 코드 스타일 (포맷팅 등)
+#   - refactor: 리팩토링
+#   - perf: 성능 개선
+#   - test: 테스트 추가/수정
+#   - build: 빌드 시스템 변경
+#   - ci: CI 설정 변경
+#   - revert: 커밋 되돌리기
+#
+# 참고: https://www.conventionalcommits.org/
+# ==============================================================================
+
 name: "Lint PR"
 
 on:
   pull_request:
     types:
-      - opened
-      - edited
-      - synchronize
+      - opened      # PR 생성 시
+      - edited      # PR 제목/본문 수정 시
+      - synchronize # 새 커밋 푸시 시
 
 jobs:
   main:
     name: Validate PR Title
     runs-on: ubuntu-latest
+    
     steps:
+      # amannn/action-semantic-pull-request: PR 제목 검증
       - uses: amannn/action-semantic-pull-request@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Configure which types are allowed.
-          # Default: https://github.com/commitizen/conventional-commit-types
+          # 허용되는 커밋 타입 목록
+          # 기본값: https://github.com/commitizen/conventional-commit-types
           types: |
             feat
             fix
@@ -30,9 +58,11 @@ jobs:
             build
             ci
             revert
-          # Configure that a scope must always be provided.
+          
+          # 스코프(scope) 필수 여부 (예: feat(api): ...)
+          # false = 스코프 선택사항
           requireScope: false
-          # If the PR contains only one commit, the action will give a warning
-          # if the single commit's title doesn't match the PR title.
-          # This is useful for squashed PRs.
+          
+          # 단일 커밋 PR에서 커밋 제목도 검증
+          # squash 병합 시 커밋 메시지로 사용되므로 유용
           validateSingleCommit: true

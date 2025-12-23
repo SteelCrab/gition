@@ -1,15 +1,40 @@
+# ==============================================================================
+# Pull Request Labeler Workflow
+# ==============================================================================
+# 설명: PR에서 변경된 파일 경로에 따라 자동으로 라벨 추가
+#
+# 동작 조건:
+#   - PR이 생성되거나 업데이트될 때 실행
+#
+# 설정 파일:
+#   - .github/labeler.yml 에서 라벨 규칙 정의
+#   - 예: 'frontend' 라벨 -> src/** 경로 변경 시
+#   - 예: 'backend' 라벨 -> backend/** 경로 변경 시
+#
+# 참고:
+#   - pull_request_target 사용 (포크된 PR에서도 동작)
+#   - 라벨 규칙 변경 시 .github/labeler.yml 수정
+# ==============================================================================
+
 name: "Pull Request Labeler"
+
+# 트리거: PR 생성/업데이트 시 (포크 포함)
 on:
 - pull_request_target
 
 jobs:
   triage:
+    # 필요 권한
     permissions:
-      contents: read
-      pull-requests: write
+      contents: read       # 저장소 내용 읽기
+      pull-requests: write # PR 라벨 수정
+    
     runs-on: ubuntu-latest
+    
     steps:
-    - uses: actions/labeler@v6
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
-        configuration-path: .github/labeler.yml
+      # actions/labeler: 파일 경로 기반 자동 라벨링
+      # configuration-path: 라벨 규칙 파일 경로
+      - uses: actions/labeler@v6
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          configuration-path: .github/labeler.yml
