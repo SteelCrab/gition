@@ -1,11 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Search, X, FileText, Loader2, ChevronRight } from 'lucide-react';
 
-const SearchPanel = ({ userId, repoName, onFileSelect }) => {
+interface SearchResult {
+    path: string;
+    line: number;
+    content: string;
+}
+
+interface SearchPanelProps {
+    userId: string | null;
+    repoName?: string;
+    onFileSelect: (path: string, line: number) => void;
+}
+
+const SearchPanel = ({ userId, repoName, onFileSelect }: SearchPanelProps) => {
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState([]);
+    const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const searchContent = query.trim();
@@ -20,8 +32,8 @@ const SearchPanel = ({ userId, repoName, onFileSelect }) => {
 
             try {
                 const params = new URLSearchParams({
-                    user_id: userId,
-                    repo_name: repoName,
+                    user_id: userId || '',
+                    repo_name: repoName || '',
                     query: query
                 });
 

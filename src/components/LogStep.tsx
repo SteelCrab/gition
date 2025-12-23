@@ -1,6 +1,12 @@
 import { CheckCircle, Loader2, Circle } from 'lucide-react';
 
-const LogStep = ({ status, label, time }) => {
+interface LogStepProps {
+    status?: string;
+    label: string;
+    time: string;
+}
+
+const LogStep = ({ status, label, time }: LogStepProps) => {
     let icon = <Circle size={14} className="text-[#37352f]/20" />;
     if (status === 'success') icon = <CheckCircle size={14} className="text-[#0f7b6c]" />;
     else if (status === 'running') icon = <Loader2 size={14} className="text-[#2383e2] animate-spin" />;
