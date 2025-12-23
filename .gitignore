@@ -29,4 +29,7 @@ coverage/
 # Cache
 .cache/
 .parcel-cache/
-.md_kr/
+
+
+# Gition workspace (branch-specific pages)
+.gition/
