@@ -1,3 +1,4 @@
+/* global require, process */
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -86,8 +87,9 @@ wss.on('connection', async (ws, req) => {
     let cwd = REPOS_BASE;
     if (sanitizedUser && sanitizedRepo) {
         const targetDir = path.resolve(path.join(REPOS_BASE, sanitizedUser, sanitizedRepo));
-        // Verify resolved path stays within REPOS_BASE
-        if (targetDir.startsWith(REPOS_BASE)) {
+        // Robust path traversal check using path.relative
+        const rel = path.relative(REPOS_BASE, targetDir);
+        if (!rel.startsWith('..') && !path.isAbsolute(rel)) {
             cwd = targetDir;
         } else {
             console.error(`Blocked traversal attempt: ${targetDir}`);
@@ -139,7 +141,7 @@ wss.on('connection', async (ws, req) => {
                 case 'input':
                     ptyProcess.write(msg.data);
                     break;
-                case 'resize':
+                case 'resize': {
                     const cols = parseInt(msg.cols);
                     const rows = parseInt(msg.rows);
                     // Validate bounds to prevent DoS or layout issues
@@ -152,6 +154,7 @@ wss.on('connection', async (ws, req) => {
                         }
                     }
                     break;
+                }
                 case 'cd':
                     // Security: Removed programmatic 'cd' to prevent shell injection
                     // Users can still type 'cd' in the terminal directly
