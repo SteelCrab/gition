@@ -37,11 +37,10 @@ jobs:
 
       # Step 2: Push to GitLab
       # - Add remote if not exists
-      # - Push 'main' branch using --force-with-lease to prevent data loss
+      # - Push 'main' branch with --force (GitHub is primary source of truth)
       # - Push tags without --force to preserve remote-only tags
-      # Note: GitHub is the primary source of truth for this mirror.
       - name: 🔄 Push to GitLab
         run: |
           git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/${{ secrets.GITLAB_USERNAME }}/${{ github.event.repository.name }}.git || true
-          git push gitlab main --force-with-lease
+          git push gitlab main --force
           git push gitlab --tags
