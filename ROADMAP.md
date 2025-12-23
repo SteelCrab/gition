@@ -11,6 +11,7 @@
 - [x] Repository listing from GitHub API
 - [x] Repository cloning to server
 - [x] Branch listing and switching
+- [ ] Show hidden branch list
 - [x] File browser with directory navigation
 
 ### Editor
