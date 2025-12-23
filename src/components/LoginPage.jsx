@@ -5,67 +5,47 @@ const LoginPage = () => {
     const [loading, setLoading] = useState(false);
 
     const handleGitHubLogin = () => {
-        console.log('GitHub login button clicked, redirecting to /auth/github...');
         setLoading(true);
-        // Use relative URL - nginx will proxy to backend
         window.location.href = '/auth/github';
     };
 
     return (
-        <div className="min-h-screen bg-[#f7f6f3] flex flex-col items-center justify-center p-4 sm:p-6 animate-fadeIn">
-            <div className="w-full max-w-[480px] bg-white p-8 sm:p-12 rounded-[16px] shadow-[0_10px_40px_rgba(0,0,0,0.06)] space-y-8 border border-[#e8e8e8]">
-                {/* Logo & Header */}
-                <div className="text-center space-y-6">
-                    <div className="flex justify-center">
-                        <div className="w-16 h-16 bg-black rounded-[16px] flex items-center justify-center text-white font-bold text-4xl shadow-xl">
-                            G
-                        </div>
-                    </div>
-                    <div className="space-y-3">
-                        <h1 className="text-[32px] font-bold text-[#37352f] tracking-tight">Sign in to Gition</h1>
-                        <p className="text-[#787774] text-[15px] leading-relaxed">
-                            Connect your GitHub account to access<br />your workspaces and repositories.
-                        </p>
+        <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="text-center space-y-8">
+                {/* Logo */}
+                <div className="flex justify-center">
+                    <div className="w-24 h-24 bg-[#37352f] rounded-[6px] flex items-center justify-center text-white font-serif text-6xl">
+                        G
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                    <button
-                        onClick={handleGitHubLogin}
-                        disabled={loading}
-                        className={`
-                            w-full h-14 bg-black text-white rounded-[10px] flex items-center justify-center gap-3 text-[16px] font-semibold 
-                            hover:bg-[#2c2c2c] transition-all duration-200 transform active:scale-[0.98] shadow-lg
-                            ${loading ? 'opacity-80 cursor-not-allowed' : ''}
-                        `}
-                    >
-                        {loading ? (
-                            <Loader2 size={20} className="animate-spin" />
-                        ) : (
-                            <>
-                                <Github size={20} fill="white" />
-                                Continue with GitHub
-                            </>
-                        )}
-                    </button>
-
-                    <div className="pt-6 text-center">
-                        <p className="text-[11px] text-[#787774] font-medium uppercase tracking-[0.1em] bg-[#f7f6f3] inline-block px-4 py-1.5 rounded-full">
-                            Authorized Provider Only
-                        </p>
-                    </div>
+                {/* Title */}
+                <div className="space-y-2">
+                    <h1 className="text-5xl font-bold text-[#37352f]">Gition</h1>
+                    <p className="text-[#9b9a97] text-lg">
+                        Your workspace for code &amp; docs
+                    </p>
                 </div>
 
-                <div className="text-center text-[#9b9a97] text-[12px] leading-[1.6] max-w-[300px] mx-auto">
-                    By continuing, you agree to Gition&apos;s <a href="#" className="underline hover:text-[#37352f]">Terms of Service</a> and <a href="#" className="underline hover:text-[#37352f]">Privacy Policy</a>.
-                </div>
-            </div>
-
-            {/* Minimalist Footer */}
-            <div className="mt-12 text-[13px] text-[#787774] flex gap-6 font-medium">
-                <a href="#" className="hover:text-[#37352f] transition-colors">Documentation</a>
-                <a href="#" className="hover:text-[#37352f] transition-colors">Pricing</a>
-                <a href="#" className="hover:text-[#37352f] transition-colors">About</a>
+                {/* Login Button */}
+                <button
+                    onClick={handleGitHubLogin}
+                    disabled={loading}
+                    className={`
+                        inline-flex items-center gap-3 px-8 py-4 bg-[#37352f] text-white rounded-md text-lg font-medium
+                        hover:bg-[#2f2e2b] transition-colors
+                        ${loading ? 'opacity-70 cursor-not-allowed' : ''}
+                    `}
+                >
+                    {loading ? (
+                        <Loader2 size={22} className="animate-spin" />
+                    ) : (
+                        <>
+                            <Github size={22} />
+                            Continue with GitHub
+                        </>
+                    )}
+                </button>
             </div>
         </div>
     );
