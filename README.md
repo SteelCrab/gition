@@ -5,6 +5,13 @@
 
 An open-source platform that integrates Git repositories, block-based documentation, and CI/CD into one seamless workflow.
 
+![Gition Mockup](docs/images/mockup.png)
+
+<div style="display: flex; gap: 10px;">
+  <img src="docs/images/mockup_branch.png" alt="Gition branch management UI mockup" width="48%" />
+  <img src="docs/images/mockup_ci.png" alt="Gition CI/CD integration mockup" width="48%" />
+</div>
+
 ## Why Gition?
 
 Developers constantly switch between tools for **coding → documentation → deployment**.  
@@ -30,6 +37,7 @@ Gition solves this by combining everything into **one platform**.
 | **Commits** | History view, SHA/Author/Date, Insertions/Deletions stats |
 | **Search** | Filename search, Content search, Highlighted results |
 | **Issues & PRs** | View open issues/PRs, Labels, Branch info |
+| **Pages** | `.gition` local storage, Branch-specific pages, Git-ignored |
 
 ### 🔜 Upcoming
 
@@ -37,6 +45,7 @@ Gition solves this by combining everything into **one platform**.
 - [ ] Create/Edit Issues
 - [ ] Create Pull Requests  
 - [ ] CI/CD Pipeline visualization
+- [ ] Page sync across devices
 
 ## Roadmap
 
