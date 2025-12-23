@@ -8,8 +8,8 @@ Git 저장소, 블록 기반 문서, CI/CD를 하나로 통합한 오픈소스 �
 ![Gition 목업](../docs/images/mockup.png)
 
 <div style="display: flex; gap: 10px;">
-  <img src="../docs/images/mockup_branch.png" width="48%" />
-  <img src="../docs/images/mockup_ci.png" width="48%" />
+  <img src="../docs/images/mockup_branch.png" alt="Gition 브랜치 관리 UI 목업" width="48%" />
+  <img src="../docs/images/mockup_ci.png" alt="Gition CI/CD 통합 목업" width="48%" />
 </div>
 
 ## Why Gition?
