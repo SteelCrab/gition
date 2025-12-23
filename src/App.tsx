@@ -259,7 +259,7 @@ const MainEditor = () => {
 
                 {/* Commit History (shown when repo is selected) */}
                 {selectedRepo && (
-                    <div className="mt-2 mx-2 border border-[#efefef] rounded-[6px] bg-[#fafafa]">
+                    <div className="mt-2 mx-2 border border-[#efefef] rounded-[6px] bg-[#fafafa] max-h-[300px] flex flex-col overflow-hidden shrink-0">
                         <CommitHistory
                             userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                             repoName={selectedRepo.name}
