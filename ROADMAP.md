@@ -41,6 +41,8 @@
 ### Blocks
 - [ ] Issue block - Display GitHub issues inline
 - [ ] PR block - Display Pull Requests inline
+- [ ] Commit block - Display GitHub commits inline
+- [ ] Commit link block - Display Git commits inline
 
 ### Pages
 - [ ] Landing/Promotion page
