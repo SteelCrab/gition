@@ -26,7 +26,7 @@
  */
 
 import { Terminal, Box, Play, Loader2, CheckCircle, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import PipelineStep from './PipelineStep';
 
 // PipelineBlock Props interface
@@ -39,6 +39,18 @@ const PipelineBlock = ({ label, status: initialStatus = 'idle' }: PipelineBlockP
     // Deployment status management
     const [status, setStatus] = useState(initialStatus);
 
+    // Timer reference for cleanup
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    /**
+     * Component cleanup: clear any active timers to prevent memory leaks
+     */
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+        };
+    }, []);
+
     /**
      * Deploy start handler
      * - Change to running state
@@ -46,7 +58,14 @@ const PipelineBlock = ({ label, status: initialStatus = 'idle' }: PipelineBlockP
      */
     const handleDeploy = () => {
         setStatus('running');
-        setTimeout(() => setStatus('success'), 2500);
+
+        // Clear existing timer if any
+        if (timerRef.current) clearTimeout(timerRef.current);
+
+        timerRef.current = setTimeout(() => {
+            setStatus('success');
+            timerRef.current = null;
+        }, 2500);
     };
 
     return (
