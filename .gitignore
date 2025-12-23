@@ -37,3 +37,5 @@ coverage/
 # Documentation
 .md_kr/
 
+__pycache__/
+*.pyc
