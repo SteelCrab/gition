@@ -18,6 +18,8 @@
 - [ ] Code blocks with syntax highlighting
 - [x] Text blocks with inline editing
 - [ ] Pipeline blocks execution
+- [x] `.gition` local page storage (branch-specific, git-ignored)
+- [ ] Markdown rendering (#8)
 
 ### Git Operations
 - [x] Commit history viewer
@@ -29,6 +31,10 @@
 - [x] GitHub Issues display
 - [x] Pull Requests display
 - [ ] Issue/PR creation from UI
+- [ ] GitHub Actions status display (#2)
+- [ ] Bi-directional sync (GitHub ↔ Gition) (#9)
+
+
 
 ---
 
@@ -45,6 +51,10 @@
 - [ ] Responsive mobile layout improvements
 - [ ] Keyboard shortcuts
 
+### Web Terminal
+- [ ] Branch-specific terminal access (checkout & execute)
+- [ ] Script blocks → Click to run in terminal
+- [ ] Real-time output streaming (xterm.js + WebSocket)
 ---
 
 ## v0.3 - Collaboration 🔵
