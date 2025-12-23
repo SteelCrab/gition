@@ -28,7 +28,9 @@
 - [x] File content viewer/editor
 - [x] Search within repository (code search)
 - [ ] Commit/Push from UI
+- [ ] Automatic commit fetch for current repository
 - [ ] Fix: Commit history overflow hides repo/search panels
+- [ ] Automatic commit for workspaces with pending changes
 
 ### Integrations
 - [x] GitHub Issues display
@@ -36,6 +38,16 @@
 - [ ] Issue/PR creation from UI
 - [ ] GitHub Actions status display (#2)
 - [ ] Bi-directional sync (GitHub ↔ Gition) (#9)
+
+### Blocks
+- [ ] Issue block - Display GitHub issues inline
+- [ ] PR block - Display Pull Requests inline
+- [ ] Commit block - Display GitHub commits inline
+- [ ] Commit link block - Display Git commits inline
+
+### Pages
+- [ ] Landing/Promotion page
+- [ ] Branch page navigation (click branch → new page)
 
 
 
