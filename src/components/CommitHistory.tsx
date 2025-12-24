@@ -96,28 +96,30 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
                 body: JSON.stringify({ user_id: userId, repo_name: repoName })
             });
 
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = null;
+            }
+
             if (!response.ok) {
                 let errorMessage = `Server error: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    if (errorData.message) {
-                        errorMessage += ` - ${errorData.message}`;
-                    }
-                } catch {
-                    // Fallback to text if JSON parsing fails
-                    const text = await response.text();
-                    if (text) errorMessage += ` - ${text.substring(0, 100)}`;
+                if (data && data.message) {
+                    errorMessage += ` - ${data.message}`;
+                } else if (text) {
+                    errorMessage += ` - ${text.substring(0, 100)}`;
                 }
                 setError(errorMessage);
                 return;
             }
 
-            const data = await response.json();
-            if (data.status === 'success') {
+            if (data && data.status === 'success') {
                 // After pull, refresh commits
                 await fetchCommits();
             } else {
-                setError(data.message || 'Failed to pull');
+                setError((data && data.message) || 'Failed to pull');
             }
         } catch (err: unknown) {
             console.error('Failed to pull:', err);
