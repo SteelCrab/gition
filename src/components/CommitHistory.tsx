@@ -24,8 +24,9 @@
  * =============================================================================
  */
 
+// Download: https://lucide.dev/icons/download
 import { useState, useEffect, useCallback } from 'react';
-import { History, GitCommit, Loader2 } from 'lucide-react';
+import { History, GitCommit, Loader2, Download } from 'lucide-react';
 
 // Commit info interface
 interface Commit {
@@ -44,6 +45,7 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
     // State management
     const [commits, setCommits] = useState<Commit[]>([]);
     const [loading, setLoading] = useState(false);
+    const [pulling, setPulling] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     /**
@@ -51,7 +53,11 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
      * - Re-fetches when userId or repoName changes
      */
     const fetchCommits = useCallback(async () => {
-        if (!userId || !repoName) return;
+        console.log('Fetching commits for:', userId, repoName);
+        if (!userId || !repoName) {
+            console.warn('Missing userId or repoName');
+            return;
+        }
         setLoading(true);
         setError(null);
         try {
@@ -77,6 +83,54 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
     }, [fetchCommits]);
 
     /**
+     * Pull latest changes from remote
+     */
+    const pullRepo = async () => {
+        if (!userId || !repoName) return;
+        setPulling(true);
+        setError(null);
+        try {
+            const response = await fetch('/api/git/pull', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, repo_name: repoName })
+            });
+
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = null;
+            }
+
+            if (!response.ok) {
+                let errorMessage = `Server error: ${response.status}`;
+                if (data && data.message) {
+                    errorMessage += ` - ${data.message}`;
+                } else if (text) {
+                    errorMessage += ` - ${text.substring(0, 100)}`;
+                }
+                setError(errorMessage);
+                return;
+            }
+
+            if (data && data.status === 'success') {
+                // After pull, refresh commits
+                await fetchCommits();
+            } else {
+                setError((data && data.message) || 'Failed to pull');
+            }
+        } catch (err: unknown) {
+            console.error('Failed to pull:', err);
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected network error occurred';
+            setError(errorMessage);
+        } finally {
+            setPulling(false);
+        }
+    };
+
+    /**
      * Format date
      * @param dateString ISO date string
      * @returns "Jan 15" format string or "Invalid Date"
@@ -91,11 +145,21 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
     return (
         <div className="flex flex-col h-full bg-[#fcfcfc]">
             {/* Header */}
-            <div className="px-3 py-2 border-b border-[#efefef] flex items-center gap-2">
-                <History size={14} className="text-[#787774]" />
-                <span className="text-[12px] font-semibold text-[#787774] uppercase tracking-wider">
-                    Commit History
-                </span>
+            <div className="px-3 py-2 border-b border-[#efefef] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <History size={14} className="text-[#787774]" />
+                    <span className="text-[12px] font-semibold text-[#787774] uppercase tracking-wider">
+                        Commit History
+                    </span>
+                </div>
+                <button
+                    onClick={pullRepo}
+                    disabled={pulling || loading}
+                    className="p-1 hover:bg-black/5 rounded transition-colors disabled:opacity-50 relative z-10"
+                    title="Pull from remote"
+                >
+                    <Download size={12} className={`text-[#787774] ${pulling ? 'animate-bounce' : ''}`} />
+                </button>
             </div>
 
             {/* Commit list */}
