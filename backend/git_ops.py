@@ -493,6 +493,9 @@ def get_commits(
             "commits": commits
         }
     except Exception as e:
+        print(f"Error getting commits for {user_id}/{repo_name}: {e}")
+        import traceback
+        traceback.print_exc()
         return {"status": "error", "message": str(e), "commits": []}
 
 
