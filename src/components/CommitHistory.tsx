@@ -24,7 +24,7 @@
  * =============================================================================
  */
 
-// RefreshCw: https://lucide.dev/icons/refresh-cw
+// Download: https://lucide.dev/icons/download
 import { useState, useEffect, useCallback } from 'react';
 import { History, GitCommit, Loader2, Download } from 'lucide-react';
 
@@ -88,12 +88,30 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
     const pullRepo = async () => {
         if (!userId || !repoName) return;
         setPulling(true);
+        setError(null);
         try {
             const response = await fetch('/api/git/pull', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: userId, repo_name: repoName })
             });
+
+            if (!response.ok) {
+                let errorMessage = `Server error: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData.message) {
+                        errorMessage += ` - ${errorData.message}`;
+                    }
+                } catch {
+                    // Fallback to text if JSON parsing fails
+                    const text = await response.text();
+                    if (text) errorMessage += ` - ${text.substring(0, 100)}`;
+                }
+                setError(errorMessage);
+                return;
+            }
+
             const data = await response.json();
             if (data.status === 'success') {
                 // After pull, refresh commits
@@ -103,7 +121,7 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
             }
         } catch (err: unknown) {
             console.error('Failed to pull:', err);
-            const errorMessage = err instanceof Error ? err.message : 'Pull failed';
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected network error occurred';
             setError(errorMessage);
         } finally {
             setPulling(false);
