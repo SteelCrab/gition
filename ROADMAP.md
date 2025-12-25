@@ -19,7 +19,6 @@
 - [x] Notion-style block editor
 - [ ] Code blocks with syntax highlighting
 - [x] Text blocks with inline editing
-- [ ] Pipeline blocks execution
 - [x] `.gition` local page storage (branch-specific, git-ignored)
 - [ ] Markdown rendering (#8)
 
@@ -44,12 +43,37 @@
 - [ ] PR block - Display Pull Requests inline
 - [ ] Commit block - Display GitHub commits inline
 - [ ] Commit link block - Display Git commits inline
+- [ ] Heading block - H1/H2/H3 inline
+- [ ] List block - Bulleted/Numbered list inline
+- [ ] Quote block - Blockquote inline
+- [ ] Callout block - Highlighted callout inline
+- [ ] Divider block - Horizontal divider inline
+- [ ] Toggle block - Collapsible toggle inline
+- [ ] Table block - Table inline
 
 ### 📄 Pages
 - [ ] Landing/Promotion page
 - [ ] Branch page navigation (click branch → new page)
 
+### 🗄️ Database
+- [ ] MySQL + PipeSQL dual DB architecture
+- [ ] **MySQL**: User/Repository metadata
+  - Users (id, login, email, avatar_url, access_token)
+  - Repositories (id, name, owner, clone_url, default_branch)
+  - Branches (repo_id, name, commit_sha, is_current)
+  - Commits (sha, repo_id, message, author, date)
+- [ ] **PipeSQL**: Page/Block data management
+  - Pages (id, repo_id, branch, title, created_at)
+  - Blocks (id, page_id, type, content, order)
+  - BlockLinks (block_id, target_type, target_id)
 
+### 📊 Graph
+- [ ] Graph visualization
+
+### ☸️ Kubernetes (Basic)
+- [ ] Docker Compose dev environment
+- [ ] Basic Kubernetes manifests (Deployment, Service)
+- [ ] Single namespace deployment
 
 ---
 
@@ -71,9 +95,9 @@
 - [ ] Script blocks → Click to run in terminal
 - [ ] Real-time output streaming (xterm.js + WebSocket)
 - [ ] Recording feature (GIF for ≤5s, MP4 for >5s)
----
 
-## v0.3 - Collaboration 🔵
+### 🧱 Blocks
+- [ ] Pipeline blocks execution
 
 ### ⚡ Real-time Features
 - [ ] Real-time document editing
@@ -85,30 +109,28 @@
 - [ ] Pipeline execution logs
 - [ ] Deployment status tracking
 
----
+### ☸️ Kubernetes (Advanced)
 
-## v1.0 - Kubernetes Deployment 🔵
-
-### 🏗️ Infrastructure
+#### 🏗️ Infrastructure
 - [ ] Helm chart structure (`k8s/charts/gition/`)
 - [ ] Namespace configuration (dev/staging/prod)
 - [ ] Ingress with TLS (cert-manager)
 
-### ⚙️ Workloads
+#### ⚙️ Workloads
 - [ ] Frontend Deployment (replicas: 2+)
 - [ ] API Deployment (replicas: 3+)
 - [ ] MySQL StatefulSet (Primary-Replica)
 
-### 💾 Storage
+#### 💾 Storage
 - [ ] Multi-PVC sharding strategy
 - [ ] Hash-based workspace routing
 - [ ] PVC per shard (`repos-pvc-1`, `repos-pvc-2`, ...)
 
-### 📈 Scaling
-- [ ] HPA for Frontend (CPU 70%)
-- [ ] HPA for API (CPU 70%, Memory 80%)
+#### 📈 Scaling
+- [ ] Frontend HPA (CPU 70%)
+- [ ] API HPA (CPU 70%, Memory 80%)
 
-### 🔄 GitOps
+#### 🔄 GitOps
 - [ ] ArgoCD application configuration
 - [ ] GitHub Actions → Registry → ArgoCD pipeline
 
@@ -118,7 +140,7 @@
 - [ ] Block → Markdown conversion
 - [ ] .gitignore integration
 
-### 🕸️ Graph View
+### 🕸️ Graph View (Advanced)
 - [ ] `[[link]]` syntax parser
 - [ ] `doc_links` table schema
 - [ ] Link API (`/api/links/*`)
