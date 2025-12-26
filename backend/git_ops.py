@@ -765,14 +765,25 @@ def checkout_branch(user_id: str, repo_name: str, branch_name: str) -> Dict[str,
                 # May already exist, try direct checkout
                 repo.git.checkout(branch_name)
         
-        # Pull latest changes from remote after checkout
+        # Pull latest changes from remote after checkout (using tracking info)
         pull_result = None
         try:
-            repo.git.pull('origin', branch_name)
-            pull_result = "synced"
+            active_branch = repo.active_branch
+            tracking_branch = active_branch.tracking_branch()
+            if tracking_branch:
+                remote_name = tracking_branch.remote_name
+                remote = repo.remotes[remote_name]
+                remote.pull()
+                pull_result = "synced"
+            else:
+                logger.warning(f"Branch '{active_branch.name}' has no upstream tracking. Skipping pull.")
+                pull_result = "no_tracking_info"
         except GitCommandError as pull_err:
-            # Pull may fail if no upstream or conflicts
+            # Pull may fail due to conflicts
             logger.warning(f"Pull after checkout failed: {pull_err}")
+            pull_result = "pull_failed"
+        except Exception as pull_err:
+            logger.warning(f"Unexpected pull error: {pull_err}")
             pull_result = "pull_failed"
         
         return {
