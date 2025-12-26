@@ -27,11 +27,16 @@ import httpx
 import asyncio
 import os
 import json
+import logging
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create FastAPI app instance
 app = FastAPI(title="Gition Auth Server")
