@@ -564,6 +564,7 @@ def search_files(
 def get_commits(
     user_id: str,
     repo_name: str,
+    branch: str = None,
     max_count: int = 50
 ) -> Dict[str, Any]:
     """
@@ -572,6 +573,7 @@ def get_commits(
     Args:
         user_id: User's GitHub ID
         repo_name: Repository name
+        branch: Branch name (optional, defaults to current branch)
         max_count: Maximum commit count
         
     Returns:
@@ -588,7 +590,26 @@ def get_commits(
         repo = Repo(repo_path)
         commits = []
         
-        for commit in repo.iter_commits(max_count=max_count):
+        # Validate branch if specified
+        if branch:
+            # Check if branch exists in local or remote refs
+            all_refs = [b.name for b in repo.branches]
+            all_refs.extend([ref.name.split('/', 1)[1] for ref in repo.remotes.origin.refs if '/' in ref.name])
+            if branch not in all_refs:
+                return {
+                    "status": "error", 
+                    "message": f"Branch '{branch}' not found",
+                    "commits": []
+                }
+            rev = branch
+        else:
+            # Handle detached HEAD case
+            if repo.head.is_detached:
+                rev = repo.head.commit.hexsha
+            else:
+                rev = repo.active_branch.name
+        
+        for commit in repo.iter_commits(rev=rev, max_count=max_count):
             commits.append({
                 "sha": commit.hexsha[:7],           # Abbreviated SHA
                 "full_sha": commit.hexsha,          # Full SHA
@@ -603,16 +624,20 @@ def get_commits(
                 }
             })
         
+        # Determine current branch name for response
+        current_branch = branch if branch else (
+            repo.active_branch.name if not repo.head.is_detached else "HEAD"
+        )
+        
         return {
             "status": "success",
             "total": len(commits),
+            "branch": current_branch,
             "commits": commits
         }
     except Exception as e:
-        print(f"Error getting commits for {user_id}/{repo_name}: {e}")
-        import traceback
-        traceback.print_exc()
-        return {"status": "error", "message": str(e), "commits": []}
+        logger.exception(f"[Internal] Error getting commits for {user_id}/{repo_name}")
+        return {"status": "error", "message": "Failed to retrieve commits. Please try again.", "commits": []}
 
 
 # ==============================================================================
@@ -654,8 +679,12 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
         
         current_branch = repo.active_branch.name if not repo.head.is_detached else None
         
+        # Collect local branch names for later reference
+        local_branch_names = set()
+        
         # Local branches
         for branch in repo.branches:
+            local_branch_names.add(branch.name)
             branches.append({
                 "name": branch.name,
                 "type": "local",
@@ -664,7 +693,8 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
                 "commit_message": branch.commit.message.strip().split('\n')[0]
             })
         
-        # Remote branches (from all remotes, not just origin)
+        # Remote branches (show all, indicate if also exists locally)
+        remote_branch_names = set()
         for remote in repo.remotes:
             try:
                 for ref in remote.refs:
@@ -673,17 +703,18 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
                         continue
                     # Extract branch name (remove remote prefix like 'origin/')
                     branch_name = ref.name.split('/', 1)[1] if '/' in ref.name else ref.name
-                    # Skip if already exists as local branch
-                    if not any(b['name'] == branch_name and b['type'] == 'local' for b in branches):
-                        # Also skip if already added as remote
-                        if not any(b['name'] == branch_name and b['type'] == 'remote' for b in branches):
-                            branches.append({
-                                "name": branch_name,
-                                "type": "remote",
-                                "is_current": False,
-                                "commit_sha": ref.commit.hexsha[:7],
-                                "commit_message": ref.commit.message.strip().split('\n')[0]
-                            })
+                    # Skip if already added as remote from another remote
+                    if branch_name in remote_branch_names:
+                        continue
+                    remote_branch_names.add(branch_name)
+                    branches.append({
+                        "name": branch_name,
+                        "type": "remote",
+                        "is_current": False,
+                        "has_local": branch_name in local_branch_names,
+                        "commit_sha": ref.commit.hexsha[:7],
+                        "commit_message": ref.commit.message.strip().split('\n')[0]
+                    })
             except Exception as ref_err:
                 logger.warning(f"Failed to get refs from {remote.name}: {ref_err}")
         
@@ -734,10 +765,32 @@ def checkout_branch(user_id: str, repo_name: str, branch_name: str) -> Dict[str,
                 # May already exist, try direct checkout
                 repo.git.checkout(branch_name)
         
+        # Pull latest changes from remote after checkout (using tracking info)
+        pull_result = None
+        try:
+            active_branch = repo.active_branch
+            tracking_branch = active_branch.tracking_branch()
+            if tracking_branch:
+                remote_name = tracking_branch.remote_name
+                remote = repo.remotes[remote_name]
+                remote.pull()
+                pull_result = "synced"
+            else:
+                logger.warning(f"Branch '{active_branch.name}' has no upstream tracking. Skipping pull.")
+                pull_result = "no_tracking_info"
+        except GitCommandError as pull_err:
+            # Pull may fail due to conflicts
+            logger.warning(f"Pull after checkout failed: {pull_err}")
+            pull_result = "pull_failed"
+        except Exception as pull_err:
+            logger.warning(f"Unexpected pull error: {pull_err}")
+            pull_result = "pull_failed"
+        
         return {
             "status": "success",
             "message": f"Switched to branch '{branch_name}'",
-            "current_branch": repo.active_branch.name
+            "current_branch": repo.active_branch.name,
+            "pull_result": pull_result
         }
     except GitCommandError as e:
         return {"status": "error", "message": f"Checkout failed: {str(e)}"}

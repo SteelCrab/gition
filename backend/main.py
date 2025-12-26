@@ -469,12 +469,16 @@ async def api_clone_repo(request: Request):
     try:
         body = await request.json()
         clone_url = body.get("clone_url")
-        access_token = body.get("access_token")
         user_id = body.get("user_id")
         repo_name = body.get("repo_name")
         
-        if not all([clone_url, access_token, user_id, repo_name]):
+        # Get access_token from cookie instead of body
+        access_token = get_token(request)
+        
+        if not all([clone_url, user_id, repo_name]):
             return {"status": "error", "message": "Missing required fields"}
+        if not access_token:
+            return {"status": "error", "message": "Not authenticated"}
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(clone_repo, clone_url, access_token, str(user_id), repo_name)
@@ -498,12 +502,16 @@ async def api_reclone_repo(request: Request):
     try:
         body = await request.json()
         clone_url = body.get("clone_url")
-        access_token = body.get("access_token")
         user_id = body.get("user_id")
         repo_name = body.get("repo_name")
         
-        if not all([clone_url, access_token, user_id, repo_name]):
+        # Get access_token from cookie instead of body
+        access_token = get_token(request)
+        
+        if not all([clone_url, user_id, repo_name]):
             return {"status": "error", "message": "Missing required fields"}
+        if not access_token:
+            return {"status": "error", "message": "Not authenticated"}
         
         result = await asyncio.to_thread(reclone_repo, clone_url, access_token, str(user_id), repo_name)
         return result
@@ -635,6 +643,7 @@ async def api_search_files(
 async def api_get_commits(
     user_id: str,
     repo_name: str,
+    branch: str = None,
     max_count: int = 50
 ):
     """
@@ -643,10 +652,11 @@ async def api_get_commits(
     Query Params:
         - user_id: User ID
         - repo_name: Repository name
+        - branch: Branch name (optional, defaults to current branch)
         - max_count: Maximum commit count (max: 100)
     """
     # Performance: Use to_thread for blocking Git operations
-    result = await asyncio.to_thread(get_commits, user_id, repo_name, min(max_count, 100))
+    result = await asyncio.to_thread(get_commits, user_id, repo_name, branch, min(max_count, 100))
     return result
 
 
