@@ -45,13 +45,12 @@ const MainLayout = () => {
                     event_type: eventType,
                     repo_name: displayRepo,
                     status,
-                    metadata,
-                    timestamp: new Date().toISOString()
+                    metadata
                 })
             });
         } catch (err) {
-            // Silently fail audit logging to not block user actions, but log to console for debugging
-            console.error('Failed to send audit event');
+            // Silently fail audit logging to not block user actions, but log for diagnostic purposes
+            console.error('[Diagnostic] Failed to send audit event:', eventType, err);
         }
     };
 
