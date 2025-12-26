@@ -49,7 +49,9 @@ app.add_middleware(
 
 # GitHub OAuth configuration (loaded from environment variables)
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+#: :meta private:
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+#: :meta private:
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost")  # Redirect URL after authentication
 
 
