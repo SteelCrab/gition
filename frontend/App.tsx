@@ -151,7 +151,7 @@ const MainEditor = () => {
                 // Try README.md first, then readme.md
                 const readmeFiles = ['README.md', 'readme.md', 'README.MD', 'Readme.md'];
                 for (const readmeFile of readmeFiles) {
-                    const response = await fetch(`/api/git/file?user_id=${userId}&repo_name=${selectedRepo.name}&path=${encodeURIComponent(readmeFile)}`);
+                    const response = await fetch(`/api/git/file?user_id=${userId}&repo_name=${selectedRepo.name}&path=${encodeURIComponent(readmeFile)}&branch=${selectedRepo.default_branch}`);
                     const data = await response.json();
                     if (data.status === 'success' && !data.binary && data.content) {
                         setReadmeContent(data.content);
