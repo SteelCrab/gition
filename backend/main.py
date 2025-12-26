@@ -707,7 +707,7 @@ async def api_checkout_branch(request: Request):
 # CRUD operations for branch-specific pages stored in .gition directory
 
 @app.get("/api/pages/{user_id}/{repo_name}")
-async def api_list_pages(user_id: str, repo_name: str):
+async def api_list_pages(request: Request, user_id: str, repo_name: str):
     """
     List all branch pages for a repository
     
@@ -720,15 +720,21 @@ async def api_list_pages(user_id: str, repo_name: str):
         - pages: List of page summaries
         - total: Total count
     """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "pages": [], "total": 0}
+    
     try:
         result = await asyncio.to_thread(list_branch_pages, user_id, repo_name)
         return result
-        logger.exception(f"Failed to list pages for repo {repo_name}")
-        return {"status": "error", "message": "An internal error occurred while listing pages.", "pages": [], "total": 0}
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to list pages for {repo_name}: {e}")
+        return {"status": "error", "message": "Failed to list pages. Please try again.", "pages": [], "total": 0}
 
 
 @app.get("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
-async def api_get_page(user_id: str, repo_name: str, branch_name: str):
+async def api_get_page(request: Request, user_id: str, repo_name: str, branch_name: str):
     """
     Get a branch page
     
@@ -741,15 +747,21 @@ async def api_get_page(user_id: str, repo_name: str, branch_name: str):
         - status: success | not_found | error
         - page: Page data (on success)
     """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "page": None}
+    
     try:
         result = await asyncio.to_thread(get_branch_page, user_id, repo_name, branch_name)
         return result
     except Exception as e:
-        return {"status": "error", "message": str(e), "page": None}
+        logger.exception(f"[Internal] Failed to get page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to load page. Please try again.", "page": None}
 
 
 @app.post("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
-async def api_create_page(user_id: str, repo_name: str, branch_name: str, request: Request):
+async def api_create_page(request: Request, user_id: str, repo_name: str, branch_name: str):
     """
     Create a new branch page
     
@@ -766,6 +778,11 @@ async def api_create_page(user_id: str, repo_name: str, branch_name: str, reques
         - status: success | exists | error
         - page: Page data (on success)
     """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "page": None}
+    
     try:
         body = {}
         try:
@@ -781,11 +798,12 @@ async def api_create_page(user_id: str, repo_name: str, branch_name: str, reques
         )
         return result
     except Exception as e:
-        return {"status": "error", "message": str(e), "page": None}
+        logger.exception(f"[Internal] Failed to create page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to create page. Please try again.", "page": None}
 
 
 @app.put("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
-async def api_update_page(user_id: str, repo_name: str, branch_name: str, request: Request):
+async def api_update_page(request: Request, user_id: str, repo_name: str, branch_name: str):
     """
     Update a branch page
     
@@ -802,6 +820,11 @@ async def api_update_page(user_id: str, repo_name: str, branch_name: str, reques
         - status: success | not_found | error
         - page: Updated page data (on success)
     """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "page": None}
+    
     try:
         body = await request.json()
         title = body.get("title")
@@ -812,11 +835,12 @@ async def api_update_page(user_id: str, repo_name: str, branch_name: str, reques
         )
         return result
     except Exception as e:
-        return {"status": "error", "message": str(e), "page": None}
+        logger.exception(f"[Internal] Failed to update page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to save page. Please try again.", "page": None}
 
 
 @app.delete("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
-async def api_delete_page(user_id: str, repo_name: str, branch_name: str):
+async def api_delete_page(request: Request, user_id: str, repo_name: str, branch_name: str):
     """
     Delete a branch page
     
@@ -832,11 +856,17 @@ async def api_delete_page(user_id: str, repo_name: str, branch_name: str):
         - status: success | not_found | error
         - message: Status message
     """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated"}
+    
     try:
         result = await asyncio.to_thread(delete_branch_page, user_id, repo_name, branch_name)
         return result
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        logger.exception(f"[Internal] Failed to delete page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to delete page. Please try again."}
 
 
 # ==============================================================================

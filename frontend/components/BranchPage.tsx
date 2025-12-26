@@ -63,10 +63,51 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
     const [error, setError] = useState<string | null>(null);
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
-    // Refs for debouncing
+    // Refs for debouncing and cleanup
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const statusResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastSavedContentRef = useRef<string>('');
     const lastSavedTitleRef = useRef<string>('');
+    // Current values refs for flush on unmount
+    const currentTitleRef = useRef<string>('');
+    const currentContentRef = useRef<string>('');
+
+    /**
+     * Create a new page for this branch
+     */
+    const createPage = useCallback(async () => {
+        if (!userId || !repoName || !branchName) return;
+
+        try {
+            const response = await fetch(
+                `/api/pages/${encodeURIComponent(userId)}/${encodeURIComponent(repoName)}/${encodeURIComponent(branchName)}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        title: branchName,
+                        content: ''
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (data.status === 'success' || data.status === 'exists') {
+                setPage(data.page);
+                setTitle(data.page.title);
+                setContent(data.page.content);
+                lastSavedContentRef.current = data.page.content;
+                lastSavedTitleRef.current = data.page.title;
+            } else {
+                setError(data.message || 'Failed to create page');
+            }
+        } catch (err) {
+            console.error('Failed to create page:', err);
+            setError('Failed to create page. Please try again.');
+        }
+    }, [userId, repoName, branchName]);
 
     /**
      * Fetch page data from API
@@ -103,50 +144,13 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
         } finally {
             setLoading(false);
         }
-    }, [userId, repoName, branchName]);
-
-    /**
-     * Create a new page for this branch
-     */
-    const createPage = async () => {
-        if (!userId || !repoName || !branchName) return;
-
-        try {
-            const response = await fetch(
-                `/api/pages/${encodeURIComponent(userId)}/${encodeURIComponent(repoName)}/${encodeURIComponent(branchName)}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({
-                        title: branchName,
-                        content: ''
-                    })
-                }
-            );
-
-            const data = await response.json();
-
-            if (data.status === 'success' || data.status === 'exists') {
-                setPage(data.page);
-                setTitle(data.page.title);
-                setContent(data.page.content);
-                lastSavedContentRef.current = data.page.content;
-                lastSavedTitleRef.current = data.page.title;
-            } else {
-                setError(data.message || 'Failed to create page');
-            }
-        } catch (err) {
-            console.error('Failed to create page:', err);
-            setError('Failed to create page. Please try again.');
-        }
-    };
+    }, [userId, repoName, branchName, createPage]);
 
     /**
      * Save page content to API
      */
-    const savePage = async (newTitle: string, newContent: string) => {
-        if (!userId || !repoName || !branchName || saveStatus === 'saving') return;
+    const savePage = useCallback(async (newTitle: string, newContent: string) => {
+        if (!userId || !repoName || !branchName) return;
 
         // Skip if nothing changed
         if (newTitle === lastSavedTitleRef.current && newContent === lastSavedContentRef.current) {
@@ -177,23 +181,28 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
                 lastSavedTitleRef.current = newTitle;
                 setSaveStatus('saved');
 
+                // Clear any existing reset timeout
+                if (statusResetTimeoutRef.current) {
+                    clearTimeout(statusResetTimeoutRef.current);
+                }
                 // Reset to idle after 2 seconds
-                setTimeout(() => setSaveStatus('idle'), 2000);
+                statusResetTimeoutRef.current = setTimeout(() => setSaveStatus('idle'), 2000);
             } else {
                 setSaveStatus('error');
-                console.error('Save failed:', data.message);
+                console.error('[Internal] Save failed:', data.message);
             }
         } catch (err) {
-            console.error('Failed to save page:', err);
+            console.error('[Internal] Failed to save page:', err);
             setSaveStatus('error');
         }
-    };
+    }, [userId, repoName, branchName]);
 
     /**
      * Debounced save handler
      */
     const handleContentChange = (newContent: string) => {
         setContent(newContent);
+        currentContentRef.current = newContent;
 
         // Clear previous timeout
         if (saveTimeoutRef.current) {
@@ -202,7 +211,7 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
 
         // Set new timeout for auto-save (1.5 seconds)
         saveTimeoutRef.current = setTimeout(() => {
-            savePage(title, newContent);
+            savePage(currentTitleRef.current, newContent);
         }, 1500);
     };
 
@@ -211,6 +220,7 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
      */
     const handleTitleChange = (newTitle: string) => {
         setTitle(newTitle);
+        currentTitleRef.current = newTitle;
 
         // Clear previous timeout
         if (saveTimeoutRef.current) {
@@ -219,7 +229,7 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
 
         // Set new timeout for auto-save
         saveTimeoutRef.current = setTimeout(() => {
-            savePage(newTitle, content);
+            savePage(newTitle, currentContentRef.current);
         }, 1500);
     };
 
@@ -227,13 +237,37 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
     useEffect(() => {
         fetchPage();
 
-        // Cleanup timeout on unmount
+        // Cleanup on unmount: flush pending saves and clear timeouts
         return () => {
+            // Clear pending save timeout
             if (saveTimeoutRef.current) {
                 clearTimeout(saveTimeoutRef.current);
+                saveTimeoutRef.current = null;
+            }
+            // Clear status reset timeout
+            if (statusResetTimeoutRef.current) {
+                clearTimeout(statusResetTimeoutRef.current);
+                statusResetTimeoutRef.current = null;
+            }
+            // Flush pending changes synchronously (fire-and-forget)
+            const pendingTitle = currentTitleRef.current;
+            const pendingContent = currentContentRef.current;
+            if (
+                pendingTitle !== lastSavedTitleRef.current ||
+                pendingContent !== lastSavedContentRef.current
+            ) {
+                // Use navigator.sendBeacon for reliable unmount save
+                if (userId && repoName && branchName) {
+                    const url = `/api/pages/${encodeURIComponent(userId)}/${encodeURIComponent(repoName)}/${encodeURIComponent(branchName)}`;
+                    const blob = new Blob(
+                        [JSON.stringify({ title: pendingTitle, content: pendingContent })],
+                        { type: 'application/json' }
+                    );
+                    navigator.sendBeacon(url, blob);
+                }
             }
         };
-    }, [fetchPage]);
+    }, [fetchPage, userId, repoName, branchName]);
 
     // Render loading state
     if (loading) {
