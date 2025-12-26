@@ -17,7 +17,9 @@ const RepoPage = () => {
     useEffect(() => {
         if (!owner || !repoName) return;
         if (!branchName) {
-            navigate(`/repo/${owner}/${repoName}/main`, { replace: true });
+            const safeOwner = encodeURIComponent(owner);
+            const safeRepo = encodeURIComponent(repoName);
+            navigate(`/repo/${safeOwner}/${safeRepo}/main`, { replace: true });
         }
     }, [branchName, owner, repoName, navigate]);
 
