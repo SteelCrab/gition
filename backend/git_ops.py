@@ -232,10 +232,12 @@ def create_local_branches_from_remotes(repo_path) -> int:
                 
                 try:
                     # Create local branch tracking the remote
-                    repo.create_head(branch_name, ref.commit)
+                    local_branch = repo.create_head(branch_name, ref.commit)
+                    # Set up tracking to the remote branch
+                    local_branch.set_tracking_branch(ref)
                     local_branch_names.add(branch_name)
                     created_count += 1
-                    logger.info(f"Created local branch: {branch_name}")
+                    logger.info(f"Created local branch: {branch_name} (tracking {ref.name})")
                 except Exception as e:
                     logger.warning(f"Failed to create branch {branch_name}: {e}")
                     
