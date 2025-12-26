@@ -40,7 +40,8 @@ const RepoPage = () => {
 
                 // Stateless fetch: pass branch as a parameter
                 const response = await fetch(
-                    `/api/git/file?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}&path=${encodeURIComponent(targetPath)}&branch=${encodeURIComponent(currentBranch)}`
+                    `/api/git/file?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}&path=${encodeURIComponent(targetPath)}&branch=${encodeURIComponent(currentBranch)}`,
+                    { credentials: 'include' }
                 );
 
                 if (!response.ok) {

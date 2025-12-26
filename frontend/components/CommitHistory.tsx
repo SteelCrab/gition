@@ -60,7 +60,9 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/git/commits?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`);
+            const response = await fetch(`/api/git/commits?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`, {
+                credentials: 'include'
+            });
             const data = await response.json();
             if (data.status === 'success') {
                 setCommits(data.commits || []);
@@ -92,6 +94,7 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
             const response = await fetch('/api/git/pull', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ user_id: userId, repo_name: repoName })
             });
 

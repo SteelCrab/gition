@@ -56,7 +56,8 @@ const FileBrowser = ({ userId, repoName, onFileSelect, onBack }: FileBrowserProp
         setLoading(true);
         try {
             const response = await fetch(
-                `/api/git/files?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}&path=${encodeURIComponent(path)}`
+                `/api/git/files?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}&path=${encodeURIComponent(path)}`,
+                { credentials: 'include' }
             );
             const data = await response.json();
             if (data.status === 'success') {
