@@ -3,8 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import AuthCallback from './pages/AuthCallback';
 import MainLayout from './layouts/MainLayout';
-import Dashboard from './pages/Dashboard';
-import RepoPage from './pages/RepoPage';
 
 // Error Boundary for safety
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null; errorInfo: React.ErrorInfo | null }> {
