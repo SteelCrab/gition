@@ -1,25 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { Menu } from 'lucide-react';
 import BranchSelector from '../components/BranchSelector';
 
 const MainLayout = () => {
+    // State
     const [leftPanelOpen, setLeftPanelOpen] = useState(false);
     const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
-    // React Router hooks
+    // Hooks
     const { owner, repoName, branchName, "*": filePath } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Derived state
-    const isMobile = window.innerWidth < 1024; // Simple check, or reuse hook logic if strict
-    // Typically use useEffect for resize listener, but simplifying for now.
+    // Effects
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 1024);
+        };
 
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Derived Logic
     const userEmail = localStorage.getItem('userEmail') || 'guest@gition.com';
-
-    // Breadcrumb Logic
     const displayRepo = repoName;
     const displayFile = filePath ? filePath.split('/').pop() : null;
 
@@ -58,7 +65,6 @@ const MainLayout = () => {
                                 repoName={displayRepo}
                                 onBranchChange={(newBranch) => {
                                     // Navigate to new branch URL
-                                    // Preserve file path if exists? Maybe better to go to root of branch or keep path?
                                     // Github keeps path. Let's try to keep path.
                                     const currentPath = filePath || ''; // wildcard part
                                     // Reconstruct URL: /repo/:owner/:repo/:newBranch/:path
@@ -71,11 +77,7 @@ const MainLayout = () => {
                         {displayFile && (
                             <button
                                 onClick={() => {
-                                    // Close file -> go to repo root (branch)
-                                    const start = location.pathname.indexOf(filePath || '');
-                                    if (start > -1) {
-                                        // Just slice off the filepath?
-                                        // Or simpler: /repo/:owner/:repo/:branch
+                                    if (displayRepo) {
                                         const userId = owner || localStorage.getItem('userLogin') || 'user';
                                         const branch = branchName || 'main';
                                         navigate(`/repo/${userId}/${displayRepo}/${branch}`);
