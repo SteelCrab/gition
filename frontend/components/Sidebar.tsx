@@ -10,14 +10,16 @@ import SearchPanel from './SearchPanel';
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
+    isMobile?: boolean;
 }
 
-const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
     const navigate = useNavigate();
-    const { owner, repoName, branchName } = useParams();
+    const { repoName, branchName } = useParams();
     const [sidebarTab, setSidebarTab] = useState<'repos' | 'files' | 'issues' | 'search'>('repos');
 
     const userEmail = localStorage.getItem('userEmail') || 'guest@gition.com';
+    const isMobileView = isMobile ?? (window.innerWidth < 1024);
 
     const handleLogout = () => {
         localStorage.removeItem('isAuthenticated');
@@ -90,7 +92,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                                 const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
                                 navigate(`/repo/${userId}/${repo.name}`);
                                 setSidebarTab('files');
-                                if (window.innerWidth < 1024) onClose();
+                                if (isMobileView) onClose();
                             }} />
                         </>
                     )}
@@ -103,7 +105,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                                 if (branchName) {
                                     const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
                                     navigate(`/repo/${userId}/${selectedRepoName}/${branchName}/${path}`);
-                                    if (window.innerWidth < 1024) onClose();
+                                    if (isMobileView) onClose();
                                 } else {
                                     console.warn("Cannot navigate to file: Branch name missing from URL.");
                                 }

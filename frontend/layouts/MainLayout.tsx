@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { Menu } from 'lucide-react';
 import BranchSelector from '../components/BranchSelector';
@@ -13,7 +13,6 @@ const MainLayout = () => {
     // Hooks
     const { owner, repoName, branchName, "*": filePath } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
 
     // Effects
     useEffect(() => {
@@ -32,7 +31,7 @@ const MainLayout = () => {
 
     return (
         <div className="flex h-screen bg-white text-[#37352f] overflow-hidden relative">
-            <Sidebar isOpen={leftPanelOpen} onClose={() => setLeftPanelOpen(false)} />
+            <Sidebar isOpen={leftPanelOpen} onClose={() => setLeftPanelOpen(false)} isMobile={isMobile} />
 
             <main className="flex-1 flex flex-col min-w-0 bg-white relative transition-all duration-300">
                 {/* Header */}
