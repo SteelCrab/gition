@@ -21,10 +21,18 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
     const userEmail = localStorage.getItem('userEmail') || 'guest@gition.com';
     const isMobileView = isMobile ?? (typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
 
-    const handleLogout = () => {
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('userEmail');
-        navigate('/login');
+    const handleLogout = async () => {
+        try {
+            await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+        } catch {
+            // Best-effort logout; still clear client state
+        } finally {
+            localStorage.removeItem('isAuthenticated');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userLogin');
+            localStorage.removeItem('userId');
+            navigate('/login', { replace: true });
+        }
     };
 
     // Derived state from URL
