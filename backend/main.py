@@ -302,13 +302,24 @@ async def log_audit_event(request: Request):
             user_data = user_response.json()
             user_id = user_data.get("login")
 
-        body = await request.json()
-        
+        try:
+            body = await request.json()
+        except Exception:
+            return Response(
+                status_code=400,
+                media_type="application/json",
+                content=json.dumps({"status": "error", "message": "Invalid JSON body"}),
+            )
+
         # 2. Validation: Event Type Allowlist
         ALLOWED_EVENTS = {"COMMIT_INITIATED", "COMMIT_SUCCESS", "COMMIT_FAILURE"}
         event_type = body.get("event_type")
         if event_type not in ALLOWED_EVENTS:
-            return Response(status_code=400, content=json.dumps({"status": "error", "message": "Invalid event type"}))
+            return Response(
+                status_code=400,
+                media_type="application/json",
+                content=json.dumps({"status": "error", "message": "Invalid event type"}),
+            )
 
         # 3. Validation: Metadata Filtering
         # Only allow specific keys and ensure values are strings/primitives
