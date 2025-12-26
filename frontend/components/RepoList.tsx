@@ -206,14 +206,12 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         setCloneStatus(prev => ({ ...prev, [repo.name]: 'cloning' }));
         try {
             const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
-            const token = localStorage.getItem('githubToken');
             const response = await fetch('/api/git/clone', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
                     clone_url: repo.clone_url,
-                    access_token: token,
                     user_id: userId,
                     repo_name: repo.name
                 })
