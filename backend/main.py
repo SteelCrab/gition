@@ -271,7 +271,11 @@ async def log_audit_event(request: Request):
     # 1. Authentication Check
     token = get_token(request)
     if not token:
-        return Response(status_code=401, content=json.dumps({"status": "error", "message": "Authentication required for auditing"}))
+        return Response(
+            status_code=401,
+            media_type="application/json",
+            content=json.dumps({"status": "error", "message": "Authentication required for auditing"}),
+        )
 
     try:
         # Verify token and get user context
