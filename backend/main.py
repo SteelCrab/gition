@@ -691,7 +691,10 @@ async def api_checkout_branch(request: Request):
         
         # Auto-create page for this branch if checkout was successful
         if result.get("status") == "success":
-            await asyncio.to_thread(ensure_branch_page, user_id, repo_name, branch_name)
+            try:
+                await asyncio.to_thread(ensure_branch_page, user_id, repo_name, branch_name)
+            except Exception as e:
+                logger.warning(f"Auto-create page failed for {branch_name}: {e}")
         
         return result
     except Exception as e:
