@@ -469,12 +469,16 @@ async def api_clone_repo(request: Request):
     try:
         body = await request.json()
         clone_url = body.get("clone_url")
-        access_token = body.get("access_token")
         user_id = body.get("user_id")
         repo_name = body.get("repo_name")
         
-        if not all([clone_url, access_token, user_id, repo_name]):
+        # Get access_token from cookie instead of body
+        access_token = get_token(request)
+        
+        if not all([clone_url, user_id, repo_name]):
             return {"status": "error", "message": "Missing required fields"}
+        if not access_token:
+            return {"status": "error", "message": "Not authenticated"}
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(clone_repo, clone_url, access_token, str(user_id), repo_name)
@@ -498,12 +502,16 @@ async def api_reclone_repo(request: Request):
     try:
         body = await request.json()
         clone_url = body.get("clone_url")
-        access_token = body.get("access_token")
         user_id = body.get("user_id")
         repo_name = body.get("repo_name")
         
-        if not all([clone_url, access_token, user_id, repo_name]):
+        # Get access_token from cookie instead of body
+        access_token = get_token(request)
+        
+        if not all([clone_url, user_id, repo_name]):
             return {"status": "error", "message": "Missing required fields"}
+        if not access_token:
+            return {"status": "error", "message": "Not authenticated"}
         
         result = await asyncio.to_thread(reclone_repo, clone_url, access_token, str(user_id), repo_name)
         return result
