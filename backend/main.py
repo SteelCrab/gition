@@ -207,16 +207,15 @@ async def verify_auth(request: Request):
             media_type="application/json",
             content=json.dumps({"status": "error", "authenticated": False, "message": "Not authenticated"}),
         )
-    
+
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             headers = {
                 "Authorization": f"Bearer {token}",
-                "Accept": "application/vnd.github.v3+json"
+                "Accept": "application/vnd.github.v3+json",
             }
-            # Verify token with GitHub
             user_response = await client.get("https://api.github.com/user", headers=headers)
-            
+
             if user_response.status_code == 200:
                 user_data = user_response.json()
                 return {
@@ -225,21 +224,29 @@ async def verify_auth(request: Request):
                     "user": {
                         "id": user_data.get("id"),
                         "login": user_data.get("login"),
-                        "name": user_data.get("name")
-                    }
+                        "name": user_data.get("name"),
+                    },
                 }
-            else:
+
+            if user_response.status_code in (401,):
                 return Response(
                     status_code=401,
                     media_type="application/json",
                     content=json.dumps({"status": "error", "authenticated": False, "message": "Invalid token"}),
                 )
+
+            # Treat rate limit / upstream issues as transient
+            return Response(
+                status_code=503,
+                media_type="application/json",
+                content=json.dumps({"status": "error", "authenticated": False, "message": "Auth verification unavailable"}),
+            )
     except Exception as e:
         logger.error(f"Auth verification failed: {e}")
         return Response(
-            status_code=500,
+            status_code=503,
             media_type="application/json",
-            content=json.dumps({"status": "error", "authenticated": False, "message": "Verification service error"}),
+            content=json.dumps({"status": "error", "authenticated": False, "message": "Auth verification unavailable"}),
         )
 
 
