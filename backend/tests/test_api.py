@@ -125,12 +125,13 @@ class TestGitClone:
         assert data.get("status") == "error"
     
     @patch("main.clone_repo")
-    def test_clone_success(self, mock_clone):
+    @patch("main.get_token")
+    def test_clone_success(self, mock_get_token, mock_clone):
         """Test successful clone endpoint"""
+        mock_get_token.return_value = "test_token"
         mock_clone.return_value = {"status": "success", "message": "cloned"}
         response = client.post("/api/git/clone", json={
             "clone_url": "https://github.com/test/test.git",
-            "access_token": "test_token",
             "user_id": "test_user",
             "repo_name": "test_repo"
         })
@@ -139,12 +140,13 @@ class TestGitClone:
         assert data.get("status") == "success"
 
     @patch("main.clone_repo")
-    def test_clone_error(self, mock_clone):
+    @patch("main.get_token")
+    def test_clone_error(self, mock_get_token, mock_clone):
         """Test clone endpoint with git_ops error"""
+        mock_get_token.return_value = "test_token"
         mock_clone.return_value = {"status": "error", "message": "failed"}
         response = client.post("/api/git/clone", json={
             "clone_url": "https://github.com/test/test.git",
-            "access_token": "test_token",
             "user_id": "test_user",
             "repo_name": "test_repo"
         })

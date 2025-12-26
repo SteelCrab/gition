@@ -590,8 +590,24 @@ def get_commits(
         repo = Repo(repo_path)
         commits = []
         
-        # Use specified branch or current HEAD
-        rev = branch if branch else None
+        # Validate branch if specified
+        if branch:
+            # Check if branch exists in local or remote refs
+            all_refs = [b.name for b in repo.branches]
+            all_refs.extend([ref.name.split('/', 1)[1] for ref in repo.remotes.origin.refs if '/' in ref.name])
+            if branch not in all_refs:
+                return {
+                    "status": "error", 
+                    "message": f"Branch '{branch}' not found",
+                    "commits": []
+                }
+            rev = branch
+        else:
+            # Handle detached HEAD case
+            if repo.head.is_detached:
+                rev = repo.head.commit.hexsha
+            else:
+                rev = repo.active_branch.name
         
         for commit in repo.iter_commits(rev=rev, max_count=max_count):
             commits.append({
@@ -608,17 +624,20 @@ def get_commits(
                 }
             })
         
+        # Determine current branch name for response
+        current_branch = branch if branch else (
+            repo.active_branch.name if not repo.head.is_detached else "HEAD"
+        )
+        
         return {
             "status": "success",
             "total": len(commits),
-            "branch": branch or repo.active_branch.name,
+            "branch": current_branch,
             "commits": commits
         }
     except Exception as e:
-        print(f"Error getting commits for {user_id}/{repo_name}: {e}")
-        import traceback
-        traceback.print_exc()
-        return {"status": "error", "message": str(e), "commits": []}
+        logger.exception(f"[Internal] Error getting commits for {user_id}/{repo_name}")
+        return {"status": "error", "message": "Failed to retrieve commits. Please try again.", "commits": []}
 
 
 # ==============================================================================
