@@ -120,10 +120,15 @@ def clone_repo(
     
     try:
         Repo.clone_from(auth_url, repo_path)
+        
+        # Create local branches for all remote branches
+        branches_created = create_local_branches_from_remotes(repo_path)
+        logger.info(f"Created {branches_created} local branches from remotes")
+        
         return {
             "status": "success",
             "path": str(repo_path),
-            "message": f"Repository cloned successfully"
+            "message": f"Repository cloned successfully ({branches_created} branches created)"
         }
     except GitCommandError as e:
         # Clean up partial clone on failure
@@ -137,6 +142,57 @@ def clone_repo(
             "path": None,
             "message": f"Clone failed: {error_msg}"
         }
+
+
+def create_local_branches_from_remotes(repo_path) -> int:
+    """
+    Create local tracking branches for all remote branches.
+    
+    Args:
+        repo_path: Path to the repository
+        
+    Returns:
+        int: Number of local branches created
+    """
+    try:
+        repo = Repo(repo_path)
+        created_count = 0
+        
+        # Get existing local branch names
+        local_branch_names = {branch.name for branch in repo.branches}
+        
+        # Fetch all remote refs first
+        for remote in repo.remotes:
+            try:
+                remote.fetch()
+            except Exception:
+                continue
+                
+            for ref in remote.refs:
+                # Skip HEAD reference
+                if ref.name.endswith('/HEAD'):
+                    continue
+                    
+                # Extract branch name (remove remote prefix like 'origin/')
+                branch_name = ref.name.split('/', 1)[1] if '/' in ref.name else ref.name
+                
+                # Skip if local branch already exists
+                if branch_name in local_branch_names:
+                    continue
+                
+                try:
+                    # Create local branch tracking the remote
+                    repo.create_head(branch_name, ref.commit)
+                    local_branch_names.add(branch_name)
+                    created_count += 1
+                    logger.info(f"Created local branch: {branch_name}")
+                except Exception as e:
+                    logger.warning(f"Failed to create branch {branch_name}: {e}")
+                    
+        return created_count
+    except Exception as e:
+        logger.error(f"Error creating local branches: {e}")
+        return 0
 
 
 def pull_repo(user_id: str, repo_name: str) -> Dict[str, Any]:
