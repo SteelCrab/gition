@@ -241,8 +241,8 @@ async def verify_auth(request: Request):
                 media_type="application/json",
                 content=json.dumps({"status": "error", "authenticated": False, "message": "Auth verification unavailable"}),
             )
-    except Exception as e:
-        logger.error(f"Auth verification failed: {e}")
+    except Exception:
+        logger.exception("Auth verification failed")
         return Response(
             status_code=503,
             media_type="application/json",
