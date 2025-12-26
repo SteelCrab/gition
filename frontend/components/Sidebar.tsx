@@ -45,7 +45,7 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
                     fixed lg:static inset-y-0 left-0 z-[70] bg-[#f7f6f3] lg:bg-transparent
                     w-[280px] lg:w-[240px] notion-sidebar flex flex-col group/sidebar overflow-hidden border-r border-[#efefef]
                     transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none
-                    ${isOpen ? 'translate-x-0' : '-translate-x-full lg:hidden'}
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 `}
             >
                 {/* User Profile / Logout */}
