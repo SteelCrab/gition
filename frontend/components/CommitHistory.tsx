@@ -62,10 +62,14 @@ const CommitHistory = ({ userId, repoName, branchName }: CommitHistoryProps) => 
         setError(null);
         try {
             // Include branch in the API request if available
-            let url = `/api/git/commits?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`;
+            const params = new URLSearchParams({
+                user_id: userId,
+                repo_name: repoName,
+            });
             if (branchName) {
-                url += `&branch=${encodeURIComponent(branchName)}`;
+                params.append('branch', branchName);
             }
+            const url = `/api/git/commits?${params.toString()}`;
             const response = await fetch(url, {
                 credentials: 'include'
             });

@@ -564,7 +564,7 @@ def search_files(
 def get_commits(
     user_id: str,
     repo_name: str,
-    branch: str = None,
+    branch: str | None = None,
     max_count: int = 50
 ) -> Dict[str, Any]:
     """
