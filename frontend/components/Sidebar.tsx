@@ -76,6 +76,7 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
                         <CommitHistory
                             userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                             repoName={selectedRepoName}
+                            branchName={branchName}
                         />
                     </div>
                 )}
