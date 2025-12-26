@@ -87,7 +87,7 @@ const MarkdownRenderer = ({ content, className = '' }: MarkdownRendererProps) =>
                             {children}
                         </pre>
                     ),
-                    code: ({ className, children, ...props }: ComponentPropsWithoutRef<'code'> & { className?: string }) => {
+code: ({ className, children, ...props }: ComponentPropsWithoutRef<'code'>) => {
                         const isInline = !className?.includes('language-');
                         if (isInline) {
                             return (
