@@ -30,7 +30,7 @@ import shutil
 import logging
 from pathlib import Path
 from git import Repo, GitCommandError
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -123,7 +123,8 @@ def clone_repo(
         Repo.clone_from(auth_url, repo_path)
         
         # Create local branches for all remote branches
-        branches_created = create_local_branches_from_remotes(repo_path)
+        # Skip fetch since we just cloned - all refs are up-to-date
+        branches_created = create_local_branches_from_remotes(repo_path, skip_fetch=True)
         logger.info(f"Created {branches_created} local branches from remotes")
         
         return {
@@ -177,7 +178,8 @@ def reclone_repo(
         try:
             shutil.rmtree(repo_path)
             logger.info(f"Deleted existing repository at {repo_path}")
-        except Exception as e:
+        except OSError as e:
+            logger.error(f"Failed to delete repository at {repo_path}: {e}")
             return {
                 "status": "error",
                 "path": None,
@@ -194,12 +196,16 @@ def reclone_repo(
     return result
 
 
-def create_local_branches_from_remotes(repo_path) -> int:
+def create_local_branches_from_remotes(
+    repo_path: Union[str, Path],
+    skip_fetch: bool = False
+) -> int:
     """
     Create local tracking branches for all remote branches.
     
     Args:
         repo_path: Path to the repository
+        skip_fetch: If True, skip fetching remote refs (useful after fresh clone)
         
     Returns:
         int: Number of local branches created
@@ -211,12 +217,14 @@ def create_local_branches_from_remotes(repo_path) -> int:
         # Get existing local branch names
         local_branch_names = {branch.name for branch in repo.branches}
         
-        # Fetch all remote refs first
+        # Iterate over remote refs (fetch only if not skipped)
         for remote in repo.remotes:
-            try:
-                remote.fetch()
-            except Exception:
-                continue
+            if not skip_fetch:
+                try:
+                    remote.fetch()
+                except GitCommandError as fetch_err:
+                    logger.warning(f"Fetch failed for remote {remote.name}: {fetch_err}")
+                    # Continue with cached refs
                 
             for ref in remote.refs:
                 # Skip HEAD reference
@@ -238,12 +246,12 @@ def create_local_branches_from_remotes(repo_path) -> int:
                     local_branch_names.add(branch_name)
                     created_count += 1
                     logger.info(f"Created local branch: {branch_name} (tracking {ref.name})")
-                except Exception as e:
+                except GitCommandError as e:
                     logger.warning(f"Failed to create branch {branch_name}: {e}")
                     
         return created_count
     except Exception as e:
-        logger.error(f"Error creating local branches: {e}")
+        logger.exception(f"Error creating local branches: {e}")
         return 0
 
 
