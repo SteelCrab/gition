@@ -37,18 +37,23 @@ const MainLayout = () => {
     const sendAuditEvent = async (eventType: string, status: 'success' | 'failure' | 'info', metadata: any = {}) => {
         try {
             await fetch('/api/audit/log', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    event_type: eventType,
-                    repo_name: displayRepo,
-                    status,
-                    metadata
-                })
-            });
-        } catch (err) {
-            // Silently fail audit logging to not block user actions, but log for diagnostic purposes
-            console.error('[Diagnostic] Failed to send audit event:', eventType, err);
+                try {
+                    const res = await fetch('/api/audit/log', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            event_type: eventType,
+                            repo_name: displayRepo,
+                            status,
+                            metadata,
+                        }),
+                    });
+
+                    if (!res.ok) {
+                        console.error('[Diagnostic] Audit event rejected:', eventType, res.status);
+                    }
+                } catch (err) {
         }
     };
 
