@@ -38,3 +38,7 @@ coverage/
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+
+# Sphinx docs
+backend/docs/_build/

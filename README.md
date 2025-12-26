@@ -116,6 +116,24 @@ open http://localhost
 
 
 
+## Documentation
+    
+The backend documentation is built using Sphinx.
+
+### Building Docs Locally
+
+1. Install dependencies:
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   ```
+2. Build HTML documentation:
+   ```bash
+   cd docs
+   make html
+   # Output will be in backend/docs/_build/html/
+   ```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
