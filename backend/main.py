@@ -237,11 +237,14 @@ async def verify_auth(request: Request):
                 }
 
             if user_response.status_code in (401,):
-                return Response(
+                resp = Response(
                     status_code=401,
                     media_type="application/json",
                     content=json.dumps({"status": "error", "authenticated": False, "message": "Invalid token"}),
+                    headers={"Cache-Control": "no-store"},
                 )
+                resp.delete_cookie("github_token", path="/")
+                return resp
 
             # Treat rate limit / upstream issues as transient
             return Response(
