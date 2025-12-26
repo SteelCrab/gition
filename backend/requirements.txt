@@ -4,3 +4,5 @@ httpx==0.28.1
 python-dotenv==1.2.1
 GitPython==3.1.45
 requests==2.32.3
+sphinx==7.2.6
+sphinx-rtd-theme==2.0.0
