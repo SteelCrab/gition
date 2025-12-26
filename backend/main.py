@@ -250,31 +250,60 @@ async def verify_auth(request: Request):
 @app.post("/api/audit/log")
 async def log_audit_event(request: Request):
     """
-    Record a structured audit event
+    Record a trusted, structured audit event
+    - Requires authentication
+    - Derives user/timestamp on server
+    - Validates event types and metadata
     """
+    # 1. Authentication Check
+    token = get_token(request)
+    if not token:
+        return Response(status_code=401, content=json.dumps({"status": "error", "message": "Authentication required for auditing"}))
+
     try:
+        # Verify token and get user context
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            user_response = await client.get("https://api.github.com/user", headers={"Authorization": f"Bearer {token}"})
+            if user_response.status_code != 200:
+                return Response(status_code=401, content=json.dumps({"status": "error", "message": "Invalid session"}))
+            user_data = user_response.json()
+            user_id = user_data.get("login")
+
         body = await request.json()
-        event_type = body.get("event_type")
-        repo_name = body.get("repo_name")
-        status = body.get("status", "info")
-        metadata = body.get("metadata", {})
         
-        # In a real app, this would write to a database or centralized log system
-        # For now, we use structured logging to the server console
+        # 2. Validation: Event Type Allowlist
+        ALLOWED_EVENTS = {"COMMIT_INITIATED", "COMMIT_SUCCESS", "COMMIT_FAILURE"}
+        event_type = body.get("event_type")
+        if event_type not in ALLOWED_EVENTS:
+            return Response(status_code=400, content=json.dumps({"status": "error", "message": "Invalid event type"}))
+
+        # 3. Validation: Metadata Filtering
+        # Only allow specific keys and ensure values are strings/primitives
+        ALLOWED_METADATA_KEYS = {"branch", "status", "error", "file_count"}
+        raw_metadata = body.get("metadata", {})
+        metadata = {
+            k: str(v)[:500] # Sanitize/Truncate values
+            for k, v in raw_metadata.items()
+            if k in ALLOWED_METADATA_KEYS
+        }
+
+        # 4. Construct Trusted Log Entry
+        from datetime import datetime, timezone
         log_entry = {
-            "version": "1.0",
+            "version": "1.1",
             "event": event_type,
-            "repo": repo_name,
-            "status": status,
+            "user": user_id, # Derived from verified token
+            "repo": body.get("repo_name")[:100], # Basic truncation
+            "status": body.get("status", "info")[:20],
             "metadata": metadata,
-            "timestamp": body.get("timestamp")
+            "timestamp": datetime.now(timezone.utc).isoformat() # Trusted server time
         }
         
         logger.info(f"AUDIT_EVENT: {json.dumps(log_entry)}")
         return {"status": "success"}
     except Exception as e:
         logger.error(f"Failed to record audit event: {e}")
-        return {"status": "error", "message": "Logging failed"}
+        return Response(status_code=500, content=json.dumps({"status": "error", "message": "Logging failed"}))
 
 
 # ==============================================================================
