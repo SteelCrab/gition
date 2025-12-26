@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, FileText, BookOpen, StickyNote } from 'lucide-react';
 import BranchPage from '../components/BranchPage';
+import MarkdownRenderer from '../components/MarkdownRenderer';
 
 type ViewMode = 'page' | 'readme';
 
@@ -126,6 +127,18 @@ const RepoPage = () => {
             );
         }
 
+        const isMarkdown = filePath?.toLowerCase().endsWith('.md');
+
+        if (isMarkdown && content) {
+            return (
+                <div className="w-full h-full overflow-auto p-8 bg-white">
+                    <div className="max-w-[800px] mx-auto">
+                        <MarkdownRenderer content={content} />
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <textarea
                 value={content || ''}
@@ -180,37 +193,20 @@ const RepoPage = () => {
                             <span className="ml-2 text-[#787774]">Loading...</span>
                         </div>
                     ) : content ? (
-                        <div className="max-w-[800px] mx-auto px-12 sm:px-24 py-16 h-full overflow-y-auto">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 bg-[#37352f] text-white rounded-[6px] flex items-center justify-center font-bold text-[16px]">
-                                    {repoName?.charAt(0).toUpperCase()}
-                                </div>
-                                <div>
-                                    <h1 className="text-[28px] font-bold text-[#37352f]">{repoName}</h1>
-                                </div>
-                            </div>
-                            <div className="border-t border-[#efefef] pt-6">
-                                <div className="prose prose-sm max-w-none">
-                                    <pre className="whitespace-pre-wrap font-sans text-[14px] text-[#37352f] leading-relaxed">
-                                        {content}
-                                    </pre>
-                                </div>
+                        <div className="h-full overflow-auto bg-white p-8">
+                            <div className="max-w-[800px] mx-auto">
+                                <MarkdownRenderer content={content} />
                             </div>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-center h-full text-[#787774]">
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-[#f7f6f3] rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <FileText size={28} className="text-[#787774]" />
-                                </div>
-                                <p className="text-[16px] font-medium">{repoName}</p>
-                                <p className="text-[13px] mt-1">No README.md found</p>
-                            </div>
+                        <div className="flex flex-col items-center justify-center h-full text-[#787774]">
+                            <FileText size={48} strokeWidth={1} className="mb-4 opacity-50" />
+                            <p>No README found</p>
                         </div>
                     )
                 )}
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
