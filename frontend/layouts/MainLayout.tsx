@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { Outlet, useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { Menu } from 'lucide-react';
 import BranchSelector from '../components/BranchSelector';
-import Dashboard from '../pages/Dashboard';
-import RepoPage from '../pages/RepoPage';
 
 const MainLayout = () => {
     // State
@@ -179,12 +177,7 @@ const MainLayout = () => {
                 </header>
 
                 <div className="flex-1 overflow-y-auto">
-                    <Routes>
-                        <Route index element={<Dashboard />} />
-                        <Route path="repo/:owner/:repoName" element={<RepoPage />} />
-                        <Route path="repo/:owner/:repoName/:branchName" element={<RepoPage />} />
-                        <Route path="repo/:owner/:repoName/:branchName/*" element={<RepoPage />} />
-                    </Routes>
+                    <Outlet />
                 </div>
 
                 {/* Commit Modal */}

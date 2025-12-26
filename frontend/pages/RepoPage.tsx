@@ -94,7 +94,7 @@ const RepoPage = () => {
                 <div className="mb-4 text-red-500 font-medium">Unable to load content</div>
                 <p className="text-[13px] max-w-[300px] mb-6">{error}</p>
                 <button
-                    onClick={() => window.location.reload()}
+                    onClick={() => navigate(0)}
                     className="px-4 py-1.5 bg-black text-white text-[13px] rounded-[4px] hover:bg-[#37352f] transition-all"
                 >
                     Try again
