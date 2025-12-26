@@ -643,7 +643,7 @@ async def api_search_files(
 async def api_get_commits(
     user_id: str,
     repo_name: str,
-    branch: str = None,
+    branch: str | None = None,
     max_count: int = 50
 ):
     """
