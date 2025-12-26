@@ -52,6 +52,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
                     credentials: 'include',
                 });
 
+                if (response.status === 503) {
+                    // Service temporarily unavailable - keep current state and retry
+                    console.warn('Auth service temporarily unavailable');
+                    setIsAuthenticated(false);
+                    setIsVerifying(false);
+                    return;
+                }
+
                 if (response.ok) {
                     const data = await response.json();
                     const isValid = data?.status === 'success' && data?.authenticated === true;
