@@ -287,9 +287,12 @@ async def log_audit_event(request: Request):
         # 3. Validation: Metadata Filtering
         # Only allow specific keys and ensure values are strings/primitives
         ALLOWED_METADATA_KEYS = {"branch", "status", "error", "file_count"}
-        raw_metadata = body.get("metadata", {})
+        raw_metadata = body.get("metadata") or {}
+        if not isinstance(raw_metadata, dict):
+            raw_metadata = {}
+
         metadata = {
-            k: str(v)[:500] # Sanitize/Truncate values
+            k: str(v)[:500]  # Sanitize/Truncate values
             for k, v in raw_metadata.items()
             if k in ALLOWED_METADATA_KEYS
         }
