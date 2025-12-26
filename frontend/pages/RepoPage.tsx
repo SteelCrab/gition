@@ -14,50 +14,26 @@ const RepoPage = () => {
         const fetchData = async () => {
             if (!repoName || !owner) return;
 
+            // Redirect if branch is missing
+            if (!branchName) {
+                navigate(`/repo/${owner}/${repoName}/main`, { replace: true });
+                return;
+            }
+
             setLoading(true);
             setError(null);
             setContent(null);
 
             const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || owner;
-
-            // Logic: If branchName is not in URL, we default to 'main'.
-            // However, it's better UX to redirect to the explicit branch URL so the user knows where they are.
-            if (!branchName) {
-                // Check if we should enforce 'main' or find current.
-                // For simplicity, let's force 'main' and redirect.
-                // Or better: Redirect to 'main' immediately if missing.
-                // But we can't do that inside async easily without causing flicker?
-                // Actually, let's just assume 'main' for operations but NOT redirect to avoid loop if main invalid?
-                // No, sticking to: Use branchName if present, else 'main'.
-            }
-
-            const targetBranch = branchName || 'main';
+            const targetBranch = branchName || 'main'; // Should be present due to redirect above
 
             try {
-                // 1. Checkout Branch
-                // We always attempt checkout to ensure backend state matches UI expectation.
-                try {
-                    const checkoutRes = await fetch('/api/git/checkout', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            user_id: userId,
-                            repo_name: repoName,
-                            branch_name: targetBranch
-                        })
-                    });
-                    const checkoutData = await checkoutRes.json();
-                    if (checkoutData.status === 'error') {
-                        console.warn('Checkout failed or branch not found:', checkoutData.message);
-                        // If checkout failed (e.g. branch doesn't exist), we might error out?
-                        // But maybe we are viewing a commit SHA or detached head?
-                        // For now, proceed, but log warning.
-                    }
-                } catch (e) {
-                    console.error('Checkout API error:', e);
-                }
+                // Fetch Content using stateless API (checkout is handled by backend or implied)
+                // Note: Modified backend to accept 'branch' param in /api/git/file if not already supported.
+                // Assuming backend /api/git/file supports `branch` or `ref` param. 
+                // Based on previous code, we were adding &branch=${branch} but then removed it.
+                // Now we RE-ADD it and REMOVE the checkout call.
 
-                // 2. Fetch Content
                 let targetPath = filePath;
                 let fetchReadme = false;
 
@@ -69,8 +45,8 @@ const RepoPage = () => {
                     const readmeFiles = ['README.md', 'readme.md', 'README.MD', 'Readme.md'];
                     for (const readmeFile of readmeFiles) {
                         try {
-                            // We don't need branch param if we checked out, but keeping for reference
-                            const response = await fetch(`/api/git/file?user_id=${userId}&repo_name=${repoName}&path=${encodeURIComponent(readmeFile)}`);
+                            // Stateless call: pass branch explicitly
+                            const response = await fetch(`/api/git/file?user_id=${userId}&repo_name=${repoName}&path=${encodeURIComponent(readmeFile)}&branch=${targetBranch}`);
                             const data = await response.json();
                             if (data.status === 'success' && !data.binary && data.content) {
                                 setContent(data.content);
@@ -84,7 +60,7 @@ const RepoPage = () => {
                     setIsReadme(false);
                 } else if (targetPath) {
                     // Load specific file
-                    const response = await fetch(`/api/git/file?user_id=${userId}&repo_name=${repoName}&path=${encodeURIComponent(targetPath)}`);
+                    const response = await fetch(`/api/git/file?user_id=${userId}&repo_name=${repoName}&path=${encodeURIComponent(targetPath)}&branch=${targetBranch}`);
                     const data = await response.json();
                     if (data.status === 'success') {
                         if (data.binary) {
@@ -106,7 +82,7 @@ const RepoPage = () => {
         };
 
         fetchData();
-    }, [owner, repoName, branchName, filePath]);
+    }, [owner, repoName, branchName, filePath, navigate]);
 
     if (loading) {
         return (

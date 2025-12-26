@@ -87,12 +87,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                             <div className="px-2 py-1 text-[11px] font-semibold text-[#787774] uppercase tracking-wider mb-2">Repositories</div>
                             <RepoList onRepoSelect={(repo) => {
                                 // Navigate to the repo URL
-                                // Assuming owner is current user for now if we don't have it in repo object clearly?
-                                // Repository interface in App.tsx didn't show owner field, but typically it's part of full_name or user login.
-                                // Let's guess user_id from localStorage for now.
                                 const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
                                 navigate(`/repo/${userId}/${repo.name}`);
                                 setSidebarTab('files');
+                                if (window.innerWidth < 1024) onClose();
                             }} />
                         </>
                     )}
@@ -100,14 +98,15 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                         <FileBrowser
                             userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                             repoName={selectedRepoName}
-                            onFileSelect={(path, name) => {
-                                // Navigate to file URL
-                                // Default branch? We need to know the current branch.
-                                // If branch param is missing, we might assume 'main' or wait for redirect?
-                                // We can use the current branch from params if available.
-                                const currentBranch = branchName || 'main'; // This fallback is risky if main isn't default
-                                const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
-                                navigate(`/repo/${userId}/${selectedRepoName}/${currentBranch}/${path}`);
+                            onFileSelect={(path, _name) => {
+                                // Navigate to file URL only if we have a branch from the URL
+                                if (branchName) {
+                                    const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
+                                    navigate(`/repo/${userId}/${selectedRepoName}/${branchName}/${path}`);
+                                    if (window.innerWidth < 1024) onClose();
+                                } else {
+                                    console.warn("Cannot navigate to file: Branch name missing from URL.");
+                                }
                             }}
                             onBack={() => {
                                 setSidebarTab('repos');
