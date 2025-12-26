@@ -62,7 +62,19 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
         if (!userId || !repoName) return;
         setLoading(true);
         try {
-            const response = await fetch(`/api/git/branches?user_id=${userId}&repo_name=${repoName}`);
+            const response = await fetch(`/api/git/branches?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`, {
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch branches: ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Server returned non-JSON response');
+            }
+
             const data = await response.json();
             if (data.status === 'success') {
                 const branchList = (data.branches || []) as Branch[];
@@ -81,6 +93,8 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
                         setSelectedBranch(branchList[0].name);
                     }
                 }
+            } else {
+                throw new Error(data.message || 'Unknown error');
             }
         } catch (_err) {
             console.error('Failed to fetch branches:', _err);
@@ -110,12 +124,27 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
             const response = await fetch('/api/git/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     user_id: userId,
                     repo_name: repoName,
                     branch_name: branch.name
                 })
             });
+
+            if (!response.ok) {
+                // Log full details internally for debugging
+                const errorText = await response.text();
+                console.error(`[Internal] Checkout failed (${response.status}):`, errorText);
+                // Show user-friendly message without exposing internals
+                throw new Error('Failed to switch branch. Please try again later.');
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.error('[Internal] Server returned non-JSON response');
+                throw new Error('Unexpected server response. Please try again.');
+            }
 
             const data = await response.json();
 
@@ -128,12 +157,14 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
                 // Refresh branch list to update current badge
                 await fetchBranches();
             } else {
-                console.error('Checkout failed:', data.message);
-                alert(`Failed to switch to branch: ${data.message}`);
+                // Log the actual message for debugging
+                console.error('[Internal] Checkout failed:', data.message);
+                throw new Error('Failed to switch branch. Please try again.');
             }
         } catch (err) {
             console.error('Checkout error:', err);
-            alert('Failed to switch branch. Please try again.');
+            // Only show sanitized messages to user
+            alert(err instanceof Error ? err.message : 'Failed to switch branch. Please try again.');
         } finally {
             setSwitching(false);
         }

@@ -19,12 +19,20 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
     const [sidebarTab, setSidebarTab] = useState<'repos' | 'files' | 'issues' | 'search'>('repos');
 
     const userEmail = localStorage.getItem('userEmail') || 'guest@gition.com';
-    const isMobileView = isMobile ?? (window.innerWidth < 1024);
+    const isMobileView = isMobile ?? (typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
 
-    const handleLogout = () => {
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('userEmail');
-        navigate('/login');
+    const handleLogout = async () => {
+        try {
+            await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+        } catch {
+            // Best-effort logout; still clear client state
+        } finally {
+            localStorage.removeItem('isAuthenticated');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userLogin');
+            localStorage.removeItem('userId');
+            navigate('/login', { replace: true });
+        }
     };
 
     // Derived state from URL
@@ -45,7 +53,7 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
                     fixed lg:static inset-y-0 left-0 z-[70] bg-[#f7f6f3] lg:bg-transparent
                     w-[280px] lg:w-[240px] notion-sidebar flex flex-col group/sidebar overflow-hidden border-r border-[#efefef]
                     transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none
-                    ${isOpen ? 'translate-x-0' : '-translate-x-full lg:hidden'}
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 `}
             >
                 {/* User Profile / Logout */}
@@ -65,8 +73,6 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
                 {/* Commit History (only if repo selected) */}
                 {selectedRepoName && (
                     <div className="mt-2 mx-2 border border-[#efefef] rounded-[6px] bg-[#fafafa] max-h-[300px] flex flex-col shrink-0">
-                        {/* Pass basic props, CommitHistory might need update to not rely on props if it can read URL? 
-                             But keeping props is safer for now. */}
                         <CommitHistory
                             userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                             repoName={selectedRepoName}
@@ -90,7 +96,9 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
                             <RepoList onRepoSelect={(repo) => {
                                 // Navigate to the repo URL
                                 const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
-                                navigate(`/repo/${userId}/${repo.name}`);
+                                const safeUserId = encodeURIComponent(userId);
+                                const safeRepo = encodeURIComponent(repo.name);
+                                navigate(`/repo/${safeUserId}/${safeRepo}`);
                                 setSidebarTab('files');
                                 if (isMobileView) onClose();
                             }} />
@@ -101,14 +109,19 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
                             userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                             repoName={selectedRepoName}
                             onFileSelect={(path, _name) => {
-                                // Navigate to file URL only if we have a branch from the URL
-                                if (branchName) {
-                                    const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
-                                    navigate(`/repo/${userId}/${selectedRepoName}/${branchName}/${path}`);
-                                    if (isMobileView) onClose();
-                                } else {
-                                    console.warn("Cannot navigate to file: Branch name missing from URL.");
-                                }
+                                const effectiveBranch = branchName || 'main';
+                                const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
+                                const safeUserId = encodeURIComponent(userId);
+                                const safeRepo = encodeURIComponent(selectedRepoName);
+                                const safeBranch = encodeURIComponent(effectiveBranch);
+                                const safePath = path
+                                    .split('/')
+                                    .filter(Boolean)
+                                    .map(encodeURIComponent)
+                                    .join('/');
+
+                                navigate(`/repo/${safeUserId}/${safeRepo}/${safeBranch}/${safePath}`);
+                                if (isMobileView) onClose();
                             }}
                             onBack={() => {
                                 setSidebarTab('repos');
@@ -128,9 +141,18 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
                             repoName={selectedRepoName || undefined}
                             onFileSelect={(path, _line) => {
                                 if (!selectedRepoName) return;
-                                const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
+                                const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
                                 const currentBranch = branchName || 'main';
-                                navigate(`/repo/${userId}/${selectedRepoName}/${currentBranch}/${path}`);
+                                const safeUserId = encodeURIComponent(userId);
+                                const safeRepo = encodeURIComponent(selectedRepoName);
+                                const safeBranch = encodeURIComponent(currentBranch);
+                                const safePath = path
+                                    .split('/')
+                                    .filter(Boolean)
+                                    .map(encodeURIComponent)
+                                    .join('/');
+
+                                navigate(`/repo/${safeUserId}/${safeRepo}/${safeBranch}/${safePath}`);
                             }}
                         />
                     )}
