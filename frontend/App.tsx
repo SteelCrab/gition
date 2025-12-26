@@ -48,10 +48,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
         const verifySession = async () => {
             try {
                 // Perform server-side session validation
-                const response = await fetch('/api/auth/verify');
+                const response = await fetch('/api/auth/verify', {
+                    credentials: 'include',
+                });
+
                 if (response.ok) {
                     const data = await response.json();
-                    setIsAuthenticated(data.status === 'success');
+                    setIsAuthenticated(data?.status === 'success' && data?.authenticated === true);
                 } else {
                     setIsAuthenticated(false);
                     // Clear insecure local flag if server says unauthorized
