@@ -256,7 +256,7 @@ async def get_repos(request: Request):
 # ==============================================================================
 # Import actual Git operation functions from git_ops.py
 from git_ops import (
-    clone_repo, pull_repo, list_files, read_file,
+    clone_repo, reclone_repo, pull_repo, list_files, read_file,
     is_cloned, delete_repo, search_files, get_commits,
     get_branches, checkout_branch
 )
@@ -287,6 +287,34 @@ async def api_clone_repo(request: Request):
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(clone_repo, clone_url, access_token, str(user_id), repo_name)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/git/reclone")
+async def api_reclone_repo(request: Request):
+    """
+    Delete existing repository and clone fresh.
+    Useful for fixing corrupted clones or resetting local changes.
+    
+    Body (JSON):
+        - clone_url: Repository HTTPS clone URL
+        - access_token: GitHub access token
+        - user_id: User ID
+        - repo_name: Repository name
+    """
+    try:
+        body = await request.json()
+        clone_url = body.get("clone_url")
+        access_token = body.get("access_token")
+        user_id = body.get("user_id")
+        repo_name = body.get("repo_name")
+        
+        if not all([clone_url, access_token, user_id, repo_name]):
+            return {"status": "error", "message": "Missing required fields"}
+        
+        result = await asyncio.to_thread(reclone_repo, clone_url, access_token, str(user_id), repo_name)
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}

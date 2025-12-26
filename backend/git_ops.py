@@ -100,6 +100,7 @@ def clone_repo(
             - status: "success" | "exists" | "error"
             - path: Cloned path (on success)
             - message: Status message
+            - branches_created: Number of local branches created (on success)
     """
     repo_path = get_repo_path(user_id, repo_name)
     
@@ -128,7 +129,8 @@ def clone_repo(
         return {
             "status": "success",
             "path": str(repo_path),
-            "message": f"Repository cloned successfully ({branches_created} branches created)"
+            "message": f"Repository cloned successfully ({branches_created} branches created)",
+            "branches_created": branches_created
         }
     except GitCommandError as e:
         # Clean up partial clone on failure
@@ -142,6 +144,54 @@ def clone_repo(
             "path": None,
             "message": f"Clone failed: {error_msg}"
         }
+
+
+def reclone_repo(
+    clone_url: str,
+    access_token: str,
+    user_id: str,
+    repo_name: str
+) -> Dict[str, Any]:
+    """
+    Delete existing repository and clone fresh.
+    
+    Useful when clone is corrupted or needs to be reset.
+    
+    Args:
+        clone_url: GitHub HTTPS clone URL
+        access_token: GitHub OAuth access token
+        user_id: User's GitHub ID
+        repo_name: Repository name
+        
+    Returns:
+        Dict:
+            - status: "success" | "error"
+            - path: Cloned path (on success)
+            - message: Status message
+            - branches_created: Number of local branches created (on success)
+    """
+    repo_path = get_repo_path(user_id, repo_name)
+    
+    # Delete existing repository if it exists
+    if repo_path.exists():
+        try:
+            shutil.rmtree(repo_path)
+            logger.info(f"Deleted existing repository at {repo_path}")
+        except Exception as e:
+            return {
+                "status": "error",
+                "path": None,
+                "message": f"Failed to delete existing repository: {str(e)}"
+            }
+    
+    # Clone fresh
+    result = clone_repo(clone_url, access_token, user_id, repo_name)
+    
+    # Update message to indicate reclone
+    if result["status"] == "success":
+        result["message"] = f"Repository re-cloned successfully ({result.get('branches_created', 0)} branches created)"
+    
+    return result
 
 
 def create_local_branches_from_remotes(repo_path) -> int:
