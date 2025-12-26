@@ -202,7 +202,11 @@ async def verify_auth(request: Request):
     """
     token = get_token(request)
     if not token:
-        return Response(status_code=401, content=json.dumps({"status": "error", "message": "Not authenticated"}))
+        return Response(
+            status_code=401,
+            media_type="application/json",
+            content=json.dumps({"status": "error", "authenticated": False, "message": "Not authenticated"}),
+        )
     
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -225,10 +229,18 @@ async def verify_auth(request: Request):
                     }
                 }
             else:
-                return Response(status_code=401, content=json.dumps({"status": "error", "message": "Invalid token"}))
+                return Response(
+                    status_code=401,
+                    media_type="application/json",
+                    content=json.dumps({"status": "error", "authenticated": False, "message": "Invalid token"}),
+                )
     except Exception as e:
         logger.error(f"Auth verification failed: {e}")
-        return Response(status_code=500, content=json.dumps({"status": "error", "message": "Verification service error"}))
+        return Response(
+            status_code=500,
+            media_type="application/json",
+            content=json.dumps({"status": "error", "authenticated": False, "message": "Verification service error"}),
+        )
 
 
 # ==============================================================================
