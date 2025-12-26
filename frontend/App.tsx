@@ -155,12 +155,12 @@ const MainEditor = () => {
                     const data = await response.json();
                     if (data.status === 'success' && !data.binary && data.content) {
                         setReadmeContent(data.content);
-                        setLoadingReadme(false);
                         return;
                     }
                 }
                 setReadmeContent(null);
-            } catch (_err) {
+            } catch (err) {
+                console.error('Failed to load README:', err);
                 setReadmeContent(null);
             } finally {
                 setLoadingReadme(false);
