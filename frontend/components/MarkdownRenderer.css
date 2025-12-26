@@ -1,6 +1,5 @@
-/* MarkdownRenderer.css */
+@import "tailwindcss";
 
-/* MarkdownRenderer.css */
 
 .markdown-body {
   @apply text-[var(--color-text-main)] leading-relaxed;
