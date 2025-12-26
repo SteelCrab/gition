@@ -564,6 +564,7 @@ def search_files(
 def get_commits(
     user_id: str,
     repo_name: str,
+    branch: str = None,
     max_count: int = 50
 ) -> Dict[str, Any]:
     """
@@ -572,6 +573,7 @@ def get_commits(
     Args:
         user_id: User's GitHub ID
         repo_name: Repository name
+        branch: Branch name (optional, defaults to current branch)
         max_count: Maximum commit count
         
     Returns:
@@ -588,7 +590,10 @@ def get_commits(
         repo = Repo(repo_path)
         commits = []
         
-        for commit in repo.iter_commits(max_count=max_count):
+        # Use specified branch or current HEAD
+        rev = branch if branch else None
+        
+        for commit in repo.iter_commits(rev=rev, max_count=max_count):
             commits.append({
                 "sha": commit.hexsha[:7],           # Abbreviated SHA
                 "full_sha": commit.hexsha,          # Full SHA
@@ -606,6 +611,7 @@ def get_commits(
         return {
             "status": "success",
             "total": len(commits),
+            "branch": branch or repo.active_branch.name,
             "commits": commits
         }
     except Exception as e:

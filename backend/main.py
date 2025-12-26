@@ -643,6 +643,7 @@ async def api_search_files(
 async def api_get_commits(
     user_id: str,
     repo_name: str,
+    branch: str = None,
     max_count: int = 50
 ):
     """
@@ -651,10 +652,11 @@ async def api_get_commits(
     Query Params:
         - user_id: User ID
         - repo_name: Repository name
+        - branch: Branch name (optional, defaults to current branch)
         - max_count: Maximum commit count (max: 100)
     """
     # Performance: Use to_thread for blocking Git operations
-    result = await asyncio.to_thread(get_commits, user_id, repo_name, min(max_count, 100))
+    result = await asyncio.to_thread(get_commits, user_id, repo_name, branch, min(max_count, 100))
     return result
 
 
