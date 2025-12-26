@@ -96,6 +96,7 @@ const MainEditor = () => {
     const [_activeTab, _setActiveTab] = useState('pipeline');
     const [showSlashMenu, setShowSlashMenu] = useState(false);
     const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
+    const [commitMessage, setCommitMessage] = useState('');
     const [isCloning, setIsCloning] = useState(false);
     const [_repoFiles, setRepoFiles] = useState<string[]>([]);
     const [sidebarTab, setSidebarTab] = useState('repos'); // repos, files, search
@@ -536,10 +537,26 @@ const MainEditor = () => {
                     <div className="fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-[100]" onClick={() => setIsCommitModalOpen(false)}>
                         <div className="bg-white w-[400px] rounded-[6px] shadow-2xl p-6" onClick={e => e.stopPropagation()}>
                             <h2 className="text-[18px] font-bold mb-4">Commit Changes</h2>
-                            <textarea className="w-full h-32 p-3 bg-[#f7f6f3] rounded-[6px] text-[14px] outline-none mb-4" placeholder="What did you work on?" autoFocus />
+                            <textarea
+                                className="w-full h-32 p-3 bg-[#f7f6f3] rounded-[6px] text-[14px] outline-none mb-4"
+                                placeholder="What did you work on?"
+                                autoFocus
+                                value={commitMessage}
+                                onChange={(e) => setCommitMessage(e.target.value)}
+                            />
                             <div className="flex justify-end gap-2">
                                 <button onClick={() => setIsCommitModalOpen(false)} className="px-3 py-1 text-[13px] hover:bg-black/5 rounded">Cancel</button>
-                                <button onClick={() => setIsCommitModalOpen(false)} className="px-3 py-1 bg-[#2383e2] text-white rounded-[3px] font-medium text-[13px]">Push & Commit</button>
+                                <button
+                                    onClick={() => {
+                                        console.log('Committing with message:', commitMessage);
+                                        // TODO: Implement actual commit API call here
+                                        setIsCommitModalOpen(false);
+                                        setCommitMessage('');
+                                    }}
+                                    className="px-3 py-1 bg-[#2383e2] text-white rounded-[3px] font-medium text-[13px]"
+                                >
+                                    Push & Commit
+                                </button>
                             </div>
                         </div>
                     </div>
