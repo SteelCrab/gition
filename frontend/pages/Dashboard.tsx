@@ -72,11 +72,18 @@ const Dashboard = () => {
             <p className="text-[18px] text-[#787774] mb-8 font-medium">Developer's All-in-One Collaboration Platform</p>
 
             <div className="space-y-1">
-                {blocks.map(block => (
-                    block.type === 'text' && block.content !== undefined ? <TextBlock key={block.id} id={block.id} content={block.content} onUpdate={handleUpdateBlock} /> :
-                        block.type === 'code' && block.content !== undefined ? <CodeBlock key={block.id} id={block.id} content={block.content} language={block.language || 'text'} filename={block.filename || ''} onUpdate={handleUpdateBlock} /> :
-                            block.type === 'pipeline' && block.label !== undefined ? <PipelineBlock key={block.id} label={block.label} /> : null
-                ))}
+{blocks.map(block => {
+    switch (block.type) {
+        case 'text':
+            return block.content !== undefined ? <TextBlock key={block.id} id={block.id} content={block.content} onUpdate={handleUpdateBlock} /> : null;
+        case 'code':
+            return block.content !== undefined ? <CodeBlock key={block.id} id={block.id} content={block.content} language={block.language || 'text'} filename={block.filename || ''} onUpdate={handleUpdateBlock} /> : null;
+        case 'pipeline':
+            return block.label !== undefined ? <PipelineBlock key={block.id} label={block.label} /> : null;
+        default:
+            return null;
+    }
+})}
             </div>
 
             <div className="mt-12 relative group">
