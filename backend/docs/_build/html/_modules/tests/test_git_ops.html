@@ -1,0 +1,492 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ko" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests.test_git_ops &mdash; Gition Backend 0.1.0 문서</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d6a8a7ef"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/translations.js?v=afa94a99"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="색인" href="../../genindex.html" />
+    <link rel="search" title="검색" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Gition Backend
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">목차:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">backend</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Gition Backend</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">모듈 코드</a></li>
+      <li class="breadcrumb-item active">tests.test_git_ops</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>tests.test_git_ops의 소스 코드</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Git Operations Tests</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">unittest.mock</span><span class="w"> </span><span class="kn">import</span> <span class="n">patch</span><span class="p">,</span> <span class="n">MagicMock</span><span class="p">,</span> <span class="n">mock_open</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+
+<span class="c1"># Ensure backend directory is in path</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))))</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">git_ops</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_repo_path</span><span class="p">,</span>
+    <span class="n">clone_repo</span><span class="p">,</span>
+    <span class="n">pull_repo</span><span class="p">,</span>
+    <span class="n">list_files</span><span class="p">,</span>
+    <span class="n">read_file</span><span class="p">,</span>
+    <span class="n">is_cloned</span><span class="p">,</span>
+    <span class="n">delete_repo</span><span class="p">,</span>
+    <span class="n">search_files</span><span class="p">,</span>
+    <span class="n">get_commits</span><span class="p">,</span>
+    <span class="n">get_branches</span><span class="p">,</span>
+    <span class="n">checkout_branch</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="TestGetRepoPath">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestGetRepoPath">[문서]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestGetRepoPath</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test get_repo_path function&quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="TestGetRepoPath.test_returns_path">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestGetRepoPath.test_returns_path">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.REPOS_BASE_PATH&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/repos&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_returns_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test that get_repo_path returns a Path object&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">get_repo_path</span><span class="p">(</span><span class="s2">&quot;user123&quot;</span><span class="p">,</span> <span class="s2">&quot;my-repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">Path</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="TestGetRepoPath.test_path_contains_user_and_repo">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestGetRepoPath.test_path_contains_user_and_repo">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.REPOS_BASE_PATH&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/repos&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_path_contains_user_and_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test path includes user_id and repo_name&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">get_repo_path</span><span class="p">(</span><span class="s2">&quot;user123&quot;</span><span class="p">,</span> <span class="s2">&quot;my-repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="s2">&quot;user123&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="s2">&quot;my-repo&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TestCloneRepo">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestCloneRepo">[문서]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestCloneRepo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test clone_repo function&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TestCloneRepo.test_already_cloned">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestCloneRepo.test_already_cloned">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_already_cloned</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test returns exists status if already cloned&quot;&quot;&quot;</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">side_effect</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="kc">True</span>
+        <span class="c1"># Mock (repo_path / &quot;.git&quot;).exists()</span>
+        <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.__truediv__&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">mock_div</span><span class="p">:</span>
+            <span class="n">mock_dot_git</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
+            <span class="n">mock_dot_git</span><span class="o">.</span><span class="n">exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">mock_div</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="n">mock_dot_git</span>
+            
+            <span class="n">result</span> <span class="o">=</span> <span class="n">clone_repo</span><span class="p">(</span><span class="s2">&quot;https://github.com/u/r&quot;</span><span class="p">,</span> <span class="s2">&quot;token&quot;</span><span class="p">,</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;exists&quot;</span></div>
+
+
+<div class="viewcode-block" id="TestCloneRepo.test_successful_clone">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestCloneRepo.test_successful_clone">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Repo.clone_from&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.mkdir&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_successful_clone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">,</span> <span class="n">mock_mkdir</span><span class="p">,</span> <span class="n">mock_clone</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test successful repository clone&quot;&quot;&quot;</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">False</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="n">clone_repo</span><span class="p">(</span><span class="s2">&quot;https://github.com/u/r&quot;</span><span class="p">,</span> <span class="s2">&quot;token&quot;</span><span class="p">,</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+        <span class="n">mock_clone</span><span class="o">.</span><span class="n">assert_called_once</span><span class="p">()</span>
+        <span class="c1"># Verify token injection</span>
+        <span class="k">assert</span> <span class="s2">&quot;https://token@github.com/u/r&quot;</span> <span class="ow">in</span> <span class="n">mock_clone</span><span class="o">.</span><span class="n">call_args</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="TestCloneRepo.test_clone_failure_cleanup">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestCloneRepo.test_clone_failure_cleanup">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Repo.clone_from&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.shutil.rmtree&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.mkdir&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_clone_failure_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">,</span> <span class="n">mock_mkdir</span><span class="p">,</span> <span class="n">mock_rmtree</span><span class="p">,</span> <span class="n">mock_clone</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test cleanup after failed clone&quot;&quot;&quot;</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">side_effect</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]</span> <span class="c1"># Not exists initially, exists for cleanup</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">git</span><span class="w"> </span><span class="kn">import</span> <span class="n">GitCommandError</span>
+        <span class="n">mock_clone</span><span class="o">.</span><span class="n">side_effect</span> <span class="o">=</span> <span class="n">GitCommandError</span><span class="p">(</span><span class="s2">&quot;clone&quot;</span><span class="p">,</span> <span class="s2">&quot;failed&quot;</span><span class="p">)</span>
+        
+        <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">&quot;git_ops.REPOS_BASE_PATH&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/repos&quot;</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">clone_repo</span><span class="p">(</span><span class="s2">&quot;https://github.com/u/r&quot;</span><span class="p">,</span> <span class="s2">&quot;token&quot;</span><span class="p">,</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span>
+            <span class="n">mock_rmtree</span><span class="o">.</span><span class="n">assert_called_once</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TestPullRepo">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestPullRepo">[문서]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestPullRepo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test pull_repo function&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TestPullRepo.test_error_not_cloned">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestPullRepo.test_error_not_cloned">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_error_not_cloned</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">pull_repo</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span></div>
+
+
+<div class="viewcode-block" id="TestPullRepo.test_successful_pull">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestPullRepo.test_successful_pull">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Repo&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_successful_pull</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">,</span> <span class="n">mock_repo_class</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">mock_repo</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
+        <span class="n">mock_repo_class</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="n">mock_repo</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="n">pull_repo</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+        <span class="n">mock_repo</span><span class="o">.</span><span class="n">remotes</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">pull</span><span class="o">.</span><span class="n">assert_called_once</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TestListFiles">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestListFiles">[문서]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestListFiles</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test list_files function&quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="TestListFiles.test_error_for_missing_repo">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestListFiles.test_error_for_missing_repo">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_error_for_missing_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">list_files</span><span class="p">(</span><span class="s2">&quot;nonexistent_user&quot;</span><span class="p">,</span> <span class="s2">&quot;nonexistent_repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span></div>
+
+    
+<div class="viewcode-block" id="TestListFiles.test_list_success">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestListFiles.test_list_success">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.iterdir&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_list_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_iterdir</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="c1"># Mock directory entries</span>
+        <span class="n">file1</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">Path</span><span class="p">)</span>
+        <span class="n">file1</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;file1.txt&quot;</span>
+        <span class="n">file1</span><span class="o">.</span><span class="n">is_dir</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">file1</span><span class="o">.</span><span class="n">is_file</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">file1</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="n">file1</span><span class="o">.</span><span class="n">relative_to</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="s2">&quot;file1.txt&quot;</span>
+        
+        <span class="n">dir1</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">Path</span><span class="p">)</span>
+        <span class="n">dir1</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;dir1&quot;</span>
+        <span class="n">dir1</span><span class="o">.</span><span class="n">is_dir</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">dir1</span><span class="o">.</span><span class="n">is_file</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">dir1</span><span class="o">.</span><span class="n">relative_to</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="s2">&quot;dir1&quot;</span>
+        
+        <span class="n">mock_iterdir</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">[</span><span class="n">file1</span><span class="p">,</span> <span class="n">dir1</span><span class="p">]</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="n">list_files</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;files&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;files&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;directory&quot;</span> <span class="c1"># Sorted</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TestReadFile">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestReadFile">[문서]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestReadFile</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test read_file function&quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="TestReadFile.test_error_for_missing_repo">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestReadFile.test_error_for_missing_repo">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_error_for_missing_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">read_file</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="s2">&quot;file.txt&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span></div>
+
+
+<div class="viewcode-block" id="TestReadFile.test_read_text_success">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestReadFile.test_read_text_success">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.stat&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.read_text&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.is_file&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_read_text_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">,</span> <span class="n">mock_is_file</span><span class="p">,</span> <span class="n">mock_read_text</span><span class="p">,</span> <span class="n">mock_stat</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">mock_is_file</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">mock_read_text</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="s2">&quot;hello world&quot;</span>
+        <span class="n">mock_stat</span><span class="o">.</span><span class="n">return_value</span><span class="o">.</span><span class="n">st_size</span> <span class="o">=</span> <span class="mi">11</span>
+        
+        <span class="c1"># Mock suffix for binary check</span>
+        <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.suffix&quot;</span><span class="p">,</span> <span class="s2">&quot;.txt&quot;</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">read_file</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="s2">&quot;file.txt&quot;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+            <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;hello world&quot;</span>
+            <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;binary&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">False</span>
+            <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">11</span></div>
+
+
+<div class="viewcode-block" id="TestReadFile.test_read_binary_by_extension">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestReadFile.test_read_binary_by_extension">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.is_file&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_read_binary_by_extension</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">,</span> <span class="n">mock_is_file</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">mock_is_file</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.suffix&quot;</span><span class="p">,</span> <span class="s2">&quot;.png&quot;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.stat&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">mock_stat</span><span class="p">:</span>
+                <span class="n">mock_stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">=</span> <span class="mi">1024</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">read_file</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="s2">&quot;image.png&quot;</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+                <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;binary&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span>
+                <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TestDeleteRepo">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestDeleteRepo">[문서]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestDeleteRepo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test delete_repo function&quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="TestDeleteRepo.test_delete_success">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestDeleteRepo.test_delete_success">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.shutil.rmtree&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_delete_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">,</span> <span class="n">mock_rmtree</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">delete_repo</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+        <span class="n">mock_rmtree</span><span class="o">.</span><span class="n">assert_called_once</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="TestDeleteRepo.test_delete_missing">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestDeleteRepo.test_delete_missing">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_delete_missing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">delete_repo</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;error&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TestSearchFiles">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestSearchFiles">[문서]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestSearchFiles</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test search_files function&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TestSearchFiles.test_search_filename_match">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestSearchFiles.test_search_filename_match">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.rglob&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_search_filename_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">,</span> <span class="n">mock_rglob</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        
+        <span class="n">file1</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">Path</span><span class="p">)</span>
+        <span class="n">file1</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;match_file.txt&quot;</span>
+        <span class="n">file1</span><span class="o">.</span><span class="n">is_dir</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">file1</span><span class="o">.</span><span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;match_file.txt&quot;</span><span class="p">]</span>
+        <span class="n">file1</span><span class="o">.</span><span class="n">relative_to</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;match_file.txt&quot;</span><span class="p">)</span>
+        <span class="n">mock_rglob</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">[</span><span class="n">file1</span><span class="p">]</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="n">search_files</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="s2">&quot;match&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;results&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;filename&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TestGetCommits">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestGetCommits">[문서]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestGetCommits</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test get_commits function&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TestGetCommits.test_get_commits_success">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestGetCommits.test_get_commits_success">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Repo&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_get_commits_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">,</span> <span class="n">mock_repo_class</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">mock_repo</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
+        <span class="n">mock_commit</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
+        <span class="n">mock_commit</span><span class="o">.</span><span class="n">hexsha</span> <span class="o">=</span> <span class="s2">&quot;1234567890&quot;</span>
+        <span class="n">mock_commit</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;Initial commit&quot;</span>
+        <span class="n">mock_commit</span><span class="o">.</span><span class="n">author</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Author&quot;</span>
+        <span class="n">mock_commit</span><span class="o">.</span><span class="n">author</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="s2">&quot;author@example.com&quot;</span>
+        <span class="n">mock_commit</span><span class="o">.</span><span class="n">committed_datetime</span><span class="o">.</span><span class="n">isoformat</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="s2">&quot;2023-01-01T00:00:00&quot;</span>
+        <span class="n">mock_commit</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">total</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;files&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;insertions&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;deletions&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        
+        <span class="n">mock_repo</span><span class="o">.</span><span class="n">iter_commits</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="p">[</span><span class="n">mock_commit</span><span class="p">]</span>
+        <span class="n">mock_repo_class</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="n">mock_repo</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="n">get_commits</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;commits&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;commits&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;sha&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;1234567&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TestGetBranches">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestGetBranches">[문서]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestGetBranches</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test get_branches function&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TestGetBranches.test_get_branches_success">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestGetBranches.test_get_branches_success">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Repo&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_get_branches_success</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">,</span> <span class="n">mock_repo_class</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">mock_repo</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
+        
+        <span class="c1"># Mock local branch</span>
+        <span class="n">local_branch</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
+        <span class="n">local_branch</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;main&quot;</span>
+        <span class="n">local_branch</span><span class="o">.</span><span class="n">commit</span><span class="o">.</span><span class="n">hexsha</span> <span class="o">=</span> <span class="s2">&quot;123&quot;</span>
+        <span class="n">local_branch</span><span class="o">.</span><span class="n">commit</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;msg&quot;</span>
+        <span class="n">mock_repo</span><span class="o">.</span><span class="n">branches</span> <span class="o">=</span> <span class="p">[</span><span class="n">local_branch</span><span class="p">]</span>
+        <span class="n">mock_repo</span><span class="o">.</span><span class="n">active_branch</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;main&quot;</span>
+        <span class="n">mock_repo</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">is_detached</span> <span class="o">=</span> <span class="kc">False</span>
+        
+        <span class="c1"># Mock remote branch</span>
+        <span class="n">remote</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
+        <span class="n">remote</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;origin&quot;</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
+        <span class="n">ref</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;origin/feature&quot;</span>
+        <span class="n">ref</span><span class="o">.</span><span class="n">commit</span><span class="o">.</span><span class="n">hexsha</span> <span class="o">=</span> <span class="s2">&quot;456&quot;</span>
+        <span class="n">ref</span><span class="o">.</span><span class="n">commit</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;msg2&quot;</span>
+        <span class="n">remote</span><span class="o">.</span><span class="n">refs</span> <span class="o">=</span> <span class="p">[</span><span class="n">ref</span><span class="p">]</span>
+        <span class="n">mock_repo</span><span class="o">.</span><span class="n">remotes</span> <span class="o">=</span> <span class="p">[</span><span class="n">remote</span><span class="p">]</span>
+        
+        <span class="n">mock_repo_class</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="n">mock_repo</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="n">get_branches</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+        <span class="c1"># 1 local + 1 remote</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;branches&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">2</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TestCheckoutBranch">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestCheckoutBranch">[문서]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TestCheckoutBranch</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test checkout_branch function&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TestCheckoutBranch.test_checkout_existing_local">
+<a class="viewcode-back" href="../../tests.html#tests.test_git_ops.TestCheckoutBranch.test_checkout_existing_local">[문서]</a>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Repo&quot;</span><span class="p">)</span>
+    <span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;git_ops.Path.exists&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_checkout_existing_local</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mock_exists</span><span class="p">,</span> <span class="n">mock_repo_class</span><span class="p">):</span>
+        <span class="n">mock_exists</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">mock_repo</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
+        <span class="n">mock_branch</span> <span class="o">=</span> <span class="n">MagicMock</span><span class="p">()</span>
+        <span class="n">mock_branch</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;feature&quot;</span>
+        <span class="n">mock_repo</span><span class="o">.</span><span class="n">branches</span> <span class="o">=</span> <span class="p">[</span><span class="n">mock_branch</span><span class="p">]</span>
+        <span class="n">mock_repo</span><span class="o">.</span><span class="n">active_branch</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;feature&quot;</span>
+        <span class="n">mock_repo_class</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="n">mock_repo</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="n">checkout_branch</span><span class="p">(</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="s2">&quot;feature&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
+        <span class="n">mock_repo</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">checkout</span><span class="o">.</span><span class="n">assert_called_with</span><span class="p">(</span><span class="s2">&quot;feature&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Gition.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
