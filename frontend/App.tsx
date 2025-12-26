@@ -45,43 +45,70 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
+        let cancelled = false;
+        let retryTimer: number | undefined;
+        let attempts = 0;
+
         const verifySession = async () => {
             try {
-                // Perform server-side session validation
                 const response = await fetch('/api/auth/verify', {
                     credentials: 'include',
                 });
 
                 if (response.status === 503) {
-                    // Service temporarily unavailable - preserve current state and retry shortly
-                    console.warn('Auth service temporarily unavailable; retrying...');
-                    setTimeout(() => {
-                        verifySession();
-                    }, 1500);
+                    attempts += 1;
+
+                    // Bound retries + avoid updating state after unmount
+                    if (attempts <= 5 && !cancelled) {
+                        const delay = Math.min(1500 * attempts, 8000);
+                        retryTimer = window.setTimeout(() => {
+                            if (!cancelled) verifySession();
+                        }, delay);
+                        return; // do not flip isVerifying yet
+                    }
+
+                    if (!cancelled) {
+                        setIsAuthenticated(false);
+                        setIsVerifying(false);
+                    }
                     return;
                 }
 
                 if (response.ok) {
                     const data = await response.json();
                     const isValid = data?.status === 'success' && data?.authenticated === true;
-                    setIsAuthenticated(isValid);
+
+                    if (!cancelled) {
+                        setIsAuthenticated(isValid);
+                        setIsVerifying(false);
+                    }
 
                     if (isValid && data.user) {
                         localStorage.setItem('userLogin', data.user.login);
                         localStorage.setItem('userEmail', data.user.email || `${data.user.login}@github.com`);
                     }
-                } else {
-                    setIsAuthenticated(false);
+                    return;
                 }
-            } catch (err) {
-                console.error('Session verification failed');
-                setIsAuthenticated(false);
-            } finally {
-                setIsVerifying(false);
+
+                if (!cancelled) {
+                    setIsAuthenticated(false);
+                    setIsVerifying(false);
+                }
+            } catch (_err) {
+                if (!cancelled) {
+                    console.error('Session verification failed');
+                    setIsAuthenticated(false);
+                    setIsVerifying(false);
+                }
             }
         };
 
         verifySession();
+
+        return () => {
+            cancelled = true;
+            if (retryTimer) window.clearTimeout(retryTimer);
+        };
     }, []);
 
     if (isVerifying) {
