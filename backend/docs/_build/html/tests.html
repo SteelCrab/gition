@@ -1,0 +1,666 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ko" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tests package &mdash; Gition Backend 0.1.0 문서</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d6a8a7ef"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/translations.js?v=afa94a99"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="색인" href="genindex.html" />
+    <link rel="search" title="검색" href="search.html" />
+    <link rel="prev" title="main module" href="main.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Gition Backend
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">목차:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">backend</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html">git_ops module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">tests package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-tests.test_api">tests.test_api module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestHealthCheck"><code class="docutils literal notranslate"><span class="pre">TestHealthCheck</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestReposEndpoint"><code class="docutils literal notranslate"><span class="pre">TestReposEndpoint</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitClone"><code class="docutils literal notranslate"><span class="pre">TestGitClone</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitFiles"><code class="docutils literal notranslate"><span class="pre">TestGitFiles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitFile"><code class="docutils literal notranslate"><span class="pre">TestGitFile</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitStatus"><code class="docutils literal notranslate"><span class="pre">TestGitStatus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitCommits"><code class="docutils literal notranslate"><span class="pre">TestGitCommits</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitBranches"><code class="docutils literal notranslate"><span class="pre">TestGitBranches</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitCheckout"><code class="docutils literal notranslate"><span class="pre">TestGitCheckout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitSearch"><code class="docutils literal notranslate"><span class="pre">TestGitSearch</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitPull"><code class="docutils literal notranslate"><span class="pre">TestGitPull</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitDelete"><code class="docutils literal notranslate"><span class="pre">TestGitDelete</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitHubIssues"><code class="docutils literal notranslate"><span class="pre">TestGitHubIssues</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_api.TestGitHubPulls"><code class="docutils literal notranslate"><span class="pre">TestGitHubPulls</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-tests.test_git_ops">tests.test_git_ops module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_git_ops.TestGetRepoPath"><code class="docutils literal notranslate"><span class="pre">TestGetRepoPath</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_git_ops.TestCloneRepo"><code class="docutils literal notranslate"><span class="pre">TestCloneRepo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_git_ops.TestPullRepo"><code class="docutils literal notranslate"><span class="pre">TestPullRepo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_git_ops.TestListFiles"><code class="docutils literal notranslate"><span class="pre">TestListFiles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_git_ops.TestReadFile"><code class="docutils literal notranslate"><span class="pre">TestReadFile</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_git_ops.TestDeleteRepo"><code class="docutils literal notranslate"><span class="pre">TestDeleteRepo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_git_ops.TestSearchFiles"><code class="docutils literal notranslate"><span class="pre">TestSearchFiles</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_git_ops.TestGetCommits"><code class="docutils literal notranslate"><span class="pre">TestGetCommits</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_git_ops.TestGetBranches"><code class="docutils literal notranslate"><span class="pre">TestGetBranches</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tests.test_git_ops.TestCheckoutBranch"><code class="docutils literal notranslate"><span class="pre">TestCheckoutBranch</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-tests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Gition Backend</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">backend</a></li>
+      <li class="breadcrumb-item active">tests package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/tests.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tests-package">
+<h1>tests package<a class="headerlink" href="#tests-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-tests.test_api">
+<span id="tests-test-api-module"></span><h2>tests.test_api module<a class="headerlink" href="#module-tests.test_api" title="Link to this heading"></a></h2>
+<p>Comprehensive API Tests for Gition Backend
+Target: 70% coverage</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestHealthCheck">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestHealthCheck</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestHealthCheck"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestHealthCheck" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test basic API health</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestHealthCheck.test_health_endpoint">
+<span class="sig-name descname"><span class="pre">test_health_endpoint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestHealthCheck.test_health_endpoint"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestHealthCheck.test_health_endpoint" title="Link to this definition"></a></dt>
+<dd><p>Test health endpoint</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestHealthCheck.test_auth_github_redirect">
+<span class="sig-name descname"><span class="pre">test_auth_github_redirect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestHealthCheck.test_auth_github_redirect"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestHealthCheck.test_auth_github_redirect" title="Link to this definition"></a></dt>
+<dd><p>Test GitHub OAuth redirect</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestHealthCheck.test_auth_callback_with_code">
+<span class="sig-name descname"><span class="pre">test_auth_callback_with_code</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestHealthCheck.test_auth_callback_with_code"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestHealthCheck.test_auth_callback_with_code" title="Link to this definition"></a></dt>
+<dd><p>Test OAuth callback with mock code</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestReposEndpoint">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestReposEndpoint</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestReposEndpoint"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestReposEndpoint" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test repos endpoint</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestReposEndpoint.test_repos_no_auth">
+<span class="sig-name descname"><span class="pre">test_repos_no_auth</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestReposEndpoint.test_repos_no_auth"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestReposEndpoint.test_repos_no_auth" title="Link to this definition"></a></dt>
+<dd><p>Test repos endpoint without auth token</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestReposEndpoint.test_repos_with_token_success">
+<span class="sig-name descname"><span class="pre">test_repos_with_token_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_client_class</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestReposEndpoint.test_repos_with_token_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestReposEndpoint.test_repos_with_token_success" title="Link to this definition"></a></dt>
+<dd><p>Test repos endpoint with valid token success</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestReposEndpoint.test_repos_github_error">
+<span class="sig-name descname"><span class="pre">test_repos_github_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_client_class</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestReposEndpoint.test_repos_github_error"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestReposEndpoint.test_repos_github_error" title="Link to this definition"></a></dt>
+<dd><p>Test repos endpoint when GitHub API fails</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitClone">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitClone</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitClone"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitClone" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test Git clone operations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitClone.test_clone_missing_params">
+<span class="sig-name descname"><span class="pre">test_clone_missing_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitClone.test_clone_missing_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitClone.test_clone_missing_params" title="Link to this definition"></a></dt>
+<dd><p>Test clone with missing parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitClone.test_clone_partial_params">
+<span class="sig-name descname"><span class="pre">test_clone_partial_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitClone.test_clone_partial_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitClone.test_clone_partial_params" title="Link to this definition"></a></dt>
+<dd><p>Test clone with partial parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitClone.test_clone_success">
+<span class="sig-name descname"><span class="pre">test_clone_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_clone</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitClone.test_clone_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitClone.test_clone_success" title="Link to this definition"></a></dt>
+<dd><p>Test successful clone endpoint</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitClone.test_clone_error">
+<span class="sig-name descname"><span class="pre">test_clone_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_clone</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitClone.test_clone_error"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitClone.test_clone_error" title="Link to this definition"></a></dt>
+<dd><p>Test clone endpoint with git_ops error</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitFiles">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitFiles</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitFiles"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitFiles" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test Git files operations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitFiles.test_files_missing_params">
+<span class="sig-name descname"><span class="pre">test_files_missing_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitFiles.test_files_missing_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitFiles.test_files_missing_params" title="Link to this definition"></a></dt>
+<dd><p>Test files endpoint with missing parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitFiles.test_files_with_params_success">
+<span class="sig-name descname"><span class="pre">test_files_with_params_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitFiles.test_files_with_params_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitFiles.test_files_with_params_success" title="Link to this definition"></a></dt>
+<dd><p>Test files endpoint with valid params success</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitFiles.test_files_with_path_success">
+<span class="sig-name descname"><span class="pre">test_files_with_path_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitFiles.test_files_with_path_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitFiles.test_files_with_path_success" title="Link to this definition"></a></dt>
+<dd><p>Test files endpoint with path parameter success</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitFile">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitFile</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitFile"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitFile" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test Git file content operations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitFile.test_file_missing_params">
+<span class="sig-name descname"><span class="pre">test_file_missing_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitFile.test_file_missing_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitFile.test_file_missing_params" title="Link to this definition"></a></dt>
+<dd><p>Test file endpoint with missing parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitFile.test_file_with_params">
+<span class="sig-name descname"><span class="pre">test_file_with_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitFile.test_file_with_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitFile.test_file_with_params" title="Link to this definition"></a></dt>
+<dd><p>Test file endpoint with valid params but non-existent repo</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitFile.test_file_nested_path">
+<span class="sig-name descname"><span class="pre">test_file_nested_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitFile.test_file_nested_path"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitFile.test_file_nested_path" title="Link to this definition"></a></dt>
+<dd><p>Test file endpoint with nested path</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitStatus">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitStatus</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitStatus"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitStatus" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test Git status operations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitStatus.test_status_missing_params">
+<span class="sig-name descname"><span class="pre">test_status_missing_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitStatus.test_status_missing_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitStatus.test_status_missing_params" title="Link to this definition"></a></dt>
+<dd><p>Test status endpoint with missing parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitStatus.test_status_with_params">
+<span class="sig-name descname"><span class="pre">test_status_with_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_cloned</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitStatus.test_status_with_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitStatus.test_status_with_params" title="Link to this definition"></a></dt>
+<dd><p>Test status with valid params</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitCommits">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitCommits</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitCommits"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitCommits" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test Git commits operations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitCommits.test_commits_missing_params">
+<span class="sig-name descname"><span class="pre">test_commits_missing_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitCommits.test_commits_missing_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitCommits.test_commits_missing_params" title="Link to this definition"></a></dt>
+<dd><p>Test commits endpoint with missing parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitCommits.test_commits_with_params">
+<span class="sig-name descname"><span class="pre">test_commits_with_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_commits</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitCommits.test_commits_with_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitCommits.test_commits_with_params" title="Link to this definition"></a></dt>
+<dd><p>Test commits with valid params but non-existent repo</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitCommits.test_commits_with_max_count">
+<span class="sig-name descname"><span class="pre">test_commits_with_max_count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitCommits.test_commits_with_max_count"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitCommits.test_commits_with_max_count" title="Link to this definition"></a></dt>
+<dd><p>Test commits with max_count parameter</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitBranches">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitBranches</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitBranches"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitBranches" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test Git branches operations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitBranches.test_branches_missing_params">
+<span class="sig-name descname"><span class="pre">test_branches_missing_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitBranches.test_branches_missing_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitBranches.test_branches_missing_params" title="Link to this definition"></a></dt>
+<dd><p>Test branches endpoint with missing parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitBranches.test_branches_with_params">
+<span class="sig-name descname"><span class="pre">test_branches_with_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_branches</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitBranches.test_branches_with_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitBranches.test_branches_with_params" title="Link to this definition"></a></dt>
+<dd><p>Test branches with valid params but non-existent repo</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitCheckout">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitCheckout</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitCheckout"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitCheckout" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test Git checkout operations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitCheckout.test_checkout_missing_params">
+<span class="sig-name descname"><span class="pre">test_checkout_missing_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitCheckout.test_checkout_missing_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitCheckout.test_checkout_missing_params" title="Link to this definition"></a></dt>
+<dd><p>Test checkout endpoint with missing parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitCheckout.test_checkout_partial_params">
+<span class="sig-name descname"><span class="pre">test_checkout_partial_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitCheckout.test_checkout_partial_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitCheckout.test_checkout_partial_params" title="Link to this definition"></a></dt>
+<dd><p>Test checkout with partial parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitCheckout.test_checkout_with_all_params">
+<span class="sig-name descname"><span class="pre">test_checkout_with_all_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_checkout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitCheckout.test_checkout_with_all_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitCheckout.test_checkout_with_all_params" title="Link to this definition"></a></dt>
+<dd><p>Test checkout with all params but non-existent repo</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitSearch">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitSearch</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitSearch"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitSearch" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test Git search operations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitSearch.test_search_missing_params">
+<span class="sig-name descname"><span class="pre">test_search_missing_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitSearch.test_search_missing_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitSearch.test_search_missing_params" title="Link to this definition"></a></dt>
+<dd><p>Test search endpoint with missing parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitSearch.test_search_with_params_success">
+<span class="sig-name descname"><span class="pre">test_search_with_params_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_search</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitSearch.test_search_with_params_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitSearch.test_search_with_params_success" title="Link to this definition"></a></dt>
+<dd><p>Test search with valid params success</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitSearch.test_search_short_query">
+<span class="sig-name descname"><span class="pre">test_search_short_query</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitSearch.test_search_short_query"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitSearch.test_search_short_query" title="Link to this definition"></a></dt>
+<dd><p>Test search with too short query</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitSearch.test_search_with_content_flag">
+<span class="sig-name descname"><span class="pre">test_search_with_content_flag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_search</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitSearch.test_search_with_content_flag"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitSearch.test_search_with_content_flag" title="Link to this definition"></a></dt>
+<dd><p>Test search with content flag</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitPull">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitPull</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitPull"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitPull" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test Git pull operations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitPull.test_pull_missing_params">
+<span class="sig-name descname"><span class="pre">test_pull_missing_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitPull.test_pull_missing_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitPull.test_pull_missing_params" title="Link to this definition"></a></dt>
+<dd><p>Test pull with missing parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitPull.test_pull_with_params_success">
+<span class="sig-name descname"><span class="pre">test_pull_with_params_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_pull</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitPull.test_pull_with_params_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitPull.test_pull_with_params_success" title="Link to this definition"></a></dt>
+<dd><p>Test pull with valid params success</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitDelete">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitDelete</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitDelete"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitDelete" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test Git delete operations</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitDelete.test_delete_missing_params">
+<span class="sig-name descname"><span class="pre">test_delete_missing_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitDelete.test_delete_missing_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitDelete.test_delete_missing_params" title="Link to this definition"></a></dt>
+<dd><p>Test delete with missing parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitDelete.test_delete_with_params">
+<span class="sig-name descname"><span class="pre">test_delete_with_params</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitDelete.test_delete_with_params"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitDelete.test_delete_with_params" title="Link to this definition"></a></dt>
+<dd><p>Test delete with valid params but non-existent repo</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitHubIssues">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitHubIssues</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitHubIssues"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitHubIssues" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test GitHub Issues API</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitHubIssues.test_issues_no_auth">
+<span class="sig-name descname"><span class="pre">test_issues_no_auth</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitHubIssues.test_issues_no_auth"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitHubIssues.test_issues_no_auth" title="Link to this definition"></a></dt>
+<dd><p>Test issues endpoint without auth token</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitHubIssues.test_issues_with_invalid_auth">
+<span class="sig-name descname"><span class="pre">test_issues_with_invalid_auth</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitHubIssues.test_issues_with_invalid_auth"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitHubIssues.test_issues_with_invalid_auth" title="Link to this definition"></a></dt>
+<dd><p>Test issues endpoint with invalid auth</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitHubIssues.test_issues_with_state">
+<span class="sig-name descname"><span class="pre">test_issues_with_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitHubIssues.test_issues_with_state"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitHubIssues.test_issues_with_state" title="Link to this definition"></a></dt>
+<dd><p>Test issues endpoint with state parameter</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_api.TestGitHubPulls">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_api.</span></span><span class="sig-name descname"><span class="pre">TestGitHubPulls</span></span><a class="reference internal" href="_modules/tests/test_api.html#TestGitHubPulls"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitHubPulls" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test GitHub Pull Requests API</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitHubPulls.test_pulls_no_auth">
+<span class="sig-name descname"><span class="pre">test_pulls_no_auth</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitHubPulls.test_pulls_no_auth"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitHubPulls.test_pulls_no_auth" title="Link to this definition"></a></dt>
+<dd><p>Test pulls endpoint without auth token</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitHubPulls.test_pulls_with_invalid_auth">
+<span class="sig-name descname"><span class="pre">test_pulls_with_invalid_auth</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitHubPulls.test_pulls_with_invalid_auth"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitHubPulls.test_pulls_with_invalid_auth" title="Link to this definition"></a></dt>
+<dd><p>Test pulls endpoint with invalid auth</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_api.TestGitHubPulls.test_pulls_with_state">
+<span class="sig-name descname"><span class="pre">test_pulls_with_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_api.html#TestGitHubPulls.test_pulls_with_state"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_api.TestGitHubPulls.test_pulls_with_state" title="Link to this definition"></a></dt>
+<dd><p>Test pulls endpoint with state parameter</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-tests.test_git_ops">
+<span id="tests-test-git-ops-module"></span><h2>tests.test_git_ops module<a class="headerlink" href="#module-tests.test_git_ops" title="Link to this heading"></a></h2>
+<p>Git Operations Tests</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestGetRepoPath">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_git_ops.</span></span><span class="sig-name descname"><span class="pre">TestGetRepoPath</span></span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestGetRepoPath"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestGetRepoPath" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test get_repo_path function</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestGetRepoPath.test_returns_path">
+<span class="sig-name descname"><span class="pre">test_returns_path</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestGetRepoPath.test_returns_path"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestGetRepoPath.test_returns_path" title="Link to this definition"></a></dt>
+<dd><p>Test that get_repo_path returns a Path object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestGetRepoPath.test_path_contains_user_and_repo">
+<span class="sig-name descname"><span class="pre">test_path_contains_user_and_repo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestGetRepoPath.test_path_contains_user_and_repo"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestGetRepoPath.test_path_contains_user_and_repo" title="Link to this definition"></a></dt>
+<dd><p>Test path includes user_id and repo_name</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestCloneRepo">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_git_ops.</span></span><span class="sig-name descname"><span class="pre">TestCloneRepo</span></span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestCloneRepo"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestCloneRepo" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test clone_repo function</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestCloneRepo.test_already_cloned">
+<span class="sig-name descname"><span class="pre">test_already_cloned</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestCloneRepo.test_already_cloned"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestCloneRepo.test_already_cloned" title="Link to this definition"></a></dt>
+<dd><p>Test returns exists status if already cloned</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestCloneRepo.test_successful_clone">
+<span class="sig-name descname"><span class="pre">test_successful_clone</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_mkdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_clone</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestCloneRepo.test_successful_clone"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestCloneRepo.test_successful_clone" title="Link to this definition"></a></dt>
+<dd><p>Test successful repository clone</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestCloneRepo.test_clone_failure_cleanup">
+<span class="sig-name descname"><span class="pre">test_clone_failure_cleanup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_mkdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_rmtree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_clone</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestCloneRepo.test_clone_failure_cleanup"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestCloneRepo.test_clone_failure_cleanup" title="Link to this definition"></a></dt>
+<dd><p>Test cleanup after failed clone</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestPullRepo">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_git_ops.</span></span><span class="sig-name descname"><span class="pre">TestPullRepo</span></span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestPullRepo"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestPullRepo" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test pull_repo function</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestPullRepo.test_error_not_cloned">
+<span class="sig-name descname"><span class="pre">test_error_not_cloned</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestPullRepo.test_error_not_cloned"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestPullRepo.test_error_not_cloned" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestPullRepo.test_successful_pull">
+<span class="sig-name descname"><span class="pre">test_successful_pull</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_repo_class</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestPullRepo.test_successful_pull"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestPullRepo.test_successful_pull" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestListFiles">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_git_ops.</span></span><span class="sig-name descname"><span class="pre">TestListFiles</span></span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestListFiles"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestListFiles" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test list_files function</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestListFiles.test_error_for_missing_repo">
+<span class="sig-name descname"><span class="pre">test_error_for_missing_repo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestListFiles.test_error_for_missing_repo"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestListFiles.test_error_for_missing_repo" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestListFiles.test_list_success">
+<span class="sig-name descname"><span class="pre">test_list_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_iterdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestListFiles.test_list_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestListFiles.test_list_success" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestReadFile">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_git_ops.</span></span><span class="sig-name descname"><span class="pre">TestReadFile</span></span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestReadFile"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestReadFile" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test read_file function</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestReadFile.test_error_for_missing_repo">
+<span class="sig-name descname"><span class="pre">test_error_for_missing_repo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestReadFile.test_error_for_missing_repo"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestReadFile.test_error_for_missing_repo" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestReadFile.test_read_text_success">
+<span class="sig-name descname"><span class="pre">test_read_text_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_is_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_read_text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_stat</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestReadFile.test_read_text_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestReadFile.test_read_text_success" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestReadFile.test_read_binary_by_extension">
+<span class="sig-name descname"><span class="pre">test_read_binary_by_extension</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_is_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestReadFile.test_read_binary_by_extension"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestReadFile.test_read_binary_by_extension" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestDeleteRepo">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_git_ops.</span></span><span class="sig-name descname"><span class="pre">TestDeleteRepo</span></span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestDeleteRepo"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestDeleteRepo" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test delete_repo function</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestDeleteRepo.test_delete_success">
+<span class="sig-name descname"><span class="pre">test_delete_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_rmtree</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestDeleteRepo.test_delete_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestDeleteRepo.test_delete_success" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestDeleteRepo.test_delete_missing">
+<span class="sig-name descname"><span class="pre">test_delete_missing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestDeleteRepo.test_delete_missing"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestDeleteRepo.test_delete_missing" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestSearchFiles">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_git_ops.</span></span><span class="sig-name descname"><span class="pre">TestSearchFiles</span></span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestSearchFiles"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestSearchFiles" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test search_files function</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestSearchFiles.test_search_filename_match">
+<span class="sig-name descname"><span class="pre">test_search_filename_match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_rglob</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestSearchFiles.test_search_filename_match"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestSearchFiles.test_search_filename_match" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestGetCommits">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_git_ops.</span></span><span class="sig-name descname"><span class="pre">TestGetCommits</span></span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestGetCommits"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestGetCommits" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test get_commits function</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestGetCommits.test_get_commits_success">
+<span class="sig-name descname"><span class="pre">test_get_commits_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_repo_class</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestGetCommits.test_get_commits_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestGetCommits.test_get_commits_success" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestGetBranches">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_git_ops.</span></span><span class="sig-name descname"><span class="pre">TestGetBranches</span></span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestGetBranches"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestGetBranches" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test get_branches function</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestGetBranches.test_get_branches_success">
+<span class="sig-name descname"><span class="pre">test_get_branches_success</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_repo_class</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestGetBranches.test_get_branches_success"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestGetBranches.test_get_branches_success" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestCheckoutBranch">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tests.test_git_ops.</span></span><span class="sig-name descname"><span class="pre">TestCheckoutBranch</span></span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestCheckoutBranch"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestCheckoutBranch" title="Link to this definition"></a></dt>
+<dd><p>기반 클래스: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Test checkout_branch function</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tests.test_git_ops.TestCheckoutBranch.test_checkout_existing_local">
+<span class="sig-name descname"><span class="pre">test_checkout_existing_local</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mock_exists</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mock_repo_class</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tests/test_git_ops.html#TestCheckoutBranch.test_checkout_existing_local"><span class="viewcode-link"><span class="pre">[소스]</span></span></a><a class="headerlink" href="#tests.test_git_ops.TestCheckoutBranch.test_checkout_existing_local" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-tests">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-tests" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="main.html" class="btn btn-neutral float-left" title="main module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Gition.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

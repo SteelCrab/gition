@@ -1,0 +1,303 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ko" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>backend &mdash; Gition Backend 0.1.0 문서</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=d6a8a7ef"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/translations.js?v=afa94a99"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="색인" href="genindex.html" />
+    <link rel="search" title="검색" href="search.html" />
+    <link rel="next" title="git_ops module" href="git_ops.html" />
+    <link rel="prev" title="Gition Backend API Documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Gition Backend
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">목차:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">backend</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html">git_ops module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html">main module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html">tests package</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Gition Backend</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">backend</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="backend">
+<h1>backend<a class="headerlink" href="#backend" title="Link to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="git_ops.html">git_ops module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git-operations-module">Git Operations Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.REPOS_BASE_PATH"><code class="docutils literal notranslate"><span class="pre">REPOS_BASE_PATH</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.BINARY_EXTENSIONS"><code class="docutils literal notranslate"><span class="pre">BINARY_EXTENSIONS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.get_repo_path"><code class="docutils literal notranslate"><span class="pre">get_repo_path()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.clone_repo"><code class="docutils literal notranslate"><span class="pre">clone_repo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.pull_repo"><code class="docutils literal notranslate"><span class="pre">pull_repo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.list_files"><code class="docutils literal notranslate"><span class="pre">list_files()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.read_file"><code class="docutils literal notranslate"><span class="pre">read_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.is_cloned"><code class="docutils literal notranslate"><span class="pre">is_cloned()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.delete_repo"><code class="docutils literal notranslate"><span class="pre">delete_repo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.search_files"><code class="docutils literal notranslate"><span class="pre">search_files()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.get_commits"><code class="docutils literal notranslate"><span class="pre">get_commits()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.get_branches"><code class="docutils literal notranslate"><span class="pre">get_branches()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="git_ops.html#git_ops.checkout_branch"><code class="docutils literal notranslate"><span class="pre">checkout_branch()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="main.html">main module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="main.html#gition-auth-server-fastapi">Gition Auth Server (FastAPI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.app"><code class="docutils literal notranslate"><span class="pre">app</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.ALLOWED_ORIGINS"><code class="docutils literal notranslate"><span class="pre">ALLOWED_ORIGINS</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.GITHUB_CLIENT_ID"><code class="docutils literal notranslate"><span class="pre">GITHUB_CLIENT_ID</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.GITHUB_CLIENT_SECRET"><code class="docutils literal notranslate"><span class="pre">GITHUB_CLIENT_SECRET</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.FRONTEND_URL"><code class="docutils literal notranslate"><span class="pre">FRONTEND_URL</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.health"><code class="docutils literal notranslate"><span class="pre">health()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.github_auth"><code class="docutils literal notranslate"><span class="pre">github_auth()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.github_callback"><code class="docutils literal notranslate"><span class="pre">github_callback()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.get_token"><code class="docutils literal notranslate"><span class="pre">get_token()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.get_repos"><code class="docutils literal notranslate"><span class="pre">get_repos()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_clone_repo"><code class="docutils literal notranslate"><span class="pre">api_clone_repo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_pull_repo"><code class="docutils literal notranslate"><span class="pre">api_pull_repo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_list_files"><code class="docutils literal notranslate"><span class="pre">api_list_files()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_read_file"><code class="docutils literal notranslate"><span class="pre">api_read_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_repo_status"><code class="docutils literal notranslate"><span class="pre">api_repo_status()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_delete_repo"><code class="docutils literal notranslate"><span class="pre">api_delete_repo()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_search_files"><code class="docutils literal notranslate"><span class="pre">api_search_files()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_get_commits"><code class="docutils literal notranslate"><span class="pre">api_get_commits()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_get_branches"><code class="docutils literal notranslate"><span class="pre">api_get_branches()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_checkout_branch"><code class="docutils literal notranslate"><span class="pre">api_checkout_branch()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_get_issues"><code class="docutils literal notranslate"><span class="pre">api_get_issues()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="main.html#main.api_get_pulls"><code class="docutils literal notranslate"><span class="pre">api_get_pulls()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tests.html">tests package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.test_api">tests.test_api module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestHealthCheck"><code class="docutils literal notranslate"><span class="pre">TestHealthCheck</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestHealthCheck.test_health_endpoint"><code class="docutils literal notranslate"><span class="pre">TestHealthCheck.test_health_endpoint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestHealthCheck.test_auth_github_redirect"><code class="docutils literal notranslate"><span class="pre">TestHealthCheck.test_auth_github_redirect()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestHealthCheck.test_auth_callback_with_code"><code class="docutils literal notranslate"><span class="pre">TestHealthCheck.test_auth_callback_with_code()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestReposEndpoint"><code class="docutils literal notranslate"><span class="pre">TestReposEndpoint</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestReposEndpoint.test_repos_no_auth"><code class="docutils literal notranslate"><span class="pre">TestReposEndpoint.test_repos_no_auth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestReposEndpoint.test_repos_with_token_success"><code class="docutils literal notranslate"><span class="pre">TestReposEndpoint.test_repos_with_token_success()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestReposEndpoint.test_repos_github_error"><code class="docutils literal notranslate"><span class="pre">TestReposEndpoint.test_repos_github_error()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitClone"><code class="docutils literal notranslate"><span class="pre">TestGitClone</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitClone.test_clone_missing_params"><code class="docutils literal notranslate"><span class="pre">TestGitClone.test_clone_missing_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitClone.test_clone_partial_params"><code class="docutils literal notranslate"><span class="pre">TestGitClone.test_clone_partial_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitClone.test_clone_success"><code class="docutils literal notranslate"><span class="pre">TestGitClone.test_clone_success()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitClone.test_clone_error"><code class="docutils literal notranslate"><span class="pre">TestGitClone.test_clone_error()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitFiles"><code class="docutils literal notranslate"><span class="pre">TestGitFiles</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitFiles.test_files_missing_params"><code class="docutils literal notranslate"><span class="pre">TestGitFiles.test_files_missing_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitFiles.test_files_with_params_success"><code class="docutils literal notranslate"><span class="pre">TestGitFiles.test_files_with_params_success()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitFiles.test_files_with_path_success"><code class="docutils literal notranslate"><span class="pre">TestGitFiles.test_files_with_path_success()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitFile"><code class="docutils literal notranslate"><span class="pre">TestGitFile</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitFile.test_file_missing_params"><code class="docutils literal notranslate"><span class="pre">TestGitFile.test_file_missing_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitFile.test_file_with_params"><code class="docutils literal notranslate"><span class="pre">TestGitFile.test_file_with_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitFile.test_file_nested_path"><code class="docutils literal notranslate"><span class="pre">TestGitFile.test_file_nested_path()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitStatus"><code class="docutils literal notranslate"><span class="pre">TestGitStatus</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitStatus.test_status_missing_params"><code class="docutils literal notranslate"><span class="pre">TestGitStatus.test_status_missing_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitStatus.test_status_with_params"><code class="docutils literal notranslate"><span class="pre">TestGitStatus.test_status_with_params()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitCommits"><code class="docutils literal notranslate"><span class="pre">TestGitCommits</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitCommits.test_commits_missing_params"><code class="docutils literal notranslate"><span class="pre">TestGitCommits.test_commits_missing_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitCommits.test_commits_with_params"><code class="docutils literal notranslate"><span class="pre">TestGitCommits.test_commits_with_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitCommits.test_commits_with_max_count"><code class="docutils literal notranslate"><span class="pre">TestGitCommits.test_commits_with_max_count()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitBranches"><code class="docutils literal notranslate"><span class="pre">TestGitBranches</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitBranches.test_branches_missing_params"><code class="docutils literal notranslate"><span class="pre">TestGitBranches.test_branches_missing_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitBranches.test_branches_with_params"><code class="docutils literal notranslate"><span class="pre">TestGitBranches.test_branches_with_params()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitCheckout"><code class="docutils literal notranslate"><span class="pre">TestGitCheckout</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitCheckout.test_checkout_missing_params"><code class="docutils literal notranslate"><span class="pre">TestGitCheckout.test_checkout_missing_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitCheckout.test_checkout_partial_params"><code class="docutils literal notranslate"><span class="pre">TestGitCheckout.test_checkout_partial_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitCheckout.test_checkout_with_all_params"><code class="docutils literal notranslate"><span class="pre">TestGitCheckout.test_checkout_with_all_params()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitSearch"><code class="docutils literal notranslate"><span class="pre">TestGitSearch</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitSearch.test_search_missing_params"><code class="docutils literal notranslate"><span class="pre">TestGitSearch.test_search_missing_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitSearch.test_search_with_params_success"><code class="docutils literal notranslate"><span class="pre">TestGitSearch.test_search_with_params_success()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitSearch.test_search_short_query"><code class="docutils literal notranslate"><span class="pre">TestGitSearch.test_search_short_query()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitSearch.test_search_with_content_flag"><code class="docutils literal notranslate"><span class="pre">TestGitSearch.test_search_with_content_flag()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitPull"><code class="docutils literal notranslate"><span class="pre">TestGitPull</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitPull.test_pull_missing_params"><code class="docutils literal notranslate"><span class="pre">TestGitPull.test_pull_missing_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitPull.test_pull_with_params_success"><code class="docutils literal notranslate"><span class="pre">TestGitPull.test_pull_with_params_success()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitDelete"><code class="docutils literal notranslate"><span class="pre">TestGitDelete</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitDelete.test_delete_missing_params"><code class="docutils literal notranslate"><span class="pre">TestGitDelete.test_delete_missing_params()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitDelete.test_delete_with_params"><code class="docutils literal notranslate"><span class="pre">TestGitDelete.test_delete_with_params()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitHubIssues"><code class="docutils literal notranslate"><span class="pre">TestGitHubIssues</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitHubIssues.test_issues_no_auth"><code class="docutils literal notranslate"><span class="pre">TestGitHubIssues.test_issues_no_auth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitHubIssues.test_issues_with_invalid_auth"><code class="docutils literal notranslate"><span class="pre">TestGitHubIssues.test_issues_with_invalid_auth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitHubIssues.test_issues_with_state"><code class="docutils literal notranslate"><span class="pre">TestGitHubIssues.test_issues_with_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_api.TestGitHubPulls"><code class="docutils literal notranslate"><span class="pre">TestGitHubPulls</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitHubPulls.test_pulls_no_auth"><code class="docutils literal notranslate"><span class="pre">TestGitHubPulls.test_pulls_no_auth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitHubPulls.test_pulls_with_invalid_auth"><code class="docutils literal notranslate"><span class="pre">TestGitHubPulls.test_pulls_with_invalid_auth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_api.TestGitHubPulls.test_pulls_with_state"><code class="docutils literal notranslate"><span class="pre">TestGitHubPulls.test_pulls_with_state()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests.test_git_ops">tests.test_git_ops module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_git_ops.TestGetRepoPath"><code class="docutils literal notranslate"><span class="pre">TestGetRepoPath</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestGetRepoPath.test_returns_path"><code class="docutils literal notranslate"><span class="pre">TestGetRepoPath.test_returns_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestGetRepoPath.test_path_contains_user_and_repo"><code class="docutils literal notranslate"><span class="pre">TestGetRepoPath.test_path_contains_user_and_repo()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_git_ops.TestCloneRepo"><code class="docutils literal notranslate"><span class="pre">TestCloneRepo</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestCloneRepo.test_already_cloned"><code class="docutils literal notranslate"><span class="pre">TestCloneRepo.test_already_cloned()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestCloneRepo.test_successful_clone"><code class="docutils literal notranslate"><span class="pre">TestCloneRepo.test_successful_clone()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestCloneRepo.test_clone_failure_cleanup"><code class="docutils literal notranslate"><span class="pre">TestCloneRepo.test_clone_failure_cleanup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_git_ops.TestPullRepo"><code class="docutils literal notranslate"><span class="pre">TestPullRepo</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestPullRepo.test_error_not_cloned"><code class="docutils literal notranslate"><span class="pre">TestPullRepo.test_error_not_cloned()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestPullRepo.test_successful_pull"><code class="docutils literal notranslate"><span class="pre">TestPullRepo.test_successful_pull()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_git_ops.TestListFiles"><code class="docutils literal notranslate"><span class="pre">TestListFiles</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestListFiles.test_error_for_missing_repo"><code class="docutils literal notranslate"><span class="pre">TestListFiles.test_error_for_missing_repo()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestListFiles.test_list_success"><code class="docutils literal notranslate"><span class="pre">TestListFiles.test_list_success()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_git_ops.TestReadFile"><code class="docutils literal notranslate"><span class="pre">TestReadFile</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestReadFile.test_error_for_missing_repo"><code class="docutils literal notranslate"><span class="pre">TestReadFile.test_error_for_missing_repo()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestReadFile.test_read_text_success"><code class="docutils literal notranslate"><span class="pre">TestReadFile.test_read_text_success()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestReadFile.test_read_binary_by_extension"><code class="docutils literal notranslate"><span class="pre">TestReadFile.test_read_binary_by_extension()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_git_ops.TestDeleteRepo"><code class="docutils literal notranslate"><span class="pre">TestDeleteRepo</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestDeleteRepo.test_delete_success"><code class="docutils literal notranslate"><span class="pre">TestDeleteRepo.test_delete_success()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestDeleteRepo.test_delete_missing"><code class="docutils literal notranslate"><span class="pre">TestDeleteRepo.test_delete_missing()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_git_ops.TestSearchFiles"><code class="docutils literal notranslate"><span class="pre">TestSearchFiles</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestSearchFiles.test_search_filename_match"><code class="docutils literal notranslate"><span class="pre">TestSearchFiles.test_search_filename_match()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_git_ops.TestGetCommits"><code class="docutils literal notranslate"><span class="pre">TestGetCommits</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestGetCommits.test_get_commits_success"><code class="docutils literal notranslate"><span class="pre">TestGetCommits.test_get_commits_success()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_git_ops.TestGetBranches"><code class="docutils literal notranslate"><span class="pre">TestGetBranches</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestGetBranches.test_get_branches_success"><code class="docutils literal notranslate"><span class="pre">TestGetBranches.test_get_branches_success()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html#tests.test_git_ops.TestCheckoutBranch"><code class="docutils literal notranslate"><span class="pre">TestCheckoutBranch</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tests.html#tests.test_git_ops.TestCheckoutBranch.test_checkout_existing_local"><code class="docutils literal notranslate"><span class="pre">TestCheckoutBranch.test_checkout_existing_local()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tests.html#module-tests">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Gition Backend API Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="git_ops.html" class="btn btn-neutral float-right" title="git_ops module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Gition.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
