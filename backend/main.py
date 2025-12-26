@@ -338,7 +338,13 @@ async def log_audit_event(request: Request):
             "timestamp": datetime.now(timezone.utc).isoformat() # Trusted server time
         }
         
-        logger.info(f"AUDIT_EVENT: {json.dumps(log_entry)}")
+        # 5. Structured Logging
+        # Outputting pure JSON allows external log aggregators (ELK, Stackdriver, etc.)
+        # to automatically parse the fields without complex regex or pattern matching.
+        logger.info(json.dumps({
+            "audit_log": True,
+            "data": log_entry
+        }))
         return {"status": "success"}
     except Exception as e:
         logger.error(f"Failed to record audit event: {e}")
