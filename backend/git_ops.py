@@ -740,10 +740,21 @@ def checkout_branch(user_id: str, repo_name: str, branch_name: str) -> Dict[str,
                 # May already exist, try direct checkout
                 repo.git.checkout(branch_name)
         
+        # Pull latest changes from remote after checkout
+        pull_result = None
+        try:
+            repo.git.pull('origin', branch_name)
+            pull_result = "synced"
+        except GitCommandError as pull_err:
+            # Pull may fail if no upstream or conflicts
+            logger.warning(f"Pull after checkout failed: {pull_err}")
+            pull_result = "pull_failed"
+        
         return {
             "status": "success",
             "message": f"Switched to branch '{branch_name}'",
-            "current_branch": repo.active_branch.name
+            "current_branch": repo.active_branch.name,
+            "pull_result": pull_result
         }
     except GitCommandError as e:
         return {"status": "error", "message": f"Checkout failed: {str(e)}"}
