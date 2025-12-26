@@ -105,10 +105,9 @@ const MainLayout = () => {
                                 userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                                 repoName={displayRepo}
                                 onBranchChange={(newBranch) => {
-                                    // Navigate to new branch URL
-                                    // Github keeps path. Let's try to keep path.
-                                    const currentPath = filePath || ''; // wildcard part
-                                    // Reconstruct URL: /repo/:owner/:repo/:newBranch/:path
+                                    if (!displayRepo || !newBranch) return;
+
+                                    const currentPath = filePath || '';
                                     const userId = owner || localStorage.getItem('userLogin') || 'user';
                                     const targetPath = currentPath ? `/${currentPath}` : '';
                                     navigate(`/repo/${userId}/${displayRepo}/${newBranch}${targetPath}`);
