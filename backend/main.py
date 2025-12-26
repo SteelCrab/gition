@@ -265,25 +265,9 @@ async def log_audit_event(request: Request):
     # 1. Authentication Check
     token = get_token(request)
     if not token:
-        return Response(
-            status_code=401,
-            media_type="application/json",
-            content=json.dumps({"status": "error", "message": "Authentication required for auditing"}),
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            user_response = await client.get(
-                "https://api.github.com/user",
-                headers={
-                    "Authorization": f"token {token}",
-                    "Accept": "application/vnd.github.v3+json",
-                },
-            )
-            if user_response.status_code != 200:
-                headers={
-                    "Authorization": f"token {token}",
-                    "Accept": "application/vnd.github.v3+json",
-                },
-            )
-            if user_response.status_code != 200:
+        return Response(status_code=401, content=json.dumps({"status": "error", "message": "Authentication required for auditing"}))
+
+    try:
         # Verify token and get user context
         async with httpx.AsyncClient(timeout=5.0) as client:
             user_response = await client.get("https://api.github.com/user", headers={"Authorization": f"Bearer {token}"})
@@ -302,7 +286,7 @@ async def log_audit_event(request: Request):
 
         # 3. Validation: Metadata Filtering
         # Only allow specific keys and ensure values are strings/primitives
-        ALLOWED_METADATA_KEYS = {"branch", "status", "error", "file_count"}
+        ALLOWED_METADATA_KEYS = {"branch", "error", "file_count"}
         raw_metadata = body.get("metadata") or {}
         if not isinstance(raw_metadata, dict):
             raw_metadata = {}
