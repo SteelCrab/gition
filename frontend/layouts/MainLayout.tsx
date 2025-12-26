@@ -68,7 +68,7 @@ const MainLayout = () => {
                                     // Github keeps path. Let's try to keep path.
                                     const currentPath = filePath || ''; // wildcard part
                                     // Reconstruct URL: /repo/:owner/:repo/:newBranch/:path
-                                    const userId = owner || localStorage.getItem('userLogin') || 'user';
+const userId = owner || localStorage.getItem('userLogin') || localStorage.getItem('userId');
                                     const targetPath = currentPath ? `/${currentPath}` : '';
                                     navigate(`/repo/${userId}/${displayRepo}/${newBranch}${targetPath}`);
                                 }}
