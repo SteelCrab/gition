@@ -720,8 +720,8 @@ async def api_list_pages(user_id: str, repo_name: str):
     try:
         result = await asyncio.to_thread(list_branch_pages, user_id, repo_name)
         return result
-    except Exception as e:
-        return {"status": "error", "message": str(e), "pages": [], "total": 0}
+        logger.exception(f"Failed to list pages for repo {repo_name}")
+        return {"status": "error", "message": "An internal error occurred while listing pages.", "pages": [], "total": 0}
 
 
 @app.get("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
