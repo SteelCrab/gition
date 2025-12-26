@@ -12,8 +12,9 @@
 - [x] Repository cloning to server
 - [x] Branch listing and switching
 - [x] Git fetch for remote branch sync
-- [x] Show hidden branch list
+- [x] Show hidden branch list (local + remote)
 - [x] File browser with directory navigation
+- [x] Auto-pull on branch checkout (uses tracking branch)
 
 ### ✏️ Editor
 - [x] Notion-style block editor
@@ -23,7 +24,7 @@
 - [ ] Markdown rendering (#8)
 
 ### 🔄 Git Operations
-- [x] Commit history viewer
+- [x] Commit history viewer (branch-aware)
 - [x] File content viewer/editor
 - [x] Search within repository (code search)
 - [ ] Commit/Push from UI
@@ -53,15 +54,18 @@
 
 ### 📄 Pages
 - [ ] Landing/Promotion page
-- [ ] Branch page navigation (click branch → new page)
+- [x] Branch page auto-creation on checkout
+- [x] Branch page navigation (tabbed UI: Notes / README)
 
 ### 🗄️ Database
 - [ ] MySQL + PipeSQL dual DB architecture
-- [ ] **MySQL**: User/Repository metadata
+- [x] **MySQL Schema**: User/Repository/Pages tables defined
   - Users (id, login, email, avatar_url, access_token)
   - Repositories (id, name, owner, clone_url, default_branch)
-  - Branches (repo_id, name, commit_sha, is_current)
-  - Commits (sha, repo_id, message, author, date)
+  - Sessions (user_id, token_hash, expires_at)
+  - Documents (user_id, repo_id, title, content)
+  - Pipelines (user_id, repo_id, name, config, status)
+  - BranchPages (user_id, repo_id, branch_name, title, content)
 - [ ] **PipeSQL**: Page/Block data management
   - Pages (id, repo_id, branch, title, created_at)
   - Blocks (id, page_id, type, content, order)
