@@ -296,12 +296,15 @@ async def log_audit_event(request: Request):
 
         # 4. Construct Trusted Log Entry
         from datetime import datetime, timezone
+        repo_name = str(body.get("repo_name") or "")[:100]
+        status = str(body.get("status") or "info")[:20]
+
         log_entry = {
             "version": "1.1",
             "event": event_type,
             "user": user_id, # Derived from verified token
-            "repo": body.get("repo_name")[:100], # Basic truncation
-            "status": body.get("status", "info")[:20],
+            "repo": repo_name,
+            "status": status,
             "metadata": metadata,
             "timestamp": datetime.now(timezone.utc).isoformat() # Trusted server time
         }
