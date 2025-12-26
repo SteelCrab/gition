@@ -146,7 +146,7 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
      * Save page content to API
      */
     const savePage = async (newTitle: string, newContent: string) => {
-        if (!userId || !repoName || !branchName) return;
+        if (!userId || !repoName || !branchName || saveStatus === 'saving') return;
 
         // Skip if nothing changed
         if (newTitle === lastSavedTitleRef.current && newContent === lastSavedContentRef.current) {
