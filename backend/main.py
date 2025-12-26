@@ -149,7 +149,8 @@ async def github_callback(code: str = None, error: str = None):
         # Step 2: Fetch user info
         headers = {
             "Authorization": f"Bearer {access_token}",
-            "Accept": "application/vnd.github.v3+json"
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "gition-auth-server",
         }
         
         user_response = await client.get("https://api.github.com/user", headers=headers)
@@ -219,6 +220,7 @@ async def verify_auth(request: Request):
             headers = {
                 "Authorization": f"token {normalized}",
                 "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "gition-auth-server",
             }
             user_response = await client.get("https://api.github.com/user", headers=headers)
 
@@ -291,6 +293,7 @@ async def log_audit_event(request: Request):
                 headers={
                     "Authorization": f"token {normalized}",
                     "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "gition-auth-server",
                 },
             )
             if user_response.status_code != 200:
@@ -383,7 +386,8 @@ async def get_repos(request: Request):
     async with httpx.AsyncClient(timeout=10.0) as client:
         headers = {
             "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github.v3+json"
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "gition-auth-server",
         }
         
         repos_response = await client.get(
@@ -711,7 +715,8 @@ async def api_get_issues(request: Request, owner: str, repo: str, state: str = "
                 f"https://api.github.com/repos/{owner}/{repo}/issues",
                 headers={
                     "Authorization": f"Bearer {token}",
-                    "Accept": "application/vnd.github.v3+json"
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "gition-auth-server",
                 },
                 params={
                     "state": state,
@@ -779,7 +784,8 @@ async def api_get_pulls(request: Request, owner: str, repo: str, state: str = "o
                 f"https://api.github.com/repos/{owner}/{repo}/pulls",
                 headers={
                     "Authorization": f"Bearer {token}",
-                    "Accept": "application/vnd.github.v3+json"
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "gition-auth-server",
                 },
                 params={
                     "state": state,
