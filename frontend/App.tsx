@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import AuthCallback from './pages/AuthCallback';
@@ -39,14 +39,42 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
-    let isAuthenticated = false;
+    const [isVerifying, setIsVerifying] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    try {
-        isAuthenticated =
-            typeof window !== 'undefined' &&
-            window.localStorage.getItem('isAuthenticated') === 'true';
-    } catch {
-        isAuthenticated = false;
+    useEffect(() => {
+        const verifySession = async () => {
+            try {
+                // Perform server-side session validation
+                const response = await fetch('/api/auth/verify');
+                if (response.ok) {
+                    const data = await response.json();
+                    setIsAuthenticated(data.status === 'success');
+                } else {
+                    setIsAuthenticated(false);
+                    // Clear insecure local flag if server says unauthorized
+                    localStorage.removeItem('isAuthenticated');
+                }
+            } catch (err) {
+                console.error('Session verification failed');
+                setIsAuthenticated(false);
+            } finally {
+                setIsVerifying(false);
+            }
+        };
+
+        verifySession();
+    }, []);
+
+    if (isVerifying) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-white">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-6 h-6 border-2 border-[#eee] border-t-black rounded-full animate-spin" />
+                    <span className="text-[13px] text-[#787774]">Verifying session...</span>
+                </div>
+            </div>
+        );
     }
 
     return isAuthenticated ? children : <Navigate to="/login" replace />;

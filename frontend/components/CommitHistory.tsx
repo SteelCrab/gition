@@ -53,9 +53,8 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
      * - Re-fetches when userId or repoName changes
      */
     const fetchCommits = useCallback(async () => {
-        console.log('Fetching commits for:', userId, repoName);
         if (!userId || !repoName) {
-            console.warn('Missing userId or repoName');
+            console.warn('Unable to fetch commits: Missing repository context');
             return;
         }
         setLoading(true);

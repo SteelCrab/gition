@@ -36,6 +36,25 @@ const MainLayout = () => {
     const displayRepo = repoName;
     const displayFile = filePath ? filePath.split('/').pop() : null;
 
+    const sendAuditEvent = async (eventType: string, status: 'success' | 'failure' | 'info', metadata: any = {}) => {
+        try {
+            await fetch('/api/audit/log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event_type: eventType,
+                    repo_name: displayRepo,
+                    status,
+                    metadata,
+                    timestamp: new Date().toISOString()
+                })
+            });
+        } catch (err) {
+            // Silently fail audit logging to not block user actions, but log to console for debugging
+            console.error('Failed to send audit event');
+        }
+    };
+
     const handleCommit = async () => {
         if (!displayRepo) {
             setCommitError('Select a repository before committing.');
@@ -50,20 +69,34 @@ const MainLayout = () => {
         setIsSubmitting(true);
         setCommitError(null);
 
+        // Audit Trail: Initial logging
+        await sendAuditEvent('COMMIT_INITIATED', 'info', { branch: branchName || 'main' });
+
         try {
             // TODO: Replace with actual backend API call
-            console.log('Initiating commit action for repository:', displayRepo);
 
+            // Simulate API delay
             await new Promise((resolve, reject) => {
                 setTimeout(() => {
+                    // Random failure simulation
                     if (Math.random() < 0.1) reject(new Error('Network timeout'));
                     else resolve(true);
                 }, 1500);
             });
 
+            // Audit Trail: Success logging
+            await sendAuditEvent('COMMIT_SUCCESS', 'success', { branch: branchName || 'main' });
+
+            // On success:
             setIsCommitModalOpen(false);
             setCommitMessage('');
         } catch (err: unknown) {
+            // Audit Trail: Failure logging
+            await sendAuditEvent('COMMIT_FAILURE', 'failure', {
+                branch: branchName || 'main',
+                error: 'Internal server error' // Do not log raw error details here
+            });
+
             console.error('Commit failed');
             setCommitError('Failed to commit changes. Please try again.');
         } finally {
