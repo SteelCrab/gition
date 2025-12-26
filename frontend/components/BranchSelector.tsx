@@ -63,6 +63,16 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
         setLoading(true);
         try {
             const response = await fetch(`/api/git/branches?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`);
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch branches: ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Server returned non-JSON response');
+            }
+
             const data = await response.json();
             if (data.status === 'success') {
                 const branchList = (data.branches || []) as Branch[];
@@ -81,6 +91,8 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
                         setSelectedBranch(branchList[0].name);
                     }
                 }
+            } else {
+                throw new Error(data.message || 'Unknown error');
             }
         } catch (_err) {
             console.error('Failed to fetch branches:', _err);
@@ -117,6 +129,16 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
                 })
             });
 
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Checkout failed (${response.status}): ${errorText}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Server returned non-JSON response');
+            }
+
             const data = await response.json();
 
             if (data.status === 'success') {
@@ -128,12 +150,11 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
                 // Refresh branch list to update current badge
                 await fetchBranches();
             } else {
-                console.error('Checkout failed:', data.message);
-                alert(`Failed to switch to branch: ${data.message}`);
+                throw new Error(data.message || 'Unknown error');
             }
         } catch (err) {
             console.error('Checkout error:', err);
-            alert('Failed to switch branch. Please try again.');
+            alert(err instanceof Error ? err.message : 'Failed to switch branch. Please try again.');
         } finally {
             setSwitching(false);
         }
