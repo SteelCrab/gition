@@ -446,6 +446,12 @@ from git_ops import (
     get_branches, checkout_branch
 )
 
+# Import page operations for branch pages
+from page_ops import (
+    create_branch_page, get_branch_page, update_branch_page,
+    list_branch_pages, ensure_branch_page, delete_branch_page
+)
+
 
 @app.post("/api/git/clone")
 async def api_clone_repo(request: Request):
@@ -682,9 +688,185 @@ async def api_checkout_branch(request: Request):
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(checkout_branch, user_id, repo_name, branch_name)
+        
+        # Auto-create page for this branch if checkout was successful
+        if result.get("status") == "success":
+            try:
+                await asyncio.to_thread(ensure_branch_page, user_id, repo_name, branch_name)
+            except Exception as e:
+                logger.warning(f"Auto-create page failed for {branch_name}: {e}")
+        
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+# ==============================================================================
+# Branch Page API
+# ==============================================================================
+# CRUD operations for branch-specific pages stored in .gition directory
+
+@app.get("/api/pages/{user_id}/{repo_name}")
+async def api_list_pages(request: Request, user_id: str, repo_name: str):
+    """
+    List all branch pages for a repository
+    
+    Path Params:
+        - user_id: User's GitHub ID
+        - repo_name: Repository name
+    
+    Returns:
+        - status: success | error
+        - pages: List of page summaries
+        - total: Total count
+    """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "pages": [], "total": 0}
+    
+    try:
+        result = await asyncio.to_thread(list_branch_pages, user_id, repo_name)
+        return result
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to list pages for {repo_name}: {e}")
+        return {"status": "error", "message": "Failed to list pages. Please try again.", "pages": [], "total": 0}
+
+
+@app.get("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
+async def api_get_page(request: Request, user_id: str, repo_name: str, branch_name: str):
+    """
+    Get a branch page
+    
+    Path Params:
+        - user_id: User's GitHub ID
+        - repo_name: Repository name
+        - branch_name: Branch name (supports slashes like feature/auth)
+    
+    Returns:
+        - status: success | not_found | error
+        - page: Page data (on success)
+    """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "page": None}
+    
+    try:
+        result = await asyncio.to_thread(get_branch_page, user_id, repo_name, branch_name)
+        return result
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to get page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to load page. Please try again.", "page": None}
+
+
+@app.post("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
+async def api_create_page(request: Request, user_id: str, repo_name: str, branch_name: str):
+    """
+    Create a new branch page
+    
+    Path Params:
+        - user_id: User's GitHub ID
+        - repo_name: Repository name
+        - branch_name: Branch name
+    
+    Body (optional JSON):
+        - title: Page title (defaults to branch name)
+        - content: Initial content
+    
+    Returns:
+        - status: success | exists | error
+        - page: Page data (on success)
+    """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "page": None}
+    
+    try:
+        body = {}
+        try:
+            body = await request.json()
+        except Exception:
+            pass  # Body is optional
+        
+        title = body.get("title")
+        content = body.get("content", "")
+        
+        result = await asyncio.to_thread(
+            create_branch_page, user_id, repo_name, branch_name, title, content
+        )
+        return result
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to create page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to create page. Please try again.", "page": None}
+
+
+@app.put("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
+async def api_update_page(request: Request, user_id: str, repo_name: str, branch_name: str):
+    """
+    Update a branch page
+    
+    Path Params:
+        - user_id: User's GitHub ID
+        - repo_name: Repository name
+        - branch_name: Branch name
+    
+    Body (JSON):
+        - title: New title (optional)
+        - content: New content (optional)
+    
+    Returns:
+        - status: success | not_found | error
+        - page: Updated page data (on success)
+    """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "page": None}
+    
+    try:
+        body = await request.json()
+        title = body.get("title")
+        content = body.get("content")
+        
+        result = await asyncio.to_thread(
+            update_branch_page, user_id, repo_name, branch_name, title, content
+        )
+        return result
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to update page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to save page. Please try again.", "page": None}
+
+
+@app.delete("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
+async def api_delete_page(request: Request, user_id: str, repo_name: str, branch_name: str):
+    """
+    Delete a branch page
+    
+    Note: Pages are NOT auto-deleted when branches are deleted.
+    This endpoint is for manual cleanup only.
+    
+    Path Params:
+        - user_id: User's GitHub ID
+        - repo_name: Repository name
+        - branch_name: Branch name
+    
+    Returns:
+        - status: success | not_found | error
+        - message: Status message
+    """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated"}
+    
+    try:
+        result = await asyncio.to_thread(delete_branch_page, user_id, repo_name, branch_name)
+        return result
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to delete page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to delete page. Please try again."}
 
 
 # ==============================================================================
