@@ -51,6 +51,7 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
     const [selectedBranch, setSelectedBranch] = useState<string>('main');
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [switching, setSwitching] = useState(false);
     const [filter, setFilter] = useState<FilterType>('all');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -67,12 +68,18 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
                 const branchList = (data.branches || []) as Branch[];
                 setBranches(branchList);
 
-                // Auto-select current branch
+                // Auto-select current branch, default to 'main' if none
                 const currentBranch = branchList.find(b => b.is_current);
                 if (currentBranch) {
                     setSelectedBranch(currentBranch.name);
-                } else if (branchList.length > 0) {
-                    setSelectedBranch(branchList[0].name);
+                } else {
+                    // Prefer 'main' branch as default
+                    const mainBranch = branchList.find(b => b.name === 'main');
+                    if (mainBranch) {
+                        setSelectedBranch('main');
+                    } else if (branchList.length > 0) {
+                        setSelectedBranch(branchList[0].name);
+                    }
                 }
             }
         } catch (_err) {
@@ -88,13 +95,48 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
     }, [fetchBranches]);
 
     /**
-     * Branch selection handler
+     * Branch selection handler - calls checkout API
      */
-    const handleBranchSelect = (branch: Branch) => {
-        setSelectedBranch(branch.name);
-        setIsOpen(false);
-        setSearchQuery('');
-        onBranchChange?.(branch.name);
+    const handleBranchSelect = async (branch: Branch) => {
+        // Skip if already on this branch
+        if (branch.is_current) {
+            setIsOpen(false);
+            setSearchQuery('');
+            return;
+        }
+
+        setSwitching(true);
+        try {
+            const response = await fetch('/api/git/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: userId,
+                    repo_name: repoName,
+                    branch_name: branch.name
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                setSelectedBranch(branch.name);
+                setIsOpen(false);
+                setSearchQuery('');
+                onBranchChange?.(branch.name);
+
+                // Refresh branch list to update current badge
+                await fetchBranches();
+            } else {
+                console.error('Checkout failed:', data.message);
+                alert(`Failed to switch to branch: ${data.message}`);
+            }
+        } catch (err) {
+            console.error('Checkout error:', err);
+            alert('Failed to switch branch. Please try again.');
+        } finally {
+            setSwitching(false);
+        }
     };
 
     // Filter and search branches
@@ -117,14 +159,20 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
             {/* Branch selector button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-1.5 px-2 py-1 hover:bg-black/5 rounded-[3px] transition-colors"
+                disabled={switching}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-[3px] transition-colors ${switching ? 'opacity-50 cursor-not-allowed bg-black/5' : 'hover:bg-black/5'
+                    }`}
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}
                 aria-label={`Current branch: ${selectedBranch}. Click to change.`}
             >
-                <GitBranch size={14} className="text-[#787774]" />
+                {switching ? (
+                    <Loader2 size={14} className="animate-spin text-[#787774]" />
+                ) : (
+                    <GitBranch size={14} className="text-[#787774]" />
+                )}
                 <span className="text-[13px] font-medium text-[#37352f] truncate max-w-[120px]">
-                    {selectedBranch}
+                    {switching ? 'Switching...' : selectedBranch}
                 </span>
                 <ChevronDown size={14} className="text-[#787774]" />
             </button>
