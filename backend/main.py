@@ -276,9 +276,25 @@ async def log_audit_event(request: Request):
     try:
         # Verify token and get user context
         async with httpx.AsyncClient(timeout=5.0) as client:
-            user_response = await client.get("https://api.github.com/user", headers={"Authorization": f"Bearer {token}"})
+            normalized = token
+            if normalized.startswith("Bearer "):
+                normalized = normalized.replace("Bearer ", "", 1)
+            if normalized.startswith("token "):
+                normalized = normalized.replace("token ", "", 1)
+
+            user_response = await client.get(
+                "https://api.github.com/user",
+                headers={
+                    "Authorization": f"token {normalized}",
+                    "Accept": "application/vnd.github.v3+json",
+                },
+            )
             if user_response.status_code != 200:
-                return Response(status_code=401, content=json.dumps({"status": "error", "message": "Invalid session"}))
+                return Response(
+                    status_code=401,
+                    media_type="application/json",
+                    content=json.dumps({"status": "error", "message": "Invalid session"}),
+                )
             user_data = user_response.json()
             user_id = user_data.get("login")
 
