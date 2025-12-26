@@ -36,24 +36,23 @@ const MainLayout = () => {
 
     const sendAuditEvent = async (eventType: string, status: 'success' | 'failure' | 'info', metadata: any = {}) => {
         try {
-            await fetch('/api/audit/log', {
-                try {
-                    const res = await fetch('/api/audit/log', {
-                        method: 'POST',
-                        credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            event_type: eventType,
-                            repo_name: displayRepo,
-                            status,
-                            metadata,
-                        }),
-                    });
-
-                    if (!res.ok) {
-                        console.error('[Diagnostic] Audit event rejected:', eventType, res.status);
-                    }
-                } catch (err) {
+            const res = await fetch('/api/audit/log', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event_type: eventType,
+                    repo_name: displayRepo,
+                    status,
+                    metadata
+                })
+            });
+            if (!res.ok) {
+                console.error('[Diagnostic] Audit event rejected:', eventType, res.status);
+            }
+        } catch (err) {
+            // Silently fail audit logging to not block user actions, but log for diagnostic purposes
+            console.error('[Diagnostic] Failed to send audit event:', eventType, err);
         }
     };
 
@@ -75,8 +74,6 @@ const MainLayout = () => {
         await sendAuditEvent('COMMIT_INITIATED', 'info', { branch: branchName || 'main' });
 
         try {
-            // TODO: Replace with actual backend API call
-
             // Simulate API delay
             await new Promise((resolve, reject) => {
                 setTimeout(() => {
@@ -96,7 +93,7 @@ const MainLayout = () => {
             // Audit Trail: Failure logging
             await sendAuditEvent('COMMIT_FAILURE', 'failure', {
                 branch: branchName || 'main',
-                error: 'Internal server error' // Do not log raw error details here
+                error: 'Internal server error'
             });
 
             console.error('Commit failed');
@@ -115,7 +112,7 @@ const MainLayout = () => {
                 <header className="h-[45px] border-b border-[#efefef] flex items-center justify-between px-3 sm:px-4 sticky top-0 bg-white z-40">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                         {/* Mobile Menu Button */}
-                        <button onClick={() => setLeftPanelOpen(true)} className={`lg:hidden p-1.5 hover:bg-black/5 rounded-[3px] text-[#37352f]/60`}>
+                        <button onClick={() => setLeftPanelOpen(true)} className="lg:hidden p-1.5 hover:bg-black/5 rounded-[3px] text-[#37352f]/60">
                             <Menu size={16} />
                         </button>
 
@@ -137,16 +134,14 @@ const MainLayout = () => {
                     <div className="flex items-center gap-1 sm:gap-2">
                         {displayRepo && (
                             <BranchSelector
-                                userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
+                                userId={owner || localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                                 repoName={displayRepo}
                                 onBranchChange={(newBranch) => {
                                     if (!displayRepo || !newBranch) return;
 
-                                    const userId = owner || localStorage.getItem('userId') || localStorage.getItem('userLogin');
+                                    const userId = owner || localStorage.getItem('userLogin') || localStorage.getItem('userId');
                                     if (!userId) return;
 
-                                    const currentPath = filePath || '';
-                                    const safeRepo = encodeURIComponent(displayRepo);
                                     const currentPath = filePath || '';
                                     const safeUserId = encodeURIComponent(userId);
                                     const safeRepo = encodeURIComponent(displayRepo);
@@ -159,6 +154,8 @@ const MainLayout = () => {
 
                                     const targetPath = safePath ? `/${safePath}` : '';
                                     navigate(`/repo/${safeUserId}/${safeRepo}/${safeBranch}${targetPath}`);
+                                }}
+                            />
                         )}
                         {displayFile && (
                             <button
