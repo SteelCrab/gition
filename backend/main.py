@@ -210,8 +210,14 @@ async def verify_auth(request: Request):
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
+            normalized = token
+            if normalized.startswith("Bearer "):
+                normalized = normalized.replace("Bearer ", "", 1)
+            if normalized.startswith("token "):
+                normalized = normalized.replace("token ", "", 1)
+
             headers = {
-                "Authorization": f"token {token}",
+                "Authorization": f"token {normalized}",
                 "Accept": "application/vnd.github.v3+json",
             }
             user_response = await client.get("https://api.github.com/user", headers=headers)
