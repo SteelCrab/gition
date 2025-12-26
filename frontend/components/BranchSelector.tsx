@@ -62,7 +62,9 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
         if (!userId || !repoName) return;
         setLoading(true);
         try {
-            const response = await fetch(`/api/git/branches?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`);
+            const response = await fetch(`/api/git/branches?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`, {
+                credentials: 'include'
+            });
 
             if (!response.ok) {
                 throw new Error(`Failed to fetch branches: ${response.status}`);
@@ -122,6 +124,7 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
             const response = await fetch('/api/git/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     user_id: userId,
                     repo_name: repoName,

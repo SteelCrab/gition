@@ -83,7 +83,9 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         await Promise.all(
             repoList.map(async (repo) => {
                 try {
-                    const response = await fetch(`/api/git/status?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repo.name)}`);
+                    const response = await fetch(`/api/git/status?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repo.name)}`, {
+                        credentials: 'include'
+                    });
                     const data = await response.json();
                     if (data.cloned) {
                         statuses[repo.name] = 'cloned';
@@ -103,16 +105,9 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         setLoading(true);
         setError(null);
 
-        const token = localStorage.getItem('githubToken');
-        if (!token) {
-            setError('Not authenticated');
-            setLoading(false);
-            return;
-        }
-
         try {
             const response = await fetch('/api/repos', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                credentials: 'include'
             });
             const data = await response.json();
 
@@ -140,7 +135,9 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
 
         setLoadingFiles(prev => ({ ...prev, [repoName]: true }));
         try {
-            const response = await fetch(`/api/git/files?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`);
+            const response = await fetch(`/api/git/files?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`, {
+                credentials: 'include'
+            });
             const data = await response.json();
             if (data.status === 'success') {
                 setRepoFiles(prev => ({ ...prev, [repoName]: data.files }));
@@ -213,6 +210,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
             const response = await fetch('/api/git/clone', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
                     clone_url: repo.clone_url,
                     access_token: token,

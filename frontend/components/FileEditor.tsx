@@ -64,7 +64,8 @@ const FileEditor = ({ userId, repoName, onClose }: FileEditorProps) => {
         setError(null);
         try {
             const response = await fetch(
-                `/api/git/files?user_id=${userId}&repo_name=${repoName}&path=${encodeURIComponent(path)}`
+                `/api/git/files?user_id=${userId}&repo_name=${repoName}&path=${encodeURIComponent(path)}`,
+                { credentials: 'include' }
             );
             const data = await response.json();
             if (data.status === 'success') {
@@ -96,7 +97,8 @@ const FileEditor = ({ userId, repoName, onClose }: FileEditorProps) => {
         setError(null);
         try {
             const response = await fetch(
-                `/api/git/file?user_id=${userId}&repo_name=${repoName}&path=${encodeURIComponent(filePath)}`
+                `/api/git/file?user_id=${userId}&repo_name=${repoName}&path=${encodeURIComponent(filePath)}`,
+                { credentials: 'include' }
             );
             const data = await response.json();
             if (data.status === 'success') {
