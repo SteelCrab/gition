@@ -278,6 +278,12 @@ async def log_audit_event(request: Request):
                 },
             )
             if user_response.status_code != 200:
+                headers={
+                    "Authorization": f"token {token}",
+                    "Accept": "application/vnd.github.v3+json",
+                },
+            )
+            if user_response.status_code != 200:
         # Verify token and get user context
         async with httpx.AsyncClient(timeout=5.0) as client:
             user_response = await client.get("https://api.github.com/user", headers={"Authorization": f"Bearer {token}"})
