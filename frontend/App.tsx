@@ -406,19 +406,24 @@ const MainEditor = () => {
                             <BranchSelector
                                 userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                                 repoName={selectedRepo.name}
-                                onBranchChange={(_branch) => {
+                                onBranchChange={async (branch) => {
                                     // Reload README when branch changes
                                     setReadmeContent(null);
                                     setLoadingReadme(true);
-                                    const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
-                                    fetch(`/api/git/file?user_id=${userId}&repo_name=${selectedRepo.name}&path=README.md`)
-                                        .then(res => res.json())
-                                        .then(data => {
-                                            if (data.status === 'success' && !data.binary && data.content) {
-                                                setReadmeContent(data.content);
-                                            }
-                                        })
-                                        .finally(() => setLoadingReadme(false));
+                                    try {
+                                        const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
+                                        // NOTE: This assumes the file fetching logic is updated to handle multiple README names and a branch parameter.
+                                        // Ideally, this would be a call to a reusable `loadReadme(branch)` function.
+                                        const response = await fetch(`/api/git/file?user_id=${userId}&repo_name=${selectedRepo.name}&path=README.md&branch=${branch}`);
+                                        const data = await response.json();
+                                        if (data.status === 'success' && !data.binary && data.content) {
+                                            setReadmeContent(data.content);
+                                        }
+                                    } catch (err) {
+                                        console.error('Failed to load README on branch change:', err);
+                                    } finally {
+                                        setLoadingReadme(false);
+                                    }
                                 }}
                             />
                         )}
