@@ -86,7 +86,8 @@ const RepoPage = () => {
                     } else {
                         setContent(null);
                     }
-                } catch {
+                } catch (err) {
+                    console.error('Failed to fetch README.md:', err);
                     setContent(null);
                 } finally {
                     setLoading(false);
