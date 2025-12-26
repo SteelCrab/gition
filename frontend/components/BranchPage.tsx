@@ -349,7 +349,7 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
             </div>
 
             {/* Page content */}
-            <div className="flex-1 overflow-y-auto px-6 py-8 max-w-[800px] mx-auto w-full">
+            <div className="flex-1 overflow-y-auto px-6 py-8 w-full">
                 {/* Title input */}
                 <input
                     type="text"
