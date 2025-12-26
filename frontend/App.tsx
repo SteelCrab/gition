@@ -53,10 +53,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
                 });
 
                 if (response.status === 503) {
-                    // Service temporarily unavailable - keep current state and retry
-                    console.warn('Auth service temporarily unavailable');
-                    setIsAuthenticated(false);
-                    setIsVerifying(false);
+                    // Service temporarily unavailable - preserve current state and retry shortly
+                    console.warn('Auth service temporarily unavailable; retrying...');
+                    setTimeout(() => {
+                        verifySession();
+                    }, 1500);
                     return;
                 }
 
