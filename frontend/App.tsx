@@ -92,7 +92,9 @@ const MainEditor = () => {
     const navigate = useNavigate();
     const [leftPanelOpen, setLeftPanelOpen] = useState(false);
     const [_rightPanelOpen, _setRightPanelOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState(
+      () => !window.matchMedia('(min-width: 1024px)').matches
+    );
     const [_activeTab, _setActiveTab] = useState('pipeline');
     const [showSlashMenu, setShowSlashMenu] = useState(false);
     const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
