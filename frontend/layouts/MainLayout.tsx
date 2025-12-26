@@ -108,7 +108,8 @@ const MainLayout = () => {
                                     if (!displayRepo || !newBranch) return;
 
                                     const currentPath = filePath || '';
-                                    const userId = owner || localStorage.getItem('userLogin') || 'user';
+                                    const userId = owner || localStorage.getItem('userId') || localStorage.getItem('userLogin');
+                                    if (!userId) return;
                                     const targetPath = currentPath ? `/${currentPath}` : '';
                                     navigate(`/repo/${userId}/${displayRepo}/${newBranch}${targetPath}`);
                                 }}
