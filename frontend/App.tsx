@@ -61,12 +61,7 @@ const App = () => {
                                 <MainLayout />
                             </ProtectedRoute>
                         }
-                    >
-                        <Route index element={<Dashboard />} />
-                        <Route path="repo/:owner/:repoName" element={<RepoPage />} />
-                        <Route path="repo/:owner/:repoName/:branchName" element={<RepoPage />} />
-                        <Route path="repo/:owner/:repoName/:branchName/*" element={<RepoPage />} />
-                    </Route>
+                    />
                 </Routes>
             </ErrorBoundary>
         </BrowserRouter>

@@ -15,6 +15,7 @@ const RepoPage = () => {
 
     // Redirect to include default branch if missing in URL
     useEffect(() => {
+        if (!owner || !repoName) return;
         if (!branchName) {
             navigate(`/repo/${owner}/${repoName}/main`, { replace: true });
         }
@@ -22,9 +23,8 @@ const RepoPage = () => {
 
     useEffect(() => {
         const fetchContent = async () => {
-            // Avoid fetching if branchName is missing (will redirect) 
-            // or if we already have content for this exact path/branch? 
-            // Simpler to just fetch on dependency change.
+            if (!owner || !repoName) return;
+            // Avoid fetching if branchName is missing (will redirect)
             if (!branchName) return;
 
             setLoading(true);
@@ -34,12 +34,11 @@ const RepoPage = () => {
             try {
                 // Determine what to fetch: specific file or README
                 const targetPath = filePath || 'README.md';
+                const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || owner;
 
                 // Stateless fetch: pass branch as a parameter
-                // Note: The backend API must support 'branch' query param for this to work statelessly.
-                // Assuming /api/git/file accepts branch
                 const response = await fetch(
-                    `/api/git/file?user_id=${encodeURIComponent(owner || '')}&repo_name=${encodeURIComponent(repoName || '')}&path=${encodeURIComponent(targetPath)}&branch=${encodeURIComponent(currentBranch)}`
+                    `/api/git/file?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}&path=${encodeURIComponent(targetPath)}&branch=${encodeURIComponent(currentBranch)}`
                 );
 
                 if (!response.ok) {
@@ -65,15 +64,16 @@ const RepoPage = () => {
                 }
 
             } catch (err: unknown) {
-                console.error("Error loading content:", err);
-                setError(err instanceof Error ? err.message : "Failed to load content");
+                // Log internal details for debugging (simulated internal logging)
+                console.error("[Internal] Failed to fetch repository content");
+                setError("Failed to load content. The file might be missing or there's a connection issue.");
             } finally {
                 setLoading(false);
             }
         };
 
         fetchContent();
-    }, [owner, repoName, filePath, branchName]); // Re-fetch when any of these change (currentBranch is derived)
+    }, [owner, repoName, filePath, branchName, currentBranch]); // Re-fetch when any of these change
 
     if (!branchName) return null; // Waiting for redirect
 
@@ -88,8 +88,15 @@ const RepoPage = () => {
 
     if (error) {
         return (
-            <div className="flex items-center justify-center h-full text-red-500">
-                <p>Error: {error}</p>
+            <div className="flex flex-col items-center justify-center h-full text-[#787774] px-4 text-center">
+                <div className="mb-4 text-red-500 font-medium">Unable to load content</div>
+                <p className="text-[13px] max-w-[300px] mb-6">{error}</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-1.5 bg-black text-white text-[13px] rounded-[4px] hover:bg-[#37352f] transition-all"
+                >
+                    Try again
+                </button>
             </div>
         );
     }

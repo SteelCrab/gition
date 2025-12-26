@@ -19,7 +19,7 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
     const [sidebarTab, setSidebarTab] = useState<'repos' | 'files' | 'issues' | 'search'>('repos');
 
     const userEmail = localStorage.getItem('userEmail') || 'guest@gition.com';
-    const isMobileView = isMobile ?? (window.innerWidth < 1024);
+    const isMobileView = isMobile ?? (typeof window !== 'undefined' ? window.innerWidth < 1024 : false);
 
     const handleLogout = () => {
         localStorage.removeItem('isAuthenticated');
