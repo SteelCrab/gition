@@ -88,7 +88,9 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
                             <RepoList onRepoSelect={(repo) => {
                                 // Navigate to the repo URL
                                 const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
-                                navigate(`/repo/${userId}/${repo.name}`);
+                                const safeUserId = encodeURIComponent(userId);
+                                const safeRepo = encodeURIComponent(repo.name);
+                                navigate(`/repo/${safeUserId}/${safeRepo}`);
                                 setSidebarTab('files');
                                 if (isMobileView) onClose();
                             }} />
@@ -101,8 +103,17 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
                             onFileSelect={(path, _name) => {
                                 // Navigate to file URL only if we have a branch from the URL
                                 if (branchName) {
-                                    const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
-                                    navigate(`/repo/${userId}/${selectedRepoName}/${branchName}/${path}`);
+                                    const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
+                                    const safeUserId = encodeURIComponent(userId);
+                                    const safeRepo = encodeURIComponent(selectedRepoName);
+                                    const safeBranch = encodeURIComponent(branchName);
+                                    const safePath = path
+                                        .split('/')
+                                        .filter(Boolean)
+                                        .map(encodeURIComponent)
+                                        .join('/');
+
+                                    navigate(`/repo/${safeUserId}/${safeRepo}/${safeBranch}/${safePath}`);
                                     if (isMobileView) onClose();
                                 } else {
                                     console.warn("Cannot navigate to file: Branch name missing from URL.");
@@ -126,9 +137,18 @@ const Sidebar = ({ isOpen, onClose, isMobile }: SidebarProps) => {
                             repoName={selectedRepoName || undefined}
                             onFileSelect={(path, _line) => {
                                 if (!selectedRepoName) return;
-                                const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
+                                const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
                                 const currentBranch = branchName || 'main';
-                                navigate(`/repo/${userId}/${selectedRepoName}/${currentBranch}/${path}`);
+                                const safeUserId = encodeURIComponent(userId);
+                                const safeRepo = encodeURIComponent(selectedRepoName);
+                                const safeBranch = encodeURIComponent(currentBranch);
+                                const safePath = path
+                                    .split('/')
+                                    .filter(Boolean)
+                                    .map(encodeURIComponent)
+                                    .join('/');
+
+                                navigate(`/repo/${safeUserId}/${safeRepo}/${safeBranch}/${safePath}`);
                             }}
                         />
                     )}

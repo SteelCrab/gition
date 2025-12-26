@@ -140,11 +140,20 @@ const MainLayout = () => {
                                 onBranchChange={(newBranch) => {
                                     if (!displayRepo || !newBranch) return;
 
-                                    const currentPath = filePath || '';
                                     const userId = owner || localStorage.getItem('userId') || localStorage.getItem('userLogin');
                                     if (!userId) return;
-                                    const targetPath = currentPath ? `/${currentPath}` : '';
-                                    navigate(`/repo/${userId}/${displayRepo}/${newBranch}${targetPath}`);
+
+                                    const currentPath = filePath || '';
+                                    const safeRepo = encodeURIComponent(displayRepo);
+                                    const safeBranch = encodeURIComponent(newBranch);
+                                    const safePath = currentPath
+                                        .split('/')
+                                        .filter(Boolean)
+                                        .map(encodeURIComponent)
+                                        .join('/');
+
+                                    const targetPath = safePath ? `/${safePath}` : '';
+                                    navigate(`/repo/${userId}/${safeRepo}/${safeBranch}${targetPath}`);
                                 }}
                             />
                         )}
@@ -154,7 +163,9 @@ const MainLayout = () => {
                                     if (displayRepo) {
                                         const userId = owner || localStorage.getItem('userLogin') || 'user';
                                         const currentBranch = branchName || 'main';
-                                        navigate(`/repo/${userId}/${displayRepo}/${currentBranch}`);
+                                        const safeRepo = encodeURIComponent(displayRepo);
+                                        const safeBranch = encodeURIComponent(currentBranch);
+                                        navigate(`/repo/${userId}/${safeRepo}/${safeBranch}`);
                                     } else {
                                         navigate('/');
                                     }
