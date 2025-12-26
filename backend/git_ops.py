@@ -590,8 +590,24 @@ def get_commits(
         repo = Repo(repo_path)
         commits = []
         
-        # Use specified branch or current HEAD
-        rev = branch if branch else None
+        # Validate branch if specified
+        if branch:
+            # Check if branch exists in local or remote refs
+            all_refs = [b.name for b in repo.branches]
+            all_refs.extend([ref.name.split('/', 1)[1] for ref in repo.remotes.origin.refs if '/' in ref.name])
+            if branch not in all_refs:
+                return {
+                    "status": "error", 
+                    "message": f"Branch '{branch}' not found",
+                    "commits": []
+                }
+            rev = branch
+        else:
+            # Handle detached HEAD case
+            if repo.head.is_detached:
+                rev = repo.head.commit.hexsha
+            else:
+                rev = repo.active_branch.name
         
         for commit in repo.iter_commits(rev=rev, max_count=max_count):
             commits.append({
@@ -608,17 +624,20 @@ def get_commits(
                 }
             })
         
+        # Determine current branch name for response
+        current_branch = branch if branch else (
+            repo.active_branch.name if not repo.head.is_detached else "HEAD"
+        )
+        
         return {
             "status": "success",
             "total": len(commits),
-            "branch": branch or repo.active_branch.name,
+            "branch": current_branch,
             "commits": commits
         }
     except Exception as e:
-        print(f"Error getting commits for {user_id}/{repo_name}: {e}")
-        import traceback
-        traceback.print_exc()
-        return {"status": "error", "message": str(e), "commits": []}
+        logger.exception(f"[Internal] Error getting commits for {user_id}/{repo_name}")
+        return {"status": "error", "message": "Failed to retrieve commits. Please try again.", "commits": []}
 
 
 # ==============================================================================
@@ -746,14 +765,25 @@ def checkout_branch(user_id: str, repo_name: str, branch_name: str) -> Dict[str,
                 # May already exist, try direct checkout
                 repo.git.checkout(branch_name)
         
-        # Pull latest changes from remote after checkout
+        # Pull latest changes from remote after checkout (using tracking info)
         pull_result = None
         try:
-            repo.git.pull('origin', branch_name)
-            pull_result = "synced"
+            active_branch = repo.active_branch
+            tracking_branch = active_branch.tracking_branch()
+            if tracking_branch:
+                remote_name = tracking_branch.remote_name
+                remote = repo.remotes[remote_name]
+                remote.pull()
+                pull_result = "synced"
+            else:
+                logger.warning(f"Branch '{active_branch.name}' has no upstream tracking. Skipping pull.")
+                pull_result = "no_tracking_info"
         except GitCommandError as pull_err:
-            # Pull may fail if no upstream or conflicts
+            # Pull may fail due to conflicts
             logger.warning(f"Pull after checkout failed: {pull_err}")
+            pull_result = "pull_failed"
+        except Exception as pull_err:
+            logger.warning(f"Unexpected pull error: {pull_err}")
             pull_result = "pull_failed"
         
         return {

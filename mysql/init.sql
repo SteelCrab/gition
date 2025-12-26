@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS pipelines (
 CREATE TABLE IF NOT EXISTS branch_pages (
     id CHAR(36) PRIMARY KEY,  -- UUID
     user_id INT NOT NULL,
-    repo_id INT,
+    repo_id INT NOT NULL,
     branch_name VARCHAR(255) NOT NULL,
     title VARCHAR(500) DEFAULT '',
     content LONGTEXT,
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS branch_pages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (repo_id) REFERENCES repositories(id) ON DELETE SET NULL,
+    FOREIGN KEY (repo_id) REFERENCES repositories(id) ON DELETE CASCADE,
     UNIQUE KEY unique_user_repo_branch (user_id, repo_id, branch_name),
     INDEX idx_user_id (user_id),
     INDEX idx_repo_id (repo_id),
