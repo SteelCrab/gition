@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import AuthCallback from './pages/AuthCallback';
+import Dashboard from './pages/Dashboard';
+import RepoPage from './pages/RepoPage';
 import MainLayout from './layouts/MainLayout';
 
 // Error Boundary for safety
@@ -87,16 +89,19 @@ const App = () => {
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
-
-                    {/* Protected Application Routes */}
                     <Route
-                        path="/*"
                         element={
                             <ProtectedRoute>
                                 <MainLayout />
                             </ProtectedRoute>
                         }
-                    />
+                    >
+                        <Route index element={<Dashboard />} />
+                        <Route path="repo/:owner/:repoName" element={<RepoPage />} />
+                        <Route path="repo/:owner/:repoName/:branchName" element={<RepoPage />} />
+                        <Route path="repo/:owner/:repoName/:branchName/*" element={<RepoPage />} />
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Route>
                 </Routes>
             </ErrorBoundary>
         </BrowserRouter>
