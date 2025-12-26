@@ -6,5 +6,5 @@ GitPython==3.1.45
 requests>=2.32.3
 urllib3>=2.6.0
 zipp>=3.19.1
-sphinx==7.2.6
-sphinx-rtd-theme==2.0.0
+sphinx>=8.2.3
+sphinx-rtd-theme>=3.0.2
