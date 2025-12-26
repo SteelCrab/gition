@@ -42,3 +42,4 @@ export { default as FileBrowser } from './FileBrowser';
 export { default as CommitHistory } from './CommitHistory';
 export { default as BranchSelector } from './BranchSelector';
 export { default as IssuesPRs } from './IssuesPRs';
+export { default as BranchPage } from './BranchPage';

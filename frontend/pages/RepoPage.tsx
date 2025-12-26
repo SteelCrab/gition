@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2, FileText } from 'lucide-react';
+import { Loader2, FileText, BookOpen, StickyNote } from 'lucide-react';
+import BranchPage from '../components/BranchPage';
+
+type ViewMode = 'page' | 'readme';
 
 const RepoPage = () => {
     const { owner, repoName, branchName, "*": filePath } = useParams();
@@ -9,9 +12,11 @@ const RepoPage = () => {
     const [content, setContent] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<ViewMode>('page');
 
     const isFile = !!filePath;
     const currentBranch = branchName || 'main'; // Default to main if not present
+    const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || owner;
 
     // Redirect to include default branch if missing in URL
     useEffect(() => {
@@ -28,83 +33,99 @@ const RepoPage = () => {
             if (!owner || !repoName) return;
             // Avoid fetching if branchName is missing (will redirect)
             if (!branchName) return;
+            // Only fetch README for repo root view
+            if (filePath) {
+                // Fetching specific file
+                setLoading(true);
+                setError(null);
+                setContent(null);
 
-            setLoading(true);
-            setError(null);
-            setContent(null);
+                try {
+                    const response = await fetch(
+                        `/api/git/file?user_id=${encodeURIComponent(userId || '')}&repo_name=${encodeURIComponent(repoName)}&path=${encodeURIComponent(filePath)}&branch=${encodeURIComponent(currentBranch)}`,
+                        { credentials: 'include' }
+                    );
 
-            try {
-                // Determine what to fetch: specific file or README
-                const targetPath = filePath || 'README.md';
-                const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || owner;
-
-                // Stateless fetch: pass branch as a parameter
-                const response = await fetch(
-                    `/api/git/file?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}&path=${encodeURIComponent(targetPath)}&branch=${encodeURIComponent(currentBranch)}`,
-                    { credentials: 'include' }
-                );
-
-                if (!response.ok) {
-                    if (response.status === 404 && !filePath) {
-                        // README not found for repo root, show placeholder
-                        setContent(null); // Will trigger "No README" view
-                        setLoading(false);
-                        return;
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch file');
                     }
-                    throw new Error('Failed to fetch file');
-                }
 
-                const data = await response.json();
+                    const data = await response.json();
 
-                if (data.status === 'success') {
-                    if (data.binary) {
-                        setContent('[Binary file - cannot display]');
+                    if (data.status === 'success') {
+                        if (data.binary) {
+                            setContent('[Binary file - cannot display]');
+                        } else {
+                            setContent(data.content);
+                        }
                     } else {
-                        setContent(data.content);
+                        throw new Error(data.message || 'Error loading content');
                     }
-                } else {
-                    throw new Error(data.message || 'Error loading content');
+                } catch (err: unknown) {
+                    console.error("[Internal] Failed to fetch file content");
+                    setError("Failed to load content. The file might be missing or there's a connection issue.");
+                } finally {
+                    setLoading(false);
                 }
+            } else {
+                // Repo root - fetch README for the readme tab
+                setLoading(true);
+                try {
+                    const response = await fetch(
+                        `/api/git/file?user_id=${encodeURIComponent(userId || '')}&repo_name=${encodeURIComponent(repoName)}&path=${encodeURIComponent('README.md')}&branch=${encodeURIComponent(currentBranch)}`,
+                        { credentials: 'include' }
+                    );
 
-            } catch (err: unknown) {
-                // Log internal details for debugging (simulated internal logging)
-                console.error("[Internal] Failed to fetch repository content");
-                setError("Failed to load content. The file might be missing or there's a connection issue.");
-            } finally {
-                setLoading(false);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === 'success' && !data.binary) {
+                            setContent(data.content);
+                        } else {
+                            setContent(null);
+                        }
+                    } else {
+                        setContent(null);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch README.md:', err);
+                    setContent(null);
+                } finally {
+                    setLoading(false);
+                }
             }
         };
 
         fetchContent();
-    }, [owner, repoName, filePath, branchName, currentBranch]); // Re-fetch when any of these change
+    }, [owner, repoName, filePath, branchName, currentBranch, userId]);
 
     if (!branchName) return null; // Waiting for redirect
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <Loader2 className="animate-spin text-[#787774]" size={24} />
-                <span className="ml-2 text-[#787774]">Loading...</span>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center h-full text-[#787774] px-4 text-center">
-                <div className="mb-4 text-red-500 font-medium">Unable to load content</div>
-                <p className="text-[13px] max-w-[300px] mb-6">{error}</p>
-                <button
-                    onClick={() => navigate(0)}
-                    className="px-4 py-1.5 bg-black text-white text-[13px] rounded-[4px] hover:bg-[#37352f] transition-all"
-                >
-                    Try again
-                </button>
-            </div>
-        );
-    }
-
+    // File view
     if (isFile) {
+        if (loading) {
+            return (
+                <div className="flex items-center justify-center h-full">
+                    <Loader2 className="animate-spin text-[#787774]" size={24} />
+                    <span className="ml-2 text-[#787774]">Loading...</span>
+                </div>
+            );
+        }
+
+        if (error) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full text-[#787774] px-4 text-center">
+                    <div className="mb-4 text-red-500 font-medium">Unable to load content</div>
+                    <p className="text-[13px] max-w-[300px] mb-6">{error}</p>
+                    <button
+                        onClick={() => navigate(0)}
+                        className="px-4 py-1.5 bg-black text-white text-[13px] rounded-[4px] hover:bg-[#37352f] transition-all"
+                    >
+                        Try again
+                    </button>
+                </div>
+            );
+        }
+
         return (
             <textarea
                 value={content || ''}
@@ -116,39 +137,78 @@ const RepoPage = () => {
         );
     }
 
-    // Repo Root (README view)
-    if (content) {
-        return (
-            <div className="max-w-[800px] mx-auto px-12 sm:px-24 py-16">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-[#37352f] text-white rounded-[6px] flex items-center justify-center font-bold text-[16px]">
-                        {repoName?.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                        <h1 className="text-[28px] font-bold text-[#37352f]">{repoName}</h1>
-                        {/* Description could be fetched separately if needed */}
-                    </div>
-                </div>
-                <div className="border-t border-[#efefef] pt-6">
-                    <div className="prose prose-sm max-w-none">
-                        <pre className="whitespace-pre-wrap font-sans text-[14px] text-[#37352f] leading-relaxed">
-                            {content}
-                        </pre>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // No README
+    // Repo Root - Tab view (Branch Page / README)
     return (
-        <div className="flex items-center justify-center h-full text-[#787774]">
-            <div className="text-center">
-                <div className="w-16 h-16 bg-[#f7f6f3] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FileText size={28} className="text-[#787774]" />
-                </div>
-                <p className="text-[16px] font-medium">{repoName}</p>
-                <p className="text-[13px] mt-1">No README.md found</p>
+        <div className="flex flex-col h-full">
+            {/* Tab Header */}
+            <div className="flex items-center border-b border-[#efefef] bg-white">
+                <button
+                    onClick={() => setViewMode('page')}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 -mb-[1px] ${viewMode === 'page'
+                        ? 'text-[#37352f] border-[#37352f]'
+                        : 'text-[#787774] border-transparent hover:text-[#37352f]'
+                        }`}
+                >
+                    <StickyNote size={14} />
+                    Branch Notes
+                </button>
+                <button
+                    onClick={() => setViewMode('readme')}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium transition-colors border-b-2 -mb-[1px] ${viewMode === 'readme'
+                        ? 'text-[#37352f] border-[#37352f]'
+                        : 'text-[#787774] border-transparent hover:text-[#37352f]'
+                        }`}
+                >
+                    <BookOpen size={14} />
+                    README
+                </button>
+            </div>
+
+            {/* Tab Content */}
+            <div className="flex-1 overflow-hidden">
+                {viewMode === 'page' ? (
+                    <BranchPage
+                        userId={userId ?? null}
+                        repoName={repoName || ''}
+                        branchName={currentBranch}
+                    />
+                ) : (
+                    // README View
+                    loading ? (
+                        <div className="flex items-center justify-center h-full">
+                            <Loader2 className="animate-spin text-[#787774]" size={24} />
+                            <span className="ml-2 text-[#787774]">Loading...</span>
+                        </div>
+                    ) : content ? (
+                        <div className="max-w-[800px] mx-auto px-12 sm:px-24 py-16 h-full overflow-y-auto">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 bg-[#37352f] text-white rounded-[6px] flex items-center justify-center font-bold text-[16px]">
+                                    {repoName?.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h1 className="text-[28px] font-bold text-[#37352f]">{repoName}</h1>
+                                </div>
+                            </div>
+                            <div className="border-t border-[#efefef] pt-6">
+                                <div className="prose prose-sm max-w-none">
+                                    <pre className="whitespace-pre-wrap font-sans text-[14px] text-[#37352f] leading-relaxed">
+                                        {content}
+                                    </pre>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-[#787774]">
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-[#f7f6f3] rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <FileText size={28} className="text-[#787774]" />
+                                </div>
+                                <p className="text-[16px] font-medium">{repoName}</p>
+                                <p className="text-[13px] mt-1">No README.md found</p>
+                            </div>
+                        </div>
+                    )
+                )}
             </div>
         </div>
     );
