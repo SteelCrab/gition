@@ -37,6 +37,11 @@ const MainLayout = () => {
     const displayFile = filePath ? filePath.split('/').pop() : null;
 
     const handleCommit = async () => {
+        if (!displayRepo) {
+            setCommitError('Select a repository before committing.');
+            return;
+        }
+
         if (!commitMessage.trim()) {
             setCommitError('Please enter a commit message.');
             return;
@@ -47,24 +52,19 @@ const MainLayout = () => {
 
         try {
             // TODO: Replace with actual backend API call
-            // const response = await fetch('/api/git/commit', { ... });
-            // Log structured action without sensitive content
             console.log('Initiating commit action for repository:', displayRepo);
 
-            // Simulate API delay
             await new Promise((resolve, reject) => {
                 setTimeout(() => {
-                    // Random failure simulation
                     if (Math.random() < 0.1) reject(new Error('Network timeout'));
                     else resolve(true);
                 }, 1500);
             });
 
-            // On success:
             setIsCommitModalOpen(false);
             setCommitMessage('');
         } catch (err: unknown) {
-            console.error('Commit failed'); // Don't log internal error details to console in production
+            console.error('Commit failed');
             setCommitError('Failed to commit changes. Please try again.');
         } finally {
             setIsSubmitting(false);
