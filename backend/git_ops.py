@@ -30,7 +30,7 @@ import shutil
 import logging
 from pathlib import Path
 from git import Repo, GitCommandError
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -100,6 +100,7 @@ def clone_repo(
             - status: "success" | "exists" | "error"
             - path: Cloned path (on success)
             - message: Status message
+            - branches_created: Number of local branches created (on success)
     """
     repo_path = get_repo_path(user_id, repo_name)
     
@@ -120,10 +121,17 @@ def clone_repo(
     
     try:
         Repo.clone_from(auth_url, repo_path)
+        
+        # Create local branches for all remote branches
+        # Skip fetch since we just cloned - all refs are up-to-date
+        branches_created = create_local_branches_from_remotes(repo_path, skip_fetch=True)
+        logger.info(f"Created {branches_created} local branches from remotes")
+        
         return {
             "status": "success",
             "path": str(repo_path),
-            "message": f"Repository cloned successfully"
+            "message": f"Repository cloned successfully ({branches_created} branches created)",
+            "branches_created": branches_created
         }
     except GitCommandError as e:
         # Clean up partial clone on failure
@@ -137,6 +145,114 @@ def clone_repo(
             "path": None,
             "message": f"Clone failed: {error_msg}"
         }
+
+
+def reclone_repo(
+    clone_url: str,
+    access_token: str,
+    user_id: str,
+    repo_name: str
+) -> Dict[str, Any]:
+    """
+    Delete existing repository and clone fresh.
+    
+    Useful when clone is corrupted or needs to be reset.
+    
+    Args:
+        clone_url: GitHub HTTPS clone URL
+        access_token: GitHub OAuth access token
+        user_id: User's GitHub ID
+        repo_name: Repository name
+        
+    Returns:
+        Dict:
+            - status: "success" | "error"
+            - path: Cloned path (on success)
+            - message: Status message
+            - branches_created: Number of local branches created (on success)
+    """
+    repo_path = get_repo_path(user_id, repo_name)
+    
+    # Delete existing repository if it exists
+    if repo_path.exists():
+        try:
+            shutil.rmtree(repo_path)
+            logger.info(f"Deleted existing repository at {repo_path}")
+        except OSError as e:
+            logger.error(f"Failed to delete repository at {repo_path}: {e}")
+            return {
+                "status": "error",
+                "path": None,
+                "message": f"Failed to delete existing repository: {str(e)}"
+            }
+    
+    # Clone fresh
+    result = clone_repo(clone_url, access_token, user_id, repo_name)
+    
+    # Update message to indicate reclone
+    if result["status"] == "success":
+        result["message"] = f"Repository re-cloned successfully ({result.get('branches_created', 0)} branches created)"
+    
+    return result
+
+
+def create_local_branches_from_remotes(
+    repo_path: Union[str, Path],
+    skip_fetch: bool = False
+) -> int:
+    """
+    Create local tracking branches for all remote branches.
+    
+    Args:
+        repo_path: Path to the repository
+        skip_fetch: If True, skip fetching remote refs (useful after fresh clone)
+        
+    Returns:
+        int: Number of local branches created
+    """
+    try:
+        repo = Repo(repo_path)
+        created_count = 0
+        
+        # Get existing local branch names
+        local_branch_names = {branch.name for branch in repo.branches}
+        
+        # Iterate over remote refs (fetch only if not skipped)
+        for remote in repo.remotes:
+            if not skip_fetch:
+                try:
+                    remote.fetch()
+                except GitCommandError as fetch_err:
+                    logger.warning(f"Fetch failed for remote {remote.name}: {fetch_err}")
+                    # Continue with cached refs
+                
+            for ref in remote.refs:
+                # Skip HEAD reference
+                if ref.name.endswith('/HEAD'):
+                    continue
+                    
+                # Extract branch name (remove remote prefix like 'origin/')
+                branch_name = ref.name.split('/', 1)[1] if '/' in ref.name else ref.name
+                
+                # Skip if local branch already exists
+                if branch_name in local_branch_names:
+                    continue
+                
+                try:
+                    # Create local branch tracking the remote
+                    local_branch = repo.create_head(branch_name, ref.commit)
+                    # Set up tracking to the remote branch
+                    local_branch.set_tracking_branch(ref)
+                    local_branch_names.add(branch_name)
+                    created_count += 1
+                    logger.info(f"Created local branch: {branch_name} (tracking {ref.name})")
+                except GitCommandError as e:
+                    logger.warning(f"Failed to create branch {branch_name}: {e}")
+                    
+        return created_count
+    except Exception as e:
+        logger.exception(f"Error creating local branches: {e}")
+        return 0
 
 
 def pull_repo(user_id: str, repo_name: str) -> Dict[str, Any]:
