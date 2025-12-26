@@ -39,7 +39,16 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    let isAuthenticated = false;
+
+    try {
+        isAuthenticated =
+            typeof window !== 'undefined' &&
+            window.localStorage.getItem('isAuthenticated') === 'true';
+    } catch {
+        isAuthenticated = false;
+    }
+
     return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
