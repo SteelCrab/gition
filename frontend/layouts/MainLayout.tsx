@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { Menu } from 'lucide-react';
 import BranchSelector from '../components/BranchSelector';
@@ -9,12 +9,11 @@ const MainLayout = () => {
     const [leftPanelOpen, setLeftPanelOpen] = useState(false);
     const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
     const [commitMessage, setCommitMessage] = useState('');
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
 
     // Hooks
     const { owner, repoName, branchName, "*": filePath } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
 
     // Effects
     useEffect(() => {
@@ -88,8 +87,6 @@ const MainLayout = () => {
                                 onClick={() => {
                                     if (displayRepo) {
                                         const userId = owner || localStorage.getItem('userLogin') || 'user';
-                                        const branch = branchName || 'main'; // This might need more logic if we want to remember last branch? No, URL has it.
-                                        // Wait, 'branchName' param is available here? Yes, from useParams.
                                         const currentBranch = branchName || 'main';
                                         navigate(`/repo/${userId}/${displayRepo}/${currentBranch}`);
                                     } else {
