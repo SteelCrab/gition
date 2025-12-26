@@ -70,30 +70,20 @@ const MainLayout = () => {
         setIsSubmitting(true);
         setCommitError(null);
 
-        // Audit Trail: Initial logging
         await sendAuditEvent('COMMIT_INITIATED', 'info', { branch: branchName || 'main' });
 
         try {
-            // Simulate API delay
-            await new Promise((resolve, reject) => {
-                setTimeout(() => {
-                    // Random failure simulation
-                    if (Math.random() < 0.1) reject(new Error('Network timeout'));
-                    else resolve(true);
-                }, 1500);
-            });
+            // Temporary placeholder: deterministic behavior (replace with real commit API call)
+            await new Promise((resolve) => setTimeout(resolve, 800));
 
-            // Audit Trail: Success logging
             await sendAuditEvent('COMMIT_SUCCESS', 'success', { branch: branchName || 'main' });
 
-            // On success:
             setIsCommitModalOpen(false);
             setCommitMessage('');
-        } catch (err: unknown) {
-            // Audit Trail: Failure logging
+        } catch (_err: unknown) {
             await sendAuditEvent('COMMIT_FAILURE', 'failure', {
                 branch: branchName || 'main',
-                error: 'Internal server error'
+                error: 'Internal server error',
             });
 
             console.error('Commit failed');
