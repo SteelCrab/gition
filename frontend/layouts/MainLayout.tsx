@@ -8,7 +8,10 @@ const MainLayout = () => {
     // State
     const [leftPanelOpen, setLeftPanelOpen] = useState(false);
     const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+    const [commitMessage, setCommitMessage] = useState('');
+    const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [commitError, setCommitError] = useState<string | null>(null);
 
     // Hooks
     const { owner, repoName, branchName, "*": filePath } = useParams();
@@ -16,6 +19,8 @@ const MainLayout = () => {
 
     // Effects
     useEffect(() => {
+        if (typeof window === 'undefined') return;
+
         const handleResize = () => {
             setIsMobile(window.innerWidth < 1024);
         };
@@ -29,6 +34,65 @@ const MainLayout = () => {
     const displayRepo = repoName;
     const displayFile = filePath ? filePath.split('/').pop() : null;
 
+    const sendAuditEvent = async (eventType: string, status: 'success' | 'failure' | 'info', metadata: any = {}) => {
+        try {
+            const res = await fetch('/api/audit/log', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    event_type: eventType,
+                    repo_name: displayRepo,
+                    status,
+                    metadata
+                })
+            });
+            if (!res.ok) {
+                console.error('[Diagnostic] Audit event rejected:', eventType, res.status);
+            }
+        } catch (err) {
+            // Silently fail audit logging to not block user actions, but log for diagnostic purposes
+            console.error('[Diagnostic] Failed to send audit event:', eventType, err);
+        }
+    };
+
+    const handleCommit = async () => {
+        if (!displayRepo) {
+            setCommitError('Select a repository before committing.');
+            return;
+        }
+
+        if (!commitMessage.trim()) {
+            setCommitError('Please enter a commit message.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setCommitError(null);
+
+        await sendAuditEvent('COMMIT_INITIATED', 'info', { branch: branchName || 'main' });
+
+        try {
+            // Temporary placeholder: deterministic behavior (replace with real commit API call)
+            await new Promise((resolve) => setTimeout(resolve, 800));
+
+            await sendAuditEvent('COMMIT_SUCCESS', 'success', { branch: branchName || 'main' });
+
+            setIsCommitModalOpen(false);
+            setCommitMessage('');
+        } catch (_err: unknown) {
+            await sendAuditEvent('COMMIT_FAILURE', 'failure', {
+                branch: branchName || 'main',
+                error: 'Internal server error',
+            });
+
+            console.error('Commit failed');
+            setCommitError('Failed to commit changes. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <div className="flex h-screen bg-white text-[#37352f] overflow-hidden relative">
             <Sidebar isOpen={leftPanelOpen} onClose={() => setLeftPanelOpen(false)} isMobile={isMobile} />
@@ -38,7 +102,7 @@ const MainLayout = () => {
                 <header className="h-[45px] border-b border-[#efefef] flex items-center justify-between px-3 sm:px-4 sticky top-0 bg-white z-40">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                         {/* Mobile Menu Button */}
-                        <button onClick={() => setLeftPanelOpen(true)} className={`lg:hidden p-1.5 hover:bg-black/5 rounded-[3px] text-[#37352f]/60`}>
+                        <button onClick={() => setLeftPanelOpen(true)} className="lg:hidden p-1.5 hover:bg-black/5 rounded-[3px] text-[#37352f]/60">
                             <Menu size={16} />
                         </button>
 
@@ -60,16 +124,26 @@ const MainLayout = () => {
                     <div className="flex items-center gap-1 sm:gap-2">
                         {displayRepo && (
                             <BranchSelector
-                                userId={localStorage.getItem('userLogin') || localStorage.getItem('userId')}
+                                userId={owner || localStorage.getItem('userLogin') || localStorage.getItem('userId')}
                                 repoName={displayRepo}
                                 onBranchChange={(newBranch) => {
-                                    // Navigate to new branch URL
-                                    // Github keeps path. Let's try to keep path.
-                                    const currentPath = filePath || ''; // wildcard part
-                                    // Reconstruct URL: /repo/:owner/:repo/:newBranch/:path
-const userId = owner || localStorage.getItem('userLogin') || localStorage.getItem('userId');
-                                    const targetPath = currentPath ? `/${currentPath}` : '';
-                                    navigate(`/repo/${userId}/${displayRepo}/${newBranch}${targetPath}`);
+                                    if (!displayRepo || !newBranch) return;
+
+                                    const userId = owner || localStorage.getItem('userLogin') || localStorage.getItem('userId');
+                                    if (!userId) return;
+
+                                    const currentPath = filePath || '';
+                                    const safeUserId = encodeURIComponent(userId);
+                                    const safeRepo = encodeURIComponent(displayRepo);
+                                    const safeBranch = encodeURIComponent(newBranch);
+                                    const safePath = currentPath
+                                        .split('/')
+                                        .filter(Boolean)
+                                        .map(encodeURIComponent)
+                                        .join('/');
+
+                                    const targetPath = safePath ? `/${safePath}` : '';
+                                    navigate(`/repo/${safeUserId}/${safeRepo}/${safeBranch}${targetPath}`);
                                 }}
                             />
                         )}
@@ -77,9 +151,13 @@ const userId = owner || localStorage.getItem('userLogin') || localStorage.getIte
                             <button
                                 onClick={() => {
                                     if (displayRepo) {
-                                        const userId = owner || localStorage.getItem('userLogin') || 'user';
-                                        const branch = branchName || 'main';
-                                        navigate(`/repo/${userId}/${displayRepo}/${branch}`);
+                                        const currentBranch = branchName || 'main';
+                                        const effectiveUserId = owner || localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
+
+                                        const safeUserId = encodeURIComponent(effectiveUserId);
+                                        const safeRepo = encodeURIComponent(displayRepo);
+                                        const safeBranch = encodeURIComponent(currentBranch);
+                                        navigate(`/repo/${safeUserId}/${safeRepo}/${safeBranch}`);
                                     } else {
                                         navigate('/');
                                     }
@@ -94,18 +172,52 @@ const userId = owner || localStorage.getItem('userLogin') || localStorage.getIte
                 </header>
 
                 <div className="flex-1 overflow-y-auto">
-                    <Outlet context={{ setLeftPanelOpen }} />
+                    <Outlet />
                 </div>
 
                 {/* Commit Modal */}
                 {isCommitModalOpen && (
-                    <div className="fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-[100]" onClick={() => setIsCommitModalOpen(false)}>
+                    <div className="fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-[100]" onClick={() => !isSubmitting && setIsCommitModalOpen(false)}>
                         <div className="bg-white w-[400px] rounded-[6px] shadow-2xl p-6" onClick={e => e.stopPropagation()}>
                             <h2 className="text-[18px] font-bold mb-4">Commit Changes</h2>
-                            <textarea className="w-full h-32 p-3 bg-[#f7f6f3] rounded-[6px] text-[14px] outline-none mb-4" placeholder="What did you work on?" autoFocus />
+                            <textarea
+                                className="w-full h-32 p-3 bg-[#f7f6f3] rounded-[6px] text-[14px] outline-none mb-2"
+                                placeholder="What did you work on?"
+                                autoFocus
+                                disabled={isSubmitting}
+                                value={commitMessage}
+                                onChange={(e) => {
+                                    setCommitMessage(e.target.value);
+                                    if (commitError) setCommitError(null);
+                                }}
+                            />
+
+                            {commitError && (
+                                <div className="text-red-500 text-[12px] mb-4">{commitError}</div>
+                            )}
+
                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setIsCommitModalOpen(false)} className="px-3 py-1 text-[13px] hover:bg-black/5 rounded">Cancel</button>
-                                <button onClick={() => setIsCommitModalOpen(false)} className="px-3 py-1 bg-[#2383e2] text-white rounded-[3px] font-medium text-[13px]">Push & Commit</button>
+                                <button
+                                    onClick={() => setIsCommitModalOpen(false)}
+                                    className="px-3 py-1 text-[13px] hover:bg-black/5 rounded"
+                                    disabled={isSubmitting}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleCommit}
+                                    className="px-3 py-1 bg-[#2383e2] text-white rounded-[3px] font-medium text-[13px] flex items-center gap-2 disabled:opacity-50"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Committing...
+                                        </>
+                                    ) : (
+                                        'Push & Commit'
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </div>

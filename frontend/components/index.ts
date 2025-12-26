@@ -32,9 +32,7 @@ export { default as PipelineStep } from './PipelineStep';
 export { default as PipelineBlock } from './PipelineBlock';
 export { default as LogStep } from './LogStep';
 
-// Authentication components
-export { default as LoginPage } from './LoginPage';
-export { default as AuthCallback } from './AuthCallback';
+
 
 // Repository management components
 export { default as RepoList } from './RepoList';

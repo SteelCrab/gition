@@ -27,11 +27,16 @@ import httpx
 import asyncio
 import os
 import json
+import logging
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create FastAPI app instance
 app = FastAPI(title="Gition Auth Server")
@@ -144,7 +149,8 @@ async def github_callback(code: str = None, error: str = None):
         # Step 2: Fetch user info
         headers = {
             "Authorization": f"Bearer {access_token}",
-            "Accept": "application/vnd.github.v3+json"
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "gition-auth-server",
         }
         
         user_response = await client.get("https://api.github.com/user", headers=headers)
@@ -185,6 +191,182 @@ async def github_callback(code: str = None, error: str = None):
         
         return response
 
+# ==============================================================================
+# Authentication Verification API
+# ==============================================================================
+
+@app.get("/api/auth/verify")
+async def verify_auth(request: Request):
+    """
+    Verify the current user's session by checking the GitHub token
+    - Used by frontend ProtectedRoute to prevent client-side bypass
+    """
+    token = get_token(request)
+    if not token:
+        return Response(
+            status_code=401,
+            media_type="application/json",
+            content=json.dumps({"status": "error", "authenticated": False, "message": "Not authenticated"}),
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            normalized = token
+            if normalized.startswith("Bearer "):
+                normalized = normalized.replace("Bearer ", "", 1)
+            if normalized.startswith("token "):
+                normalized = normalized.replace("token ", "", 1)
+
+            headers = {
+                "Authorization": f"token {normalized}",
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "gition-auth-server",
+            }
+            user_response = await client.get("https://api.github.com/user", headers=headers)
+
+            if user_response.status_code == 200:
+                user_data = user_response.json()
+                return {
+                    "status": "success",
+                    "authenticated": True,
+                    "user": {
+                        "id": user_data.get("id"),
+                        "login": user_data.get("login"),
+                        "name": user_data.get("name"),
+                    },
+                }
+
+            if user_response.status_code in (401,):
+                resp = Response(
+                    status_code=401,
+                    media_type="application/json",
+                    content=json.dumps({"status": "error", "authenticated": False, "message": "Invalid token"}),
+                    headers={"Cache-Control": "no-store"},
+                )
+                resp.delete_cookie("github_token", path="/")
+                return resp
+
+            # Treat rate limit / upstream issues as transient
+            return Response(
+                status_code=503,
+                media_type="application/json",
+                content=json.dumps({"status": "error", "authenticated": False, "message": "Auth verification unavailable"}),
+            )
+    except Exception:
+        logger.exception("Auth verification failed")
+        return Response(
+            status_code=503,
+            media_type="application/json",
+            content=json.dumps({"status": "error", "authenticated": False, "message": "Auth verification unavailable"}),
+        )
+
+
+# ==============================================================================
+# Audit Logging API
+# ==============================================================================
+
+@app.post("/api/audit/log")
+async def log_audit_event(request: Request):
+    """
+    Record a trusted, structured audit event
+    - Requires authentication
+    - Derives user/timestamp on server
+    - Validates event types and metadata
+    """
+    # 1. Authentication Check
+    token = get_token(request)
+    if not token:
+        return Response(
+            status_code=401,
+            media_type="application/json",
+            content=json.dumps({"status": "error", "message": "Authentication required for auditing"}),
+        )
+
+    try:
+        # Verify token and get user context
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            normalized = token
+            if normalized.startswith("Bearer "):
+                normalized = normalized.replace("Bearer ", "", 1)
+            if normalized.startswith("token "):
+                normalized = normalized.replace("token ", "", 1)
+
+            user_response = await client.get(
+                "https://api.github.com/user",
+                headers={
+                    "Authorization": f"token {normalized}",
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "gition-auth-server",
+                },
+            )
+            if user_response.status_code != 200:
+                return Response(
+                    status_code=401,
+                    media_type="application/json",
+                    content=json.dumps({"status": "error", "message": "Invalid session"}),
+                )
+            user_data = user_response.json()
+            user_id = user_data.get("login")
+
+        try:
+            body = await request.json()
+        except Exception:
+            return Response(
+                status_code=400,
+                media_type="application/json",
+                content=json.dumps({"status": "error", "message": "Invalid JSON body"}),
+            )
+
+        # 2. Validation: Event Type Allowlist
+        ALLOWED_EVENTS = {"COMMIT_INITIATED", "COMMIT_SUCCESS", "COMMIT_FAILURE"}
+        event_type = body.get("event_type")
+        if event_type not in ALLOWED_EVENTS:
+            return Response(
+                status_code=400,
+                media_type="application/json",
+                content=json.dumps({"status": "error", "message": "Invalid event type"}),
+            )
+
+        # 3. Validation: Metadata Filtering
+        # Only allow specific keys and ensure values are strings/primitives
+        ALLOWED_METADATA_KEYS = {"branch", "error", "file_count"}
+        raw_metadata = body.get("metadata") or {}
+        if not isinstance(raw_metadata, dict):
+            raw_metadata = {}
+
+        metadata = {
+            k: str(v)[:500]  # Sanitize/Truncate values
+            for k, v in raw_metadata.items()
+            if k in ALLOWED_METADATA_KEYS
+        }
+
+        # 4. Construct Trusted Log Entry
+        from datetime import datetime, timezone
+        repo_name = str(body.get("repo_name") or "")[:100]
+        status = str(body.get("status") or "info")[:20]
+
+        log_entry = {
+            "version": "1.1",
+            "event": event_type,
+            "user": user_id, # Derived from verified token
+            "repo": repo_name,
+            "status": status,
+            "metadata": metadata,
+            "timestamp": datetime.now(timezone.utc).isoformat() # Trusted server time
+        }
+        
+        # 5. Structured Logging
+        # Outputting pure JSON allows external log aggregators (ELK, Stackdriver, etc.)
+        # to automatically parse the fields without complex regex or pattern matching.
+        logger.info(json.dumps({
+            "audit_log": True,
+            "data": log_entry
+        }))
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Failed to record audit event: {e}")
+        return Response(status_code=500, content=json.dumps({"status": "error", "message": "Logging failed"}))
+
 
 # ==============================================================================
 # Repository List API
@@ -207,7 +389,8 @@ async def get_repos(request: Request):
     async with httpx.AsyncClient(timeout=10.0) as client:
         headers = {
             "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github.v3+json"
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "gition-auth-server",
         }
         
         repos_response = await client.get(
@@ -535,7 +718,8 @@ async def api_get_issues(request: Request, owner: str, repo: str, state: str = "
                 f"https://api.github.com/repos/{owner}/{repo}/issues",
                 headers={
                     "Authorization": f"Bearer {token}",
-                    "Accept": "application/vnd.github.v3+json"
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "gition-auth-server",
                 },
                 params={
                     "state": state,
@@ -603,7 +787,8 @@ async def api_get_pulls(request: Request, owner: str, repo: str, state: str = "o
                 f"https://api.github.com/repos/{owner}/{repo}/pulls",
                 headers={
                     "Authorization": f"Bearer {token}",
-                    "Accept": "application/vnd.github.v3+json"
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "gition-auth-server",
                 },
                 params={
                     "state": state,

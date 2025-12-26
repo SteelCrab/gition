@@ -78,7 +78,8 @@ const SearchPanel = ({ userId, repoName, onFileSelect }: SearchPanelProps) => {
                 });
 
                 const response = await fetch(`/api/git/search?${params.toString()}`, {
-                    signal: controller.signal
+                    signal: controller.signal,
+                    credentials: 'include'
                 });
                 const data = await response.json();
 

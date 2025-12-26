@@ -53,15 +53,16 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
      * - Re-fetches when userId or repoName changes
      */
     const fetchCommits = useCallback(async () => {
-        console.log('Fetching commits for:', userId, repoName);
         if (!userId || !repoName) {
-            console.warn('Missing userId or repoName');
+            console.warn('Unable to fetch commits: Missing repository context');
             return;
         }
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/git/commits?user_id=${userId}&repo_name=${repoName}`);
+            const response = await fetch(`/api/git/commits?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`, {
+                credentials: 'include'
+            });
             const data = await response.json();
             if (data.status === 'success') {
                 setCommits(data.commits || []);
@@ -93,6 +94,7 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
             const response = await fetch('/api/git/pull', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ user_id: userId, repo_name: repoName })
             });
 
