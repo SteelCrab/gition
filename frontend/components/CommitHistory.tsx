@@ -61,7 +61,7 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/git/commits?user_id=${userId}&repo_name=${repoName}`);
+            const response = await fetch(`/api/git/commits?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`);
             const data = await response.json();
             if (data.status === 'success') {
                 setCommits(data.commits || []);

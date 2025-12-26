@@ -39,7 +39,7 @@ const RepoPage = () => {
                 // Note: The backend API must support 'branch' query param for this to work statelessly.
                 // Assuming /api/git/file accepts branch
                 const response = await fetch(
-                    `/api/git/file?user_id=${owner}&repo_name=${repoName}&path=${encodeURIComponent(targetPath)}&branch=${currentBranch}`
+                    `/api/git/file?user_id=${encodeURIComponent(owner || '')}&repo_name=${encodeURIComponent(repoName || '')}&path=${encodeURIComponent(targetPath)}&branch=${encodeURIComponent(currentBranch)}`
                 );
 
                 if (!response.ok) {
@@ -64,16 +64,16 @@ const RepoPage = () => {
                     throw new Error(data.message || 'Error loading content');
                 }
 
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error("Error loading content:", err);
-                setError(err.message || "Failed to load content");
+                setError(err instanceof Error ? err.message : "Failed to load content");
             } finally {
                 setLoading(false);
             }
         };
 
         fetchContent();
-    }, [owner, repoName, currentBranch, filePath, branchName]); // Re-fetch when any of these change
+    }, [owner, repoName, filePath, branchName]); // Re-fetch when any of these change (currentBranch is derived)
 
     if (!branchName) return null; // Waiting for redirect
 

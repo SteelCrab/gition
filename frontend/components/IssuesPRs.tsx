@@ -96,7 +96,7 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
             if (token) headers['Authorization'] = `token ${token}`;
 
             const response = await fetch(
-                `https://api.github.com/repos/${owner}/${repoName}/issues?state=open&per_page=10`,
+                `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repoName)}/issues?state=open&per_page=10`,
                 { headers }
             );
 
@@ -133,7 +133,7 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
             if (token) headers['Authorization'] = `token ${token}`;
 
             const response = await fetch(
-                `https://api.github.com/repos/${owner}/${repoName}/pulls?state=open&per_page=10`,
+                `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repoName)}/pulls?state=open&per_page=10`,
                 { headers }
             );
 

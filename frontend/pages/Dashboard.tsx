@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Code, GitBranch, Terminal, Plus, Loader2 } from 'lucide-react';
+import { FileText, Code, GitBranch, Terminal, Plus, Loader2, LucideIcon } from 'lucide-react';
 
 interface Block {
     id: string;
@@ -10,7 +10,7 @@ interface Block {
     label?: string;
 }
 
-const SlashMenuItem = ({ icon: Icon, label, desc }: { icon: any; label: string; desc: string }) => (
+const SlashMenuItem = ({ icon: Icon, label, desc }: { icon: LucideIcon; label: string; desc: string }) => (
     <div className="flex items-center gap-2 p-2 hover:bg-[#efefef] cursor-pointer rounded-[3px]">
         <div className="w-5 h-5 flex items-center justify-center text-[#787774]">
             <Icon size={16} />
@@ -126,17 +126,26 @@ const Dashboard = () => {
         setTimeout(() => setIsCloning(false), 2000); // Simulate
     };
 
+    const renderBlock = (block: Block) => {
+        switch (block.type) {
+            case 'text':
+                return block.content !== undefined ? <TextBlock key={block.id} id={block.id} content={block.content} onUpdate={handleUpdateBlock} /> : null;
+            case 'code':
+                return block.content !== undefined ? <CodeBlock key={block.id} id={block.id} content={block.content} language={block.language || 'text'} filename={block.filename || ''} onUpdate={handleUpdateBlock} /> : null;
+            case 'pipeline':
+                return block.label !== undefined ? <PipelineBlock key={block.id} label={block.label} /> : null;
+            default:
+                return null;
+        }
+    };
+
     return (
         <div className="max-w-[800px] mx-auto px-6 sm:px-12 md:px-24 py-16" onClick={() => setShowSlashMenu(false)}>
             <h1 className="text-[32px] sm:text-[40px] font-bold text-[#37352f] mb-2" contentEditable suppressContentEditableWarning>Gition</h1>
             <p className="text-[16px] sm:text-[18px] text-[#787774] mb-8 font-medium">Developer&apos;s All-in-One Collaboration Platform</p>
 
             <div className="space-y-1">
-                {blocks.map(block => (
-                    block.type === 'text' && block.content !== undefined ? <TextBlock key={block.id} id={block.id} content={block.content} onUpdate={handleUpdateBlock} /> :
-                        block.type === 'code' && block.content !== undefined ? <CodeBlock key={block.id} id={block.id} content={block.content} language={block.language || 'text'} filename={block.filename || ''} onUpdate={handleUpdateBlock} /> :
-                            block.type === 'pipeline' && block.label !== undefined ? <PipelineBlock key={block.id} label={block.label} /> : null
-                ))}
+                {blocks.map(renderBlock)}
             </div>
 
             <div className="mt-12 relative group">

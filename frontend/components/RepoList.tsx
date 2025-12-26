@@ -83,7 +83,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
         await Promise.all(
             repoList.map(async (repo) => {
                 try {
-                    const response = await fetch(`/api/git/status?user_id=${userId}&repo_name=${repo.name}`);
+                    const response = await fetch(`/api/git/status?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repo.name)}`);
                     const data = await response.json();
                     if (data.cloned) {
                         statuses[repo.name] = 'cloned';
@@ -140,7 +140,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
 
         setLoadingFiles(prev => ({ ...prev, [repoName]: true }));
         try {
-            const response = await fetch(`/api/git/files?user_id=${userId}&repo_name=${repoName}`);
+            const response = await fetch(`/api/git/files?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`);
             const data = await response.json();
             if (data.status === 'success') {
                 setRepoFiles(prev => ({ ...prev, [repoName]: data.files }));
