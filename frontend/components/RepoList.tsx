@@ -75,7 +75,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
      * - Called after fetching repo list
      */
     const checkCloneStatuses = useCallback(async (repoList: Repository[]) => {
-        const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
+        const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
         if (!userId) return;
 
         const statuses: Record<string, string> = {};
@@ -130,7 +130,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
      * Fetch file list for a cloned repository
      */
     const fetchFiles = useCallback(async (repoName: string) => {
-        const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
+        const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
         if (!userId) return;
 
         setLoadingFiles(prev => ({ ...prev, [repoName]: true }));
@@ -205,7 +205,7 @@ const RepoList = ({ onRepoSelect }: RepoListProps) => {
 
         setCloneStatus(prev => ({ ...prev, [repo.name]: 'cloning' }));
         try {
-            const userId = localStorage.getItem('userId') || localStorage.getItem('userLogin');
+            const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId');
             const response = await fetch('/api/git/clone', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
