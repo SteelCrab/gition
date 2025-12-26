@@ -161,7 +161,6 @@ const MainLayout = () => {
                             <button
                                 onClick={() => {
                                     if (displayRepo) {
-                                        const userId = owner || localStorage.getItem('userLogin') || 'user';
                                         const currentBranch = branchName || 'main';
                                         const effectiveUserId = owner || localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
                                         const safeUserId = encodeURIComponent(effectiveUserId);
