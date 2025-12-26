@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { Menu } from 'lucide-react';
 import BranchSelector from '../components/BranchSelector';
+import Dashboard from '../pages/Dashboard';
+import RepoPage from '../pages/RepoPage';
 
 const MainLayout = () => {
     // State
     const [leftPanelOpen, setLeftPanelOpen] = useState(false);
     const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
     const [commitMessage, setCommitMessage] = useState('');
-    const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
+    const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 1024 : false));
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [commitError, setCommitError] = useState<string | null>(null);
 
     // Hooks
     const { owner, repoName, branchName, "*": filePath } = useParams();
@@ -17,6 +21,8 @@ const MainLayout = () => {
 
     // Effects
     useEffect(() => {
+        if (typeof window === 'undefined') return;
+
         const handleResize = () => {
             setIsMobile(window.innerWidth < 1024);
         };
@@ -30,12 +36,39 @@ const MainLayout = () => {
     const displayRepo = repoName;
     const displayFile = filePath ? filePath.split('/').pop() : null;
 
-    const handleCommit = () => {
-        // TODO: Implement actual commit API call here.
-        // This currently only logs the message and resets the modal state.
-        console.log('Committing with message:', commitMessage);
-        setIsCommitModalOpen(false);
-        setCommitMessage('');
+    const handleCommit = async () => {
+        if (!commitMessage.trim()) {
+            setCommitError('Please enter a commit message.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setCommitError(null);
+
+        try {
+            // TODO: Replace with actual backend API call
+            // const response = await fetch('/api/git/commit', { ... });
+            // Log structured action without sensitive content
+            console.log('Initiating commit action for repository:', displayRepo);
+
+            // Simulate API delay
+            await new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    // Random failure simulation
+                    if (Math.random() < 0.1) reject(new Error('Network timeout'));
+                    else resolve(true);
+                }, 1500);
+            });
+
+            // On success:
+            setIsCommitModalOpen(false);
+            setCommitMessage('');
+        } catch (err: unknown) {
+            console.error('Commit failed'); // Don't log internal error details to console in production
+            setCommitError('Failed to commit changes. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -103,24 +136,57 @@ const MainLayout = () => {
                 </header>
 
                 <div className="flex-1 overflow-y-auto">
-                    <Outlet context={{ setLeftPanelOpen }} />
+                    <Routes>
+                        <Route index element={<Dashboard />} />
+                        <Route path="repo/:owner/:repoName" element={<RepoPage />} />
+                        <Route path="repo/:owner/:repoName/:branchName" element={<RepoPage />} />
+                        <Route path="repo/:owner/:repoName/:branchName/*" element={<RepoPage />} />
+                    </Routes>
                 </div>
 
                 {/* Commit Modal */}
                 {isCommitModalOpen && (
-                    <div className="fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-[100]" onClick={() => setIsCommitModalOpen(false)}>
+                    <div className="fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-[100]" onClick={() => !isSubmitting && setIsCommitModalOpen(false)}>
                         <div className="bg-white w-[400px] rounded-[6px] shadow-2xl p-6" onClick={e => e.stopPropagation()}>
                             <h2 className="text-[18px] font-bold mb-4">Commit Changes</h2>
                             <textarea
-                                className="w-full h-32 p-3 bg-[#f7f6f3] rounded-[6px] text-[14px] outline-none mb-4"
+                                className="w-full h-32 p-3 bg-[#f7f6f3] rounded-[6px] text-[14px] outline-none mb-2"
                                 placeholder="What did you work on?"
                                 autoFocus
+                                disabled={isSubmitting}
                                 value={commitMessage}
-                                onChange={(e) => setCommitMessage(e.target.value)}
+                                onChange={(e) => {
+                                    setCommitMessage(e.target.value);
+                                    if (commitError) setCommitError(null);
+                                }}
                             />
+
+                            {commitError && (
+                                <div className="text-red-500 text-[12px] mb-4">{commitError}</div>
+                            )}
+
                             <div className="flex justify-end gap-2">
-                                <button onClick={() => setIsCommitModalOpen(false)} className="px-3 py-1 text-[13px] hover:bg-black/5 rounded">Cancel</button>
-                                <button onClick={handleCommit} className="px-3 py-1 bg-[#2383e2] text-white rounded-[3px] font-medium text-[13px]">Push & Commit</button>
+                                <button
+                                    onClick={() => setIsCommitModalOpen(false)}
+                                    className="px-3 py-1 text-[13px] hover:bg-black/5 rounded"
+                                    disabled={isSubmitting}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleCommit}
+                                    className="px-3 py-1 bg-[#2383e2] text-white rounded-[3px] font-medium text-[13px] flex items-center gap-2 disabled:opacity-50"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Committing...
+                                        </>
+                                    ) : (
+                                        'Push & Commit'
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </div>
