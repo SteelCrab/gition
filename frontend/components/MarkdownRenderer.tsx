@@ -27,7 +27,7 @@ const MarkdownRenderer = ({ content, className = '' }: MarkdownRendererProps) =>
             <ReactMarkdown
                 children={content}
                 remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeSanitize, rehypeHighlight]}
+                rehypePlugins={[rehypeHighlight, rehypeSanitize]}
                 components={{
                     // Behavioral overrides
                     a: ({ node, ...props }: any) => (
