@@ -185,6 +185,80 @@ async def github_callback(code: str = None, error: str = None):
         
         return response
 
+# ==============================================================================
+# Authentication Verification API
+# ==============================================================================
+
+@app.get("/api/auth/verify")
+async def verify_auth(request: Request):
+    """
+    Verify the current user's session by checking the GitHub token
+    - Used by frontend ProtectedRoute to prevent client-side bypass
+    """
+    token = get_token(request)
+    if not token:
+        return Response(status_code=401, content=json.dumps({"status": "error", "message": "Not authenticated"}))
+    
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+            # Verify token with GitHub
+            user_response = await client.get("https://api.github.com/user", headers=headers)
+            
+            if user_response.status_code == 200:
+                user_data = user_response.json()
+                return {
+                    "status": "success",
+                    "authenticated": True,
+                    "user": {
+                        "id": user_data.get("id"),
+                        "login": user_data.get("login"),
+                        "name": user_data.get("name")
+                    }
+                }
+            else:
+                return Response(status_code=401, content=json.dumps({"status": "error", "message": "Invalid token"}))
+    except Exception as e:
+        logger.error(f"Auth verification failed: {e}")
+        return Response(status_code=500, content=json.dumps({"status": "error", "message": "Verification service error"}))
+
+
+# ==============================================================================
+# Audit Logging API
+# ==============================================================================
+
+@app.post("/api/audit/log")
+async def log_audit_event(request: Request):
+    """
+    Record a structured audit event
+    """
+    try:
+        body = await request.json()
+        event_type = body.get("event_type")
+        repo_name = body.get("repo_name")
+        status = body.get("status", "info")
+        metadata = body.get("metadata", {})
+        
+        # In a real app, this would write to a database or centralized log system
+        # For now, we use structured logging to the server console
+        log_entry = {
+            "version": "1.0",
+            "event": event_type,
+            "repo": repo_name,
+            "status": status,
+            "metadata": metadata,
+            "timestamp": body.get("timestamp")
+        }
+        
+        logger.info(f"AUDIT_EVENT: {json.dumps(log_entry)}")
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Failed to record audit event: {e}")
+        return {"status": "error", "message": "Logging failed"}
+
 
 # ==============================================================================
 # Repository List API
