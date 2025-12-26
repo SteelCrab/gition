@@ -654,8 +654,12 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
         
         current_branch = repo.active_branch.name if not repo.head.is_detached else None
         
+        # Collect local branch names for later reference
+        local_branch_names = set()
+        
         # Local branches
         for branch in repo.branches:
+            local_branch_names.add(branch.name)
             branches.append({
                 "name": branch.name,
                 "type": "local",
@@ -664,7 +668,8 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
                 "commit_message": branch.commit.message.strip().split('\n')[0]
             })
         
-        # Remote branches (from all remotes, not just origin)
+        # Remote branches (show all, indicate if also exists locally)
+        remote_branch_names = set()
         for remote in repo.remotes:
             try:
                 for ref in remote.refs:
@@ -673,17 +678,18 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
                         continue
                     # Extract branch name (remove remote prefix like 'origin/')
                     branch_name = ref.name.split('/', 1)[1] if '/' in ref.name else ref.name
-                    # Skip if already exists as local branch
-                    if not any(b['name'] == branch_name and b['type'] == 'local' for b in branches):
-                        # Also skip if already added as remote
-                        if not any(b['name'] == branch_name and b['type'] == 'remote' for b in branches):
-                            branches.append({
-                                "name": branch_name,
-                                "type": "remote",
-                                "is_current": False,
-                                "commit_sha": ref.commit.hexsha[:7],
-                                "commit_message": ref.commit.message.strip().split('\n')[0]
-                            })
+                    # Skip if already added as remote from another remote
+                    if branch_name in remote_branch_names:
+                        continue
+                    remote_branch_names.add(branch_name)
+                    branches.append({
+                        "name": branch_name,
+                        "type": "remote",
+                        "is_current": False,
+                        "has_local": branch_name in local_branch_names,
+                        "commit_sha": ref.commit.hexsha[:7],
+                        "commit_message": ref.commit.message.strip().split('\n')[0]
+                    })
             except Exception as ref_err:
                 logger.warning(f"Failed to get refs from {remote.name}: {ref_err}")
         
