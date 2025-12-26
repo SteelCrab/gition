@@ -142,6 +142,9 @@ const MainLayout = () => {
 
                                     const currentPath = filePath || '';
                                     const safeRepo = encodeURIComponent(displayRepo);
+                                    const currentPath = filePath || '';
+                                    const safeUserId = encodeURIComponent(userId);
+                                    const safeRepo = encodeURIComponent(displayRepo);
                                     const safeBranch = encodeURIComponent(newBranch);
                                     const safePath = currentPath
                                         .split('/')
@@ -150,9 +153,7 @@ const MainLayout = () => {
                                         .join('/');
 
                                     const targetPath = safePath ? `/${safePath}` : '';
-                                    navigate(`/repo/${userId}/${safeRepo}/${safeBranch}${targetPath}`);
-                                }}
-                            />
+                                    navigate(`/repo/${safeUserId}/${safeRepo}/${safeBranch}${targetPath}`);
                         )}
                         {displayFile && (
                             <button
