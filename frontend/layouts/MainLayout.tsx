@@ -163,12 +163,9 @@ const MainLayout = () => {
                                     if (displayRepo) {
                                         const currentBranch = branchName || 'main';
                                         const effectiveUserId = owner || localStorage.getItem('userLogin') || localStorage.getItem('userId') || 'user';
-                                        const effectiveUserId = owner || localStorage.getItem('userLogin') || localStorage.getItem('userId');
-                                        if (!effectiveUserId) {
-                                            navigate('/');
-                                            return;
-                                        }
+
                                         const safeUserId = encodeURIComponent(effectiveUserId);
+                                        const safeRepo = encodeURIComponent(displayRepo);
                                         const safeBranch = encodeURIComponent(currentBranch);
                                         navigate(`/repo/${safeUserId}/${safeRepo}/${safeBranch}`);
                                     } else {
