@@ -31,9 +31,9 @@ const MainLayout = () => {
     const displayFile = filePath ? filePath.split('/').pop() : null;
 
     const handleCommit = () => {
-        // Placeholder for commit functionality
+        // TODO: Implement actual commit API call here.
+        // This currently only logs the message and resets the modal state.
         console.log('Committing with message:', commitMessage);
-        // In a real implementation, this would call the backend API
         setIsCommitModalOpen(false);
         setCommitMessage('');
     };

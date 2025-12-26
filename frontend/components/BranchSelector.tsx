@@ -62,7 +62,7 @@ const BranchSelector = ({ userId, repoName, onBranchChange }: BranchSelectorProp
         if (!userId || !repoName) return;
         setLoading(true);
         try {
-            const response = await fetch(`/api/git/branches?user_id=${userId}&repo_name=${repoName}`);
+            const response = await fetch(`/api/git/branches?user_id=${encodeURIComponent(userId)}&repo_name=${encodeURIComponent(repoName)}`);
             const data = await response.json();
             if (data.status === 'success') {
                 const branchList = (data.branches || []) as Branch[];
