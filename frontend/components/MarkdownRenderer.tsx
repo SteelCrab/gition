@@ -31,7 +31,7 @@ const MarkdownRenderer = ({ content, className = '' }: MarkdownRendererProps) =>
                 components={{
                     // Behavioral overrides
                     a: ({ node, ...props }: any) => (
-                        <a target="_blank" rel="noopener noreferrer" {...props} />
+                        <a {...props} target="_blank" rel="noopener noreferrer" />
                     ),
                     img: ({ node, ...props }: any) => (
                         <img loading="lazy" {...props} />
