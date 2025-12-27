@@ -542,35 +542,69 @@ async def api_clone_repo(request: Request):
         # Register repository in database after successful clone
         if result.get("status") == "success":
             try:
+                # Validate github_repo_id - never default to 0
                 github_repo_id = body.get("github_repo_id")
                 if not github_repo_id:
-                    logger.warning(f"Cannot register repo {repo_name}: missing github_repo_id.")
-                    return result  # Return success from clone, but skip DB registration
-
-                import user_ops, repo_ops
-                # Get user's internal DB ID from GitHub ID
-                db_user = await user_ops.get_user_by_github_id(int(user_id))
-                if db_user:
-                    await repo_ops.ensure_repo(
-                        user_id=db_user["id"],
-                        github_repo_id=int(github_repo_id),
-                        name=repo_name,
-                        full_name=body.get("full_name", f"{db_user['login']}/{repo_name}"),
-                        clone_url=clone_url,
-                        html_url=body.get("html_url"),
-                        description=body.get("description"),
-                        private=body.get("private", False),
-                        language=body.get("language"),
-                        default_branch=body.get("default_branch", "main"),
+                    # Try to extract from body's repo metadata if available
+                    repo_metadata = body.get("repo") or body.get("repository")
+                    if repo_metadata and isinstance(repo_metadata, dict):
+                        github_repo_id = repo_metadata.get("id")
+                
+                if not github_repo_id:
+                    logger.warning(
+                        f"Cannot register repo {repo_name}: missing github_repo_id. "
+                        "The clone succeeded but DB registration was skipped."
                     )
-                    logger.info(f"Repository registered in database: {repo_name}")
-            except (Exception, ValueError) as e:
+                    return result  # Return success from clone, but skip DB registration
+                
+                # Validate and resolve user_id - support both numeric GitHub ID and login string
+                db_user = None
+                user_id_str = str(user_id)
+                
+                # Check if user_id is numeric (GitHub ID)
+                if user_id_str.isdigit():
+                    db_user = await user_ops.get_user_by_github_id(int(user_id_str))
+                    if not db_user:
+                        logger.warning(
+                            f"User with GitHub ID {user_id} not found in database. "
+                            "User may need to re-authenticate."
+                        )
+                else:
+                    # user_id is a login string, look up by login
+                    db_user = await user_ops.get_user_by_login(user_id_str)
+                    if not db_user:
+                        logger.warning(
+                            f"User with login '{user_id_str}' not found in database. "
+                            "User may need to re-authenticate."
+                        )
+                
+                if not db_user:
+                    logger.error(f"Cannot register repo {repo_name}: user lookup failed for '{user_id}'")
+                    return result  # Return success from clone, but skip DB registration
+                
+                await repo_ops.ensure_repo(
+                    user_id=db_user["id"],
+                    github_repo_id=int(github_repo_id),
+                    name=repo_name,
+                    full_name=body.get("full_name", f"{db_user['login']}/{repo_name}"),
+                    clone_url=clone_url,
+                    html_url=body.get("html_url"),
+                    description=body.get("description"),
+                    private=body.get("private", False),
+                    language=body.get("language"),
+                    default_branch=body.get("default_branch", "main"),
+                )
+                logger.info(f"Repository registered in database: {repo_name} (user_id={db_user['id']})")
+                
+            except ValueError as e:
+                logger.error(f"Invalid github_repo_id format for {repo_name}: {e}")
+            except Exception as e:
                 # Log error but don't fail the clone operation
                 logger.warning(f"Failed to register repository in database: {e}")
         
         return result
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {"status": "error", "message": "Clone operation failed. Please try again."}
 
 
 @app.post("/api/git/reclone")
