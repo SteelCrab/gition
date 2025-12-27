@@ -21,21 +21,29 @@ import database
 
 logger = logging.getLogger(__name__)
 
-# Load encryption key from environment. Keep this key secret!
-ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
-if not ENCRYPTION_KEY:
-    raise ValueError("ENCRYPTION_KEY environment variable not set.")
-fernet = Fernet(ENCRYPTION_KEY.encode())
+# Lazy-loaded Fernet instance (initialized on first use)
+_fernet = None
+
+
+def _get_fernet():
+    """Get Fernet instance, initializing lazily."""
+    global _fernet
+    if _fernet is None:
+        encryption_key = os.getenv("ENCRYPTION_KEY")
+        if not encryption_key:
+            raise ValueError("ENCRYPTION_KEY environment variable not set.")
+        _fernet = Fernet(encryption_key.encode())
+    return _fernet
 
 
 def _encrypt_token(token: str) -> bytes:
     """Encrypt a token using Fernet symmetric encryption."""
-    return fernet.encrypt(token.encode())
+    return _get_fernet().encrypt(token.encode())
 
 
 def _decrypt_token(encrypted_token: bytes) -> str:
     """Decrypt a token using Fernet symmetric encryption."""
-    return fernet.decrypt(encrypted_token).decode()
+    return _get_fernet().decrypt(encrypted_token).decode()
 
 
 async def get_or_create_user(
