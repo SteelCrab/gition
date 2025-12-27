@@ -35,7 +35,7 @@ DB_CONFIG = {
     "host": os.getenv("MYSQL_HOST", "mysql"),
     "port": int(os.getenv("MYSQL_PORT", "3306")),
     "user": os.getenv("MYSQL_USER", "***REMOVED***"),
-    "password": os.getenv("MYSQL_PASSWORD", "***REMOVED***"),
+    "password": os.getenv("MYSQL_PASSWORD"),  # Required - no default for security
     "db": os.getenv("MYSQL_DATABASE", "gition"),
     "charset": "utf8mb4",
     "autocommit": True,

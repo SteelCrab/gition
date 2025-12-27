@@ -65,8 +65,11 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("Shutting down Gition Auth Server...")
-    await database.close_pool()
-    logger.info("Database pool closed")
+    try:
+        await database.close_pool()
+        logger.info("Database pool closed")
+    except Exception as e:
+        logger.warning(f"Error closing database pool: {e}")
 
 
 # Create FastAPI app instance with lifespan

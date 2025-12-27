@@ -138,7 +138,7 @@ async def create_branch_page(
         logger.exception(f"Failed to create page for branch '{branch_name}': {e}")
         return {
             "status": "error",
-            "message": str(e),
+            "message": "Failed to create page. Please try again.",
             "page": None
         }
 
@@ -186,7 +186,7 @@ async def get_branch_page(
         logger.exception(f"Failed to get page for branch '{branch_name}': {e}")
         return {
             "status": "error",
-            "message": str(e),
+            "message": "Failed to load page. Please try again.",
             "page": None
         }
 
@@ -275,7 +275,7 @@ async def update_branch_page(
         logger.exception(f"Failed to update page for branch '{branch_name}': {e}")
         return {
             "status": "error",
-            "message": str(e),
+            "message": "Failed to save page. Please try again.",
             "page": None
         }
 
@@ -313,7 +313,7 @@ async def list_branch_pages(user_id: int, repo_id: int) -> Dict[str, Any]:
         logger.exception(f"Failed to list pages: {e}")
         return {
             "status": "error",
-            "message": str(e),
+            "message": "Failed to list pages. Please try again.",
             "pages": [],
             "total": 0
         }
@@ -414,7 +414,7 @@ async def delete_branch_page(
         logger.exception(f"Failed to delete page for branch '{branch_name}': {e}")
         return {
             "status": "error",
-            "message": str(e)
+            "message": "Failed to delete page. Please try again."
         }
 
 
