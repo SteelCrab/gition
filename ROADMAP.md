@@ -21,7 +21,7 @@
 - [ ] Code blocks with syntax highlighting
 - [x] Text blocks with inline editing
 - [x] `.gition` local page storage (branch-specific, git-ignored)
-- [ ] Markdown rendering (#8)
+- [x] Markdown rendering (MarkdownRenderer component)
 
 ### 🔄 Git Operations
 - [x] Commit history viewer (branch-aware)
@@ -58,7 +58,7 @@
 - [x] Branch page navigation (tabbed UI: Notes / README)
 
 ### 🗄️ Database
-- [ ] MySQL + PipeSQL dual DB architecture
+- [x] MySQL + Branch Pages DB architecture
 - [x] **MySQL Schema**: User/Repository/Pages tables defined
   - Users (id, login, email, avatar_url, access_token)
   - Repositories (id, name, owner, clone_url, default_branch)
@@ -66,7 +66,12 @@
   - Documents (user_id, repo_id, title, content)
   - Pipelines (user_id, repo_id, name, config, status)
   - BranchPages (user_id, repo_id, branch_name, title, content)
-- [ ] **PipeSQL**: Page/Block data management
+- [x] **MySQL Operations**: Async database layer
+  - database.py: Connection pool management
+  - user_ops.py: User CRUD operations
+  - repo_ops.py: Repository sync + auto-registration
+  - page_ops.py: Branch page CRUD with login-based API
+- [ ] **PipeSQL**: Page/Block data management (future)
   - Pages (id, repo_id, branch, title, created_at)
   - Blocks (id, page_id, type, content, order)
   - BlockLinks (block_id, target_type, target_id)
