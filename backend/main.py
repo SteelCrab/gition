@@ -56,12 +56,10 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("Starting up Gition Auth Server...")
-    try:
-        await database.init_pool()
-        logger.info("Database pool initialized")
-    except Exception as e:
-        logger.error(f"Failed to initialize database: {e}")
-        # Continue without database for now (graceful degradation)
+    # Initialize database pool - let exceptions propagate to fail startup if DB is unavailable
+    # This prevents the application from running in a broken state
+    await database.init_pool()
+    logger.info("Database pool initialized")
     
     yield  # Application runs here
     
@@ -220,7 +218,7 @@ async def github_callback(code: str = None, error: str = None):
                 avatar_url=user_data.get("avatar_url"),
                 access_token=access_token
             )
-            logger.info(f"User saved to database: {user_data.get('login')}")
+            logger.info(f"User saved to database: id={user_data.get('id')}")
         except Exception as e:
             # Log error but don't fail authentication
             logger.warning(f"Failed to save user to database: {e}")

@@ -41,15 +41,18 @@ class TestLifespan:
 
     @pytest.mark.asyncio
     async def test_lifespan_startup_db_failure(self):
-        """Test graceful degradation when database init fails."""
+        """Test startup fails when database init fails (Fail Fast)."""
         with patch("database.init_pool", AsyncMock(side_effect=Exception("DB connection failed"))) as mock_init, \
              patch("database.close_pool", AsyncMock()) as mock_close:
             
             from main import lifespan, app
             
-            # Should not raise, should continue with graceful degradation
-            async with lifespan(app):
-                mock_init.assert_called_once()
+            # Should raise exception to prevent app from starting in broken state
+            with pytest.raises(Exception):
+                async with lifespan(app):
+                    pass
+            
+            mock_init.assert_called_once()
             
             # Close should still be called
             mock_close.assert_called_once()

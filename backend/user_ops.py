@@ -105,7 +105,7 @@ async def get_or_create_user(
             "SELECT * FROM users WHERE id = %s", (user_id,)
         )
         
-        logger.info(f"Created new user: {login} (id={user_id})")
+        logger.info(f"Created new user: id={user_id}")
         return {"user": user, "created": True}
         
     except Exception as e:
