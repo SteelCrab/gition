@@ -17,11 +17,7 @@ repos:
 
   # Secret detection
   - repo: https://github.com/gitleaks/gitleaks
-<<<<<<< HEAD
-    rev: v8.18.4
-=======
     rev: v8.30.0
->>>>>>> 78ff3a1 (chore: update gitleaks to v8.30.0)
     hooks:
       - id: gitleaks
 
