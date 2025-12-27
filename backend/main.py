@@ -204,6 +204,22 @@ async def github_callback(code: str = None, error: str = None):
             "avatar_url": user_data.get("avatar_url")
         }
         
+        # Step 5: Save/update user in database
+        try:
+            import user_ops
+            await user_ops.get_or_create_user(
+                github_id=user_data.get("id"),
+                login=user_data.get("login"),
+                name=user_data.get("name"),
+                email=user_info["email"],
+                avatar_url=user_data.get("avatar_url"),
+                access_token=access_token
+            )
+            logger.info(f"User saved to database: {user_data.get('login')}")
+        except Exception as e:
+            # Log error but don't fail authentication
+            logger.warning(f"Failed to save user to database: {e}")
+        
         # Security: Use Secure, HttpOnly cookie instead of URL parameters
         response = RedirectResponse(f"{FRONTEND_URL}/auth/callback?user={json.dumps(user_info)}")
         
@@ -517,6 +533,31 @@ async def api_clone_repo(request: Request):
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(clone_repo, clone_url, access_token, str(user_id), repo_name)
+        
+        # Register repository in database after successful clone
+        if result.get("status") == "success":
+            try:
+                import user_ops, repo_ops
+                # Get user's internal DB ID from GitHub ID
+                db_user = await user_ops.get_user_by_github_id(int(user_id))
+                if db_user:
+                    await repo_ops.ensure_repo(
+                        user_id=db_user["id"],
+                        github_repo_id=body.get("github_repo_id", 0),
+                        name=repo_name,
+                        full_name=body.get("full_name", f"{db_user['login']}/{repo_name}"),
+                        clone_url=clone_url,
+                        html_url=body.get("html_url"),
+                        description=body.get("description"),
+                        private=body.get("private", False),
+                        language=body.get("language"),
+                        default_branch=body.get("default_branch", "main"),
+                    )
+                    logger.info(f"Repository registered in database: {repo_name}")
+            except Exception as e:
+                # Log error but don't fail the clone operation
+                logger.warning(f"Failed to register repository in database: {e}")
+        
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
