@@ -32,37 +32,55 @@ const AuthCallback = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Extract user info from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const userDataStr = urlParams.get('user');
-
-        if (userDataStr) {
+        const verifyAuth = async () => {
             try {
-                // Parse JSON
-                const userData = JSON.parse(userDataStr);
+                // Determine API base URL
+                const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-                // Store user info in localStorage
-                localStorage.setItem('isAuthenticated', 'true');
-                localStorage.setItem('userEmail', userData.email);
-                localStorage.setItem('userLogin', userData.login);
-                localStorage.setItem('userName', userData.name);
-                localStorage.setItem('userId', userData.id);
-                localStorage.setItem('userAvatar', userData.avatar_url);
-                localStorage.setItem('githubToken', userData.access_token);
+                // Call verification endpoint (cookie is sent automatically)
+                const response = await fetch(`${apiBase}/api/auth/verify`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    credentials: 'include' // Important: send cookies
+                });
 
-                // Redirect to dashboard
-                navigate('/', { replace: true });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'success' && data.user) {
+                        // Store user info in localStorage
+                        localStorage.setItem('isAuthenticated', 'true');
+                        localStorage.setItem('userLogin', data.user.login);
+                        localStorage.setItem('userName', data.user.name || data.user.login);
+                        localStorage.setItem('userId', String(data.user.id));
+
+                        // Redirect to dashboard
+                        navigate('/', { replace: true });
+                        return;
+                    }
+                }
+
+                // If verification failed
+                console.error('Auth verification failed');
+                navigate('/login?error=auth_failed', { replace: true });
+
             } catch (error) {
-                console.error('Failed to parse user data:', error);
-                navigate('/login', { replace: true });
+                console.error('Auth verification error:', error);
+                navigate('/login?error=network_error', { replace: true });
             }
-        } else {
-            // No user parameter (error case)
-            const error = urlParams.get('error');
-            if (error) {
-                console.error('Auth error from backend:', error);
-            }
+        };
+
+        // Check for error param from backend redirect
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+
+        if (error) {
+            console.error('Auth error from backend:', error);
             navigate('/login', { replace: true });
+        } else {
+            // Attempt verification
+            verifyAuth();
         }
     }, [navigate]);
 

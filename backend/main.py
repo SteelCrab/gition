@@ -223,8 +223,9 @@ async def github_callback(code: str = None, error: str = None):
             # Log error but don't fail authentication
             logger.warning(f"Failed to save user to database: {e}")
         
-        # Security: Use Secure, HttpOnly cookie instead of URL parameters
-        response = RedirectResponse(f"{FRONTEND_URL}/auth/callback?user={json.dumps(user_info)}")
+        # Security: Use Secure, HttpOnly cookie instead of URL parameters.
+        # Frontend must call /api/auth/verify to get user info.
+        response = RedirectResponse(f"{FRONTEND_URL}/auth/callback")
         
         # Determine if we are on HTTPS (for Secure attribute)
         is_https = FRONTEND_URL.startswith("https")
@@ -602,6 +603,7 @@ async def api_clone_repo(request: Request):
         
         return result
     except Exception as e:
+        logger.exception(f"Clone operation failed for {repo_name} (user_id={user_id}): {e}")
         return {"status": "error", "message": "Clone operation failed. Please try again."}
 
 
