@@ -315,11 +315,20 @@ def list_files(user_id: str, repo_name: str, subpath: str = "") -> Dict[str, Any
         - Directories are sorted before files
     """
     repo_path = get_repo_path(user_id, repo_name)
-    target_path = repo_path / subpath if subpath else repo_path
     
     if not repo_path.exists():
         return {"status": "error", "message": "Repository not cloned", "files": []}
-    
+
+    try:
+        # Resolve paths to prevent traversal attacks
+        resolved_repo_path = repo_path.resolve(strict=True)
+        target_path = (resolved_repo_path / subpath).resolve(strict=True)
+
+        if not target_path.is_relative_to(resolved_repo_path):
+            return {"status": "error", "message": "Access denied: outside repository", "files": []}
+    except (ValueError, FileNotFoundError):
+        return {"status": "error", "message": "Path not found", "files": []}
+
     if not target_path.exists():
         return {"status": "error", "message": "Path not found", "files": []}
     
@@ -370,8 +379,9 @@ def read_file(user_id: str, repo_name: str, file_path: str) -> Dict[str, Any]:
     repo_path = get_repo_path(user_id, repo_name)
     try:
         # Verify target file is within repo path (traversal protection)
-        target_file = (repo_path / file_path).resolve()
-        if not target_file.is_relative_to(repo_path):
+        resolved_repo_path = repo_path.resolve(strict=True)
+        target_file = (resolved_repo_path / file_path).resolve(strict=True)
+        if not target_file.is_relative_to(resolved_repo_path):
             return {"status": "error", "message": "Access denied: outside repository"}
 
         if target_file.suffix.lower() in BINARY_EXTENSIONS:
