@@ -9,7 +9,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import 'highlight.js/styles/github.css';
 import './MarkdownRenderer.css';
 
@@ -22,12 +22,32 @@ interface MarkdownRendererProps {
  * Safe Markdown renderer with GFM and syntax highlighting
  */
 const MarkdownRenderer = ({ content, className = '' }: MarkdownRendererProps) => {
+    // Custom sanitize schema to preserve syntax highlighting classes
+    const sanitizeSchema = {
+        ...defaultSchema,
+        attributes: {
+            ...defaultSchema.attributes,
+            code: [
+                ...(defaultSchema.attributes?.code || []),
+                ['className'], // preserve language-* and hljs classes
+            ],
+            span: [
+                ...(defaultSchema.attributes?.span || []),
+                ['className'], // preserve hljs token classes
+            ],
+            pre: [
+                ...(defaultSchema.attributes?.pre || []),
+                ['className'],
+            ],
+        },
+    };
+
     return (
         <div className={`markdown-body ${className}`}>
             <ReactMarkdown
                 children={content}
                 remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeSanitize, rehypeHighlight]}
+                rehypePlugins={[[rehypeSanitize, sanitizeSchema], rehypeHighlight]}
                 components={{
                     // Behavioral overrides
                     a: ({ node, ...props }: any) => (

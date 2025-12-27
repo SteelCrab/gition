@@ -55,6 +55,11 @@ class JsonFormatter(logging.Formatter):
             "module": record.module,
             "function": record.funcName,
         }
+        
+        # Add audit outcome if present (success/failure)
+        if hasattr(record, "outcome"):
+            log_entry["outcome"] = record.outcome
+            
         # Add exception info if present
         if record.exc_info:
             log_entry["exception"] = self.formatException(record.exc_info)
@@ -81,8 +86,9 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up Gition Auth Server...")
     # Initialize database pool - let exceptions propagate to fail startup if DB is unavailable
     # This prevents the application from running in a broken state
+    # This prevents the application from running in a broken state
     await database.init_pool()
-    logger.info("Database pool initialized")
+    logger.info("Database pool initialized", extra={"outcome": "success"})
     
     yield  # Application runs here
     
@@ -90,9 +96,9 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down Gition Auth Server...")
     try:
         await database.close_pool()
-        logger.info("Database pool closed")
+        logger.info("Database pool closed", extra={"outcome": "success"})
     except Exception as e:
-        logger.warning(f"Error closing database pool: {e}")
+        logger.warning(f"Error closing database pool: {e}", extra={"outcome": "failure"})
 
 
 # Create FastAPI app instance with lifespan
@@ -241,10 +247,11 @@ async def github_callback(code: str = None, error: str = None):
                 avatar_url=user_data.get("avatar_url"),
                 access_token=access_token
             )
-            logger.info(f"User saved to database: id={user_data.get('id')}")
+
+            logger.info(f"User saved to database: id={user_data.get('id')}", extra={"outcome": "success"})
         except Exception as e:
             # Log error but don't fail authentication
-            logger.warning(f"Failed to save user to database: {e}")
+            logger.warning(f"Failed to save user to database: {e}", extra={"outcome": "failure"})
         
         # Security: Use Secure, HttpOnly cookie instead of URL parameters.
         # Frontend must call /api/auth/verify to get user info.
@@ -616,17 +623,17 @@ async def api_clone_repo(request: Request):
                     language=body.get("language"),
                     default_branch=body.get("default_branch", "main"),
                 )
-                logger.info(f"Repository registered in database: {repo_name} (user_id={db_user['id']})")
+                logger.info(f"Repository registered in database: {repo_name} (user_id={db_user['id']})", extra={"outcome": "success"})
                 
             except ValueError as e:
-                logger.error(f"Invalid github_repo_id format for {repo_name}: {e}")
+                logger.error(f"Invalid github_repo_id format for {repo_name}: {e}", extra={"outcome": "failure"})
             except Exception as e:
                 # Log error but don't fail the clone operation
-                logger.warning(f"Failed to register repository in database: {e}")
+                logger.warning(f"Failed to register repository in database: {e}", extra={"outcome": "failure"})
         
         return result
     except Exception as e:
-        logger.exception(f"Clone operation failed for {repo_name} (user_id={user_id}): {e}")
+        logger.exception(f"Clone operation failed for {repo_name} (user_id={user_id}): {e}", extra={"outcome": "failure"})
         return {"status": "error", "message": "Clone operation failed. Please try again."}
 
 
