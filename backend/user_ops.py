@@ -11,12 +11,31 @@ Main Features:
 ==============================================================================
 """
 
+import os
 import logging
 from typing import Any, Dict, Optional
+
+from cryptography.fernet import Fernet
 
 import database
 
 logger = logging.getLogger(__name__)
+
+# Load encryption key from environment. Keep this key secret!
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
+if not ENCRYPTION_KEY:
+    raise ValueError("ENCRYPTION_KEY environment variable not set.")
+fernet = Fernet(ENCRYPTION_KEY.encode())
+
+
+def _encrypt_token(token: str) -> bytes:
+    """Encrypt a token using Fernet symmetric encryption."""
+    return fernet.encrypt(token.encode())
+
+
+def _decrypt_token(encrypted_token: bytes) -> str:
+    """Decrypt a token using Fernet symmetric encryption."""
+    return fernet.decrypt(encrypted_token).decode()
 
 
 async def get_or_create_user(
@@ -42,6 +61,9 @@ async def get_or_create_user(
         Dict with user data and 'created' flag
     """
     try:
+        # Encrypt access token before storage
+        encrypted_token = _encrypt_token(access_token) if access_token else None
+        
         # Check if user exists
         existing = await database.fetchone(
             "SELECT * FROM users WHERE github_id = %s",
@@ -49,13 +71,13 @@ async def get_or_create_user(
         )
         
         if existing:
-            # Update access token if provided
+            # Update user data and access token if provided
             if access_token:
                 await database.execute(
                     """UPDATE users SET access_token = %s, login = %s, 
                        name = %s, email = %s, avatar_url = %s 
                        WHERE github_id = %s""",
-                    (access_token, login, name, email, avatar_url, github_id)
+                    (encrypted_token, login, name, email, avatar_url, github_id)
                 )
                 # Refetch updated user
                 existing = await database.fetchone(
@@ -68,7 +90,7 @@ async def get_or_create_user(
         user_id = await database.execute(
             """INSERT INTO users (github_id, login, name, email, avatar_url, access_token)
                VALUES (%s, %s, %s, %s, %s, %s)""",
-            (github_id, login, name, email, avatar_url, access_token)
+            (github_id, login, name, email, avatar_url, encrypted_token)
         )
         
         user = await database.fetchone(

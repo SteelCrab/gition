@@ -247,6 +247,9 @@ async def update_branch_page(
                 "page": _row_to_page(existing)
             }
         
+        # Always update the timestamp
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        
         # Add WHERE clause params
         params.extend([user_id, repo_id, branch_name])
         
