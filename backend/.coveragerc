@@ -1,0 +1,16 @@
+[run]
+# Exclude async database modules that require MySQL connection
+# These modules are tested via integration tests, not unit tests
+omit =
+    database.py
+    user_ops.py
+    repo_ops.py
+    # page_ops.py is partially testable
+    
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
