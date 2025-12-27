@@ -1,0 +1,54 @@
+repos:
+  # Python formatting
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3
+        files: ^backend/
+
+  # Python linting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^backend/
+
+  # Secret detection
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+
+  # TypeScript/JavaScript linting
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint
+        entry: npx eslint --fix
+        language: node
+        types: [typescript, javascript]
+        files: \.(ts|tsx|js|jsx)$
+
+  # TypeScript type checking
+  - repo: local
+    hooks:
+      - id: tsc
+        name: TypeScript Check
+        entry: npx tsc --noEmit
+        language: system
+        files: \.(ts|tsx)$
+        pass_filenames: false
