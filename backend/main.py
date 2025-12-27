@@ -41,7 +41,30 @@ import repo_ops
 load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+class JsonFormatter(logging.Formatter):
+    """
+    JSON log formatter for structured logging compliance.
+    Outputs logs as a JSON string with timestamp, level, message, and metadata.
+    """
+    def format(self, record):
+        log_entry = {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "logger": record.name,
+            "module": record.module,
+            "function": record.funcName,
+        }
+        # Add exception info if present
+        if record.exc_info:
+            log_entry["exception"] = self.formatException(record.exc_info)
+        
+        return json.dumps(log_entry)
+
+# Setup root logger with JSON formatter
+handler = logging.StreamHandler()
+handler.setFormatter(JsonFormatter())
+logging.basicConfig(level=logging.INFO, handlers=[handler], force=True)
 logger = logging.getLogger(__name__)
 
 

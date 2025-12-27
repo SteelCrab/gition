@@ -176,6 +176,8 @@ async def get_branch_page(
                 "page": None
             }
         
+        logger.info(f"Accessed page for branch '{branch_name}' (user_id={user_id}, repo_id={repo_id})")
+        
         return {
             "status": "success",
             "message": "Page retrieved successfully",
@@ -305,6 +307,8 @@ async def list_branch_pages(user_id: int, repo_id: int) -> Dict[str, Any]:
                ORDER BY updated_at DESC""",
             (user_id, repo_id)
         )
+        
+        logger.info(f"Listed pages for repo_id={repo_id} (user_id={user_id}, count={len(pages)})")
         
         return {
             "status": "success",
@@ -442,7 +446,8 @@ def _row_to_page(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if "metadata" in page and isinstance(page["metadata"], str):
         try:
             page["metadata"] = json.loads(page["metadata"])
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            logger.error(f"Data corruption: Failed to parse metadata for page {page.get('id')}: {e}")
             page["metadata"] = {}
     
     return page
