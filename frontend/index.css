@@ -10,6 +10,8 @@
   --color-accent: #2383e2;
   --color-hover: rgba(55, 53, 47, 0.08);
   --sidebar-width: 240px;
+  --color-bg-code: #f7f6f3;
+  --color-text-code: #eb5757;
 }
 
 * {

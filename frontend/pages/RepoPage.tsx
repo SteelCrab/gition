@@ -132,9 +132,7 @@ const RepoPage = () => {
         if (isMarkdown && content) {
             return (
                 <div className="w-full h-full overflow-auto p-8 bg-white">
-                    <div className="max-w-[800px] mx-auto">
-                        <MarkdownRenderer content={content} />
-                    </div>
+                    <MarkdownRenderer content={content} />
                 </div>
             );
         }
@@ -194,9 +192,7 @@ const RepoPage = () => {
                         </div>
                     ) : content ? (
                         <div className="h-full overflow-auto bg-white p-8">
-                            <div className="max-w-[800px] mx-auto">
-                                <MarkdownRenderer content={content} />
-                            </div>
+                            <MarkdownRenderer content={content} />
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-[#787774]">

@@ -349,32 +349,34 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
             </div>
 
             {/* Page content */}
-            <div className="flex-1 overflow-y-auto px-6 py-8 max-w-[800px] mx-auto w-full">
-                {/* Title input */}
-                <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => handleTitleChange(e.target.value)}
-                    placeholder="Untitled"
-                    className="w-full text-[32px] font-bold text-[#37352f] border-none outline-none bg-transparent placeholder-[#c4c4c4] mb-4"
-                />
+            <div className="flex-1 flex flex-col min-h-0 w-full bg-white">
+                <div className="flex-none px-6 pt-8">
+                    {/* Title input */}
+                    <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => handleTitleChange(e.target.value)}
+                        placeholder="Untitled"
+                        className="w-full text-[32px] font-bold text-[#37352f] border-none outline-none bg-transparent placeholder-[#c4c4c4] mb-2"
+                    />
 
-                {/* Metadata */}
-                {page && (
-                    <div className="text-[11px] text-[#787774] mb-6">
-                        Created: {new Date(page.created_at).toLocaleDateString()}
-                        {page.updated_at !== page.created_at && (
-                            <span> · Updated: {new Date(page.updated_at).toLocaleDateString()}</span>
-                        )}
-                    </div>
-                )}
+                    {/* Metadata */}
+                    {page && (
+                        <div className="text-[11px] text-[#787774] mb-6">
+                            Created: {new Date(page.created_at).toLocaleDateString()}
+                            {page.updated_at !== page.created_at && (
+                                <span> · Updated: {new Date(page.updated_at).toLocaleDateString()}</span>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 {/* Content textarea */}
                 <textarea
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
                     placeholder="Start writing here... Your notes will be saved automatically."
-                    className="w-full min-h-[300px] text-[15px] text-[#37352f] leading-relaxed border-none outline-none bg-transparent placeholder-[#c4c4c4] resize-none"
+                    className="flex-1 w-full px-6 pb-8 text-[15px] text-[#37352f] leading-relaxed border-none outline-none bg-transparent placeholder-[#c4c4c4] resize-none overflow-y-auto"
                     style={{ lineHeight: '1.75' }}
                 />
             </div>
