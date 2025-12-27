@@ -71,7 +71,7 @@ async def init_pool(min_size: int = 1, max_size: int = 10) -> aiomysql.Pool:
         logger.info(f"Database pool initialized: {DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['db']}")
         return _pool
     except Exception as e:
-        logger.error(f"Failed to initialize database pool: {e}")
+        logger.exception("Failed to initialize database pool")
         raise
 
 
