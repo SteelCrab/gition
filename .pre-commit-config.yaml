@@ -52,3 +52,14 @@ repos:
         language: system
         files: \.(ts|tsx)$
         pass_filenames: false
+
+  # Python Test Coverage
+  - repo: local
+    hooks:
+      - id: pytest-cov
+        name: pytest coverage
+        entry: bash -c 'cd backend && python3 -m pytest --cov=. --cov-fail-under=70'
+        language: system
+        types: [python]
+        files: ^backend/
+        pass_filenames: false
