@@ -54,8 +54,8 @@ class TestLifespan:
             
             mock_init.assert_called_once()
             
-            # Close should still be called
-            mock_close.assert_called_once()
+            # Close is NOT called because startup failed before yield
+            mock_close.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_lifespan_shutdown_db_failure(self):
