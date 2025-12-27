@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+
+.markdown-body {
+  @apply text-[var(--color-text-main)] leading-relaxed;
+}
+
+.markdown-body h1 {
+  @apply text-[24px] font-semibold text-[var(--color-text-main)] mt-6 mb-4 pb-2 border-b border-[var(--color-border)];
+}
+
+.markdown-body h2 {
+  @apply text-[20px] font-semibold text-[var(--color-text-main)] mt-5 mb-3 pb-2 border-b border-[var(--color-border)];
+}
+
+.markdown-body h3 {
+  @apply text-[17px] font-semibold text-[var(--color-text-main)] mt-4 mb-2;
+}
+
+.markdown-body h4 {
+  @apply text-[15px] font-semibold text-[var(--color-text-main)] mt-3 mb-2;
+}
+
+.markdown-body p {
+  @apply text-[14px] text-[var(--color-text-main)] leading-relaxed my-3;
+}
+
+.markdown-body a {
+  @apply text-[var(--color-accent)] hover:underline;
+}
+
+.markdown-body ul {
+  @apply list-disc list-inside my-3 pl-4 text-[14px] text-[var(--color-text-main)];
+}
+
+.markdown-body ol {
+  @apply list-decimal list-inside my-3 pl-4 text-[14px] text-[var(--color-text-main)];
+}
+
+.markdown-body li {
+  @apply my-1;
+}
+
+.markdown-body pre {
+  @apply bg-[var(--color-bg-code)] rounded-md p-4 my-4 overflow-x-auto text-[13px];
+}
+
+.markdown-body code {
+  @apply bg-[var(--color-bg-code)] text-[var(--color-text-code)] px-1.5 py-0.5 rounded text-[13px] font-mono;
+}
+
+/* Override code styles when inside pre (block code) */
+.markdown-body pre code {
+  @apply bg-transparent text-inherit p-0 border-none rounded-none;
+}
+
+.markdown-body blockquote {
+  @apply border-l-4 border-[var(--color-border)] pl-4 my-4 text-[var(--color-text-secondary)] italic;
+}
+
+.markdown-body table {
+  @apply min-w-full border border-[var(--color-border)];
+}
+
+.markdown-body thead {
+  @apply bg-[var(--color-bg-code)];
+}
+
+.markdown-body th {
+  @apply border border-[var(--color-border)] px-4 py-2 text-left text-[13px] font-semibold text-[var(--color-text-main)];
+}
+
+.markdown-body td {
+  @apply border border-[var(--color-border)] px-4 py-2 text-[13px] text-[var(--color-text-main)];
+}
+
+.markdown-body hr {
+  @apply my-6 border-t border-[var(--color-border)];
+}
+
+.markdown-body img {
+  @apply max-w-full h-auto my-4 rounded;
+}
+
+.markdown-body input[type="checkbox"] {
+  @apply mr-2 accent-[var(--color-accent)];
+}
+
+.markdown-table-wrapper {
+  @apply overflow-x-auto my-4;
+}
