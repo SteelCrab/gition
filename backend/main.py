@@ -23,6 +23,7 @@ Run Command:
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 import httpx
 import asyncio
 import os
@@ -31,6 +32,9 @@ import logging
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 
+# Database module
+import database
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -38,8 +42,35 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create FastAPI app instance
-app = FastAPI(title="Gition Auth Server")
+
+# ==============================================================================
+# Application Lifespan (Startup/Shutdown)
+# ==============================================================================
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan context manager.
+    Handles startup and shutdown events.
+    """
+    # Startup
+    logger.info("Starting up Gition Auth Server...")
+    try:
+        await database.init_pool()
+        logger.info("Database pool initialized")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        # Continue without database for now (graceful degradation)
+    
+    yield  # Application runs here
+    
+    # Shutdown
+    logger.info("Shutting down Gition Auth Server...")
+    await database.close_pool()
+    logger.info("Database pool closed")
+
+
+# Create FastAPI app instance with lifespan
+app = FastAPI(title="Gition Auth Server", lifespan=lifespan)
 
 # CORS middleware configuration
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost,http://localhost:80,http://localhost:5173").split(",")
@@ -172,6 +203,22 @@ async def github_callback(code: str = None, error: str = None):
             "email": primary_email or f"{user_data.get('id')}+{user_data.get('login')}@users.noreply.github.com",
             "avatar_url": user_data.get("avatar_url")
         }
+        
+        # Step 5: Save/update user in database
+        try:
+            import user_ops
+            await user_ops.get_or_create_user(
+                github_id=user_data.get("id"),
+                login=user_data.get("login"),
+                name=user_data.get("name"),
+                email=user_info["email"],
+                avatar_url=user_data.get("avatar_url"),
+                access_token=access_token
+            )
+            logger.info(f"User saved to database: {user_data.get('login')}")
+        except Exception as e:
+            # Log error but don't fail authentication
+            logger.warning(f"Failed to save user to database: {e}")
         
         # Security: Use Secure, HttpOnly cookie instead of URL parameters
         response = RedirectResponse(f"{FRONTEND_URL}/auth/callback?user={json.dumps(user_info)}")
@@ -446,106 +493,130 @@ from git_ops import (
     get_branches, checkout_branch
 )
 
-# Import page operations for branch pages
+# Import page operations for branch pages (using legacy wrappers that accept login/repo_name)
 from page_ops import (
-    create_branch_page, get_branch_page, update_branch_page,
-    list_branch_pages, ensure_branch_page, delete_branch_page
+    create_branch_page_by_login as create_branch_page,
+    get_branch_page_by_login as get_branch_page,
+    update_branch_page_by_login as update_branch_page,
+    list_branch_pages_by_login as list_branch_pages,
+    ensure_branch_page_by_login as ensure_branch_page,
+    delete_branch_page_by_login as delete_branch_page,
 )
 
-class CloneRepoRequest(BaseModel):
-    clone_url: str
-    user_id: str
-    repo_name: str
 
-
-class CloneRepoResponse(BaseModel):
-    status: str
-    message: str
-    path: Optional[str] = None
-    branches_created: Optional[int] = None
-
-
-class PullRepoRequest(BaseModel):
-    user_id: str
-    repo_name: str
-
-
-@app.post("/api/git/clone", response_model=CloneRepoResponse)
-async def api_clone_repo(body: CloneRepoRequest, request: Request):
+@app.post("/api/git/clone")
+async def api_clone_repo(request: Request):
     """
     Clone a GitHub repository to the server
+    
+    Body (JSON):
+        - clone_url: Repository HTTPS clone URL
+        - access_token: GitHub access token (for private repo access)
+        - user_id: User ID (for path separation)
+        - repo_name: Repository name
     
     Storage Path: /repos/{user_id}/{repo_name}/
     """
     try:
-        clone_url = body.clone_url
-        user_id = body.user_id
-        repo_name = body.repo_name
+        body = await request.json()
+        clone_url = body.get("clone_url")
+        user_id = body.get("user_id")
+        repo_name = body.get("repo_name")
         
-        # Get access_token from cookie
+        # Get access_token from cookie instead of body
         access_token = get_token(request)
         
+        if not all([clone_url, user_id, repo_name]):
+            return {"status": "error", "message": "Missing required fields"}
         if not access_token:
             return {"status": "error", "message": "Not authenticated"}
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(clone_repo, clone_url, access_token, str(user_id), repo_name)
         
-        # Log outcome for audit trails
-        outcome = "success" if result.get("status") in ["success", "exists"] else "failure"
-        logger.info(
-            f"Repository clone attempt: {user_id}/{repo_name}",
-            extra={"outcome": outcome}
-        )
+        # Register repository in database after successful clone
+        if result.get("status") == "success":
+            try:
+                import user_ops, repo_ops
+                # Get user's internal DB ID from GitHub ID
+                db_user = await user_ops.get_user_by_github_id(int(user_id))
+                if db_user:
+                    await repo_ops.ensure_repo(
+                        user_id=db_user["id"],
+                        github_repo_id=body.get("github_repo_id", 0),
+                        name=repo_name,
+                        full_name=body.get("full_name", f"{db_user['login']}/{repo_name}"),
+                        clone_url=clone_url,
+                        html_url=body.get("html_url"),
+                        description=body.get("description"),
+                        private=body.get("private", False),
+                        language=body.get("language"),
+                        default_branch=body.get("default_branch", "main"),
+                    )
+                    logger.info(f"Repository registered in database: {repo_name}")
+            except Exception as e:
+                # Log error but don't fail the clone operation
+                logger.warning(f"Failed to register repository in database: {e}")
         
         return result
     except Exception as e:
-        logger.error(f"Clone API exception: {str(e)}", exc_info=True)
         return {"status": "error", "message": str(e)}
 
 
-
-@app.post("/api/git/reclone", response_model=CloneRepoResponse)
-async def api_reclone_repo(body: CloneRepoRequest, request: Request):
+@app.post("/api/git/reclone")
+async def api_reclone_repo(request: Request):
     """
     Delete existing repository and clone fresh.
     Useful for fixing corrupted clones or resetting local changes.
+    
+    Body (JSON):
+        - clone_url: Repository HTTPS clone URL
+        - access_token: GitHub access token
+        - user_id: User ID
+        - repo_name: Repository name
     """
     try:
-        clone_url = body.clone_url
-        user_id = body.user_id
-        repo_name = body.repo_name
+        body = await request.json()
+        clone_url = body.get("clone_url")
+        user_id = body.get("user_id")
+        repo_name = body.get("repo_name")
         
-        # Get access_token from cookie
+        # Get access_token from cookie instead of body
         access_token = get_token(request)
         
+        if not all([clone_url, user_id, repo_name]):
+            return {"status": "error", "message": "Missing required fields"}
         if not access_token:
             return {"status": "error", "message": "Not authenticated"}
         
         result = await asyncio.to_thread(reclone_repo, clone_url, access_token, str(user_id), repo_name)
         return result
     except Exception as e:
-        logger.error(f"Reclone API exception: {str(e)}", exc_info=True)
         return {"status": "error", "message": str(e)}
 
 
-
 @app.post("/api/git/pull")
-async def api_pull_repo(body: PullRepoRequest):
+async def api_pull_repo(request: Request):
     """
     Pull latest changes from a cloned repository
+    
+    Body (JSON):
+        - user_id: User ID
+        - repo_name: Repository name
     """
     try:
-        user_id = body.user_id
-        repo_name = body.repo_name
+        body = await request.json()
+        user_id = body.get("user_id")
+        repo_name = body.get("repo_name")
+        
+        if not all([user_id, repo_name]):
+            return {"status": "error", "message": "Missing required fields"}
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(pull_repo, str(user_id), repo_name)
         return result
     except Exception as e:
-        logger.error(f"Pull API exception: {str(e)}", exc_info=True)
         return {"status": "error", "message": str(e)}
-
 
 
 @app.get("/api/git/files")
@@ -741,7 +812,7 @@ async def api_list_pages(request: Request, user_id: str, repo_name: str):
         return {"status": "error", "message": "Not authenticated", "pages": [], "total": 0}
     
     try:
-        result = await asyncio.to_thread(list_branch_pages, user_id, repo_name)
+        result = await list_branch_pages(user_id, repo_name)
         return result
     except Exception as e:
         logger.exception(f"[Internal] Failed to list pages for {repo_name}: {e}")
@@ -768,7 +839,7 @@ async def api_get_page(request: Request, user_id: str, repo_name: str, branch_na
         return {"status": "error", "message": "Not authenticated", "page": None}
     
     try:
-        result = await asyncio.to_thread(get_branch_page, user_id, repo_name, branch_name)
+        result = await get_branch_page(user_id, repo_name, branch_name)
         return result
     except Exception as e:
         logger.exception(f"[Internal] Failed to get page for {branch_name}: {e}")
@@ -808,9 +879,7 @@ async def api_create_page(request: Request, user_id: str, repo_name: str, branch
         title = body.get("title")
         content = body.get("content", "")
         
-        result = await asyncio.to_thread(
-            create_branch_page, user_id, repo_name, branch_name, title, content
-        )
+        result = await create_branch_page(user_id, repo_name, branch_name, title, content)
         return result
     except Exception as e:
         logger.exception(f"[Internal] Failed to create page for {branch_name}: {e}")
@@ -845,9 +914,7 @@ async def api_update_page(request: Request, user_id: str, repo_name: str, branch
         title = body.get("title")
         content = body.get("content")
         
-        result = await asyncio.to_thread(
-            update_branch_page, user_id, repo_name, branch_name, title, content
-        )
+        result = await update_branch_page(user_id, repo_name, branch_name, title, content)
         return result
     except Exception as e:
         logger.exception(f"[Internal] Failed to update page for {branch_name}: {e}")
@@ -877,7 +944,7 @@ async def api_delete_page(request: Request, user_id: str, repo_name: str, branch
         return {"status": "error", "message": "Not authenticated"}
     
     try:
-        result = await asyncio.to_thread(delete_branch_page, user_id, repo_name, branch_name)
+        result = await delete_branch_page(user_id, repo_name, branch_name)
         return result
     except Exception as e:
         logger.exception(f"[Internal] Failed to delete page for {branch_name}: {e}")
