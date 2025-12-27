@@ -1,0 +1,5 @@
+[allowlist]
+description = "Allow encryption keys in test files"
+paths = [
+    '''backend/tests/test_user_ops.py'''
+]
