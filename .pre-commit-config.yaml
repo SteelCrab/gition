@@ -38,10 +38,10 @@ repos:
     hooks:
       - id: eslint
         name: ESLint
-        entry: npm run lint
-        language: system
+        entry: npx eslint --fix
+        language: node
+        types: [typescript, javascript]
         files: \.(ts|tsx|js|jsx)$
-        pass_filenames: false
 
   # TypeScript type checking
   - repo: local
