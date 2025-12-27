@@ -452,95 +452,100 @@ from page_ops import (
     list_branch_pages, ensure_branch_page, delete_branch_page
 )
 
+class CloneRepoRequest(BaseModel):
+    clone_url: str
+    user_id: str
+    repo_name: str
 
-@app.post("/api/git/clone")
-async def api_clone_repo(request: Request):
+
+class CloneRepoResponse(BaseModel):
+    status: str
+    message: str
+    path: Optional[str] = None
+    branches_created: Optional[int] = None
+
+
+class PullRepoRequest(BaseModel):
+    user_id: str
+    repo_name: str
+
+
+@app.post("/api/git/clone", response_model=CloneRepoResponse)
+async def api_clone_repo(body: CloneRepoRequest, request: Request):
     """
     Clone a GitHub repository to the server
-    
-    Body (JSON):
-        - clone_url: Repository HTTPS clone URL
-        - access_token: GitHub access token (for private repo access)
-        - user_id: User ID (for path separation)
-        - repo_name: Repository name
     
     Storage Path: /repos/{user_id}/{repo_name}/
     """
     try:
-        body = await request.json()
-        clone_url = body.get("clone_url")
-        user_id = body.get("user_id")
-        repo_name = body.get("repo_name")
+        clone_url = body.clone_url
+        user_id = body.user_id
+        repo_name = body.repo_name
         
-        # Get access_token from cookie instead of body
+        # Get access_token from cookie
         access_token = get_token(request)
         
-        if not all([clone_url, user_id, repo_name]):
-            return {"status": "error", "message": "Missing required fields"}
         if not access_token:
             return {"status": "error", "message": "Not authenticated"}
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(clone_repo, clone_url, access_token, str(user_id), repo_name)
+        
+        # Log outcome for audit trails
+        outcome = "success" if result.get("status") in ["success", "exists"] else "failure"
+        logger.info(
+            f"Repository clone attempt: {user_id}/{repo_name}",
+            extra={"outcome": outcome}
+        )
+        
         return result
     except Exception as e:
+        logger.error(f"Clone API exception: {str(e)}", exc_info=True)
         return {"status": "error", "message": str(e)}
 
 
-@app.post("/api/git/reclone")
-async def api_reclone_repo(request: Request):
+
+@app.post("/api/git/reclone", response_model=CloneRepoResponse)
+async def api_reclone_repo(body: CloneRepoRequest, request: Request):
     """
     Delete existing repository and clone fresh.
     Useful for fixing corrupted clones or resetting local changes.
-    
-    Body (JSON):
-        - clone_url: Repository HTTPS clone URL
-        - access_token: GitHub access token
-        - user_id: User ID
-        - repo_name: Repository name
     """
     try:
-        body = await request.json()
-        clone_url = body.get("clone_url")
-        user_id = body.get("user_id")
-        repo_name = body.get("repo_name")
+        clone_url = body.clone_url
+        user_id = body.user_id
+        repo_name = body.repo_name
         
-        # Get access_token from cookie instead of body
+        # Get access_token from cookie
         access_token = get_token(request)
         
-        if not all([clone_url, user_id, repo_name]):
-            return {"status": "error", "message": "Missing required fields"}
         if not access_token:
             return {"status": "error", "message": "Not authenticated"}
         
         result = await asyncio.to_thread(reclone_repo, clone_url, access_token, str(user_id), repo_name)
         return result
     except Exception as e:
+        logger.error(f"Reclone API exception: {str(e)}", exc_info=True)
         return {"status": "error", "message": str(e)}
 
 
+
 @app.post("/api/git/pull")
-async def api_pull_repo(request: Request):
+async def api_pull_repo(body: PullRepoRequest):
     """
     Pull latest changes from a cloned repository
-    
-    Body (JSON):
-        - user_id: User ID
-        - repo_name: Repository name
     """
     try:
-        body = await request.json()
-        user_id = body.get("user_id")
-        repo_name = body.get("repo_name")
-        
-        if not all([user_id, repo_name]):
-            return {"status": "error", "message": "Missing required fields"}
+        user_id = body.user_id
+        repo_name = body.repo_name
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(pull_repo, str(user_id), repo_name)
         return result
     except Exception as e:
+        logger.error(f"Pull API exception: {str(e)}", exc_info=True)
         return {"status": "error", "message": str(e)}
+
 
 
 @app.get("/api/git/files")
