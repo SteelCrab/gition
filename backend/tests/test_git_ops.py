@@ -118,10 +118,16 @@ class TestListFiles:
         result = list_files("nonexistent_user", "nonexistent_repo")
         assert result["status"] == "error"
     
+    @patch("git_ops.Path.resolve")
     @patch("git_ops.Path.exists")
     @patch("git_ops.Path.iterdir")
-    def test_list_success(self, mock_iterdir, mock_exists):
+    def test_list_success(self, mock_iterdir, mock_exists, mock_resolve):
         mock_exists.return_value = True
+        
+        # Mock resolve to return a path that passes the security check
+        mock_path = MagicMock(spec=Path)
+        mock_path.is_relative_to.return_value = True
+        mock_resolve.return_value = mock_path
         
         # Mock directory entries
         file1 = MagicMock(spec=Path)
@@ -137,7 +143,8 @@ class TestListFiles:
         dir1.is_file.return_value = False
         dir1.relative_to.return_value = "dir1"
         
-        mock_iterdir.return_value = [file1, dir1]
+        mock_path.iterdir.return_value = [file1, dir1]
+        mock_path.exists.return_value = True
         
         result = list_files("user", "repo")
         assert result["status"] == "success"
@@ -154,37 +161,49 @@ class TestReadFile:
         result = read_file("user", "repo", "file.txt")
         assert result["status"] == "error"
 
+    @patch("git_ops.Path.resolve")
     @patch("git_ops.Path.stat")
     @patch("git_ops.Path.read_text")
     @patch("git_ops.Path.is_file")
     @patch("git_ops.Path.exists")
-    def test_read_text_success(self, mock_exists, mock_is_file, mock_read_text, mock_stat):
+    def test_read_text_success(self, mock_exists, mock_is_file, mock_read_text, mock_stat, mock_resolve):
         mock_exists.return_value = True
         mock_is_file.return_value = True
         mock_read_text.return_value = "hello world"
         mock_stat.return_value.st_size = 11
         
-        # Mock suffix for binary check
-        with patch("git_ops.Path.suffix", ".txt"):
-            result = read_file("user", "repo", "file.txt")
-            assert result["status"] == "success"
-            assert result["content"] == "hello world"
-            assert result["binary"] == False
-            assert result["size"] == 11
+        # Mock resolve to return a path that passes the security check
+        mock_resolved = MagicMock(spec=Path)
+        mock_resolved.is_relative_to.return_value = True
+        mock_resolved.suffix = ".txt"
+        mock_resolved.stat.return_value.st_size = 11
+        mock_resolved.read_text.return_value = "hello world"
+        mock_resolve.return_value = mock_resolved
+        
+        result = read_file("user", "repo", "file.txt")
+        assert result["status"] == "success"
+        assert result["content"] == "hello world"
+        assert result["binary"] == False
+        assert result["size"] == 11
 
+    @patch("git_ops.Path.resolve")
     @patch("git_ops.Path.is_file")
     @patch("git_ops.Path.exists")
-    def test_read_binary_by_extension(self, mock_exists, mock_is_file):
+    def test_read_binary_by_extension(self, mock_exists, mock_is_file, mock_resolve):
         mock_exists.return_value = True
         mock_is_file.return_value = True
         
-        with patch("git_ops.Path.suffix", ".png"):
-            with patch("git_ops.Path.stat") as mock_stat:
-                mock_stat().st_size = 1024
-                result = read_file("user", "repo", "image.png")
-                assert result["status"] == "success"
-                assert result["binary"] == True
-                assert result["content"] is None
+        # Mock resolve to return a path that passes the security check
+        mock_resolved = MagicMock(spec=Path)
+        mock_resolved.is_relative_to.return_value = True
+        mock_resolved.suffix = ".png"
+        mock_resolved.stat.return_value.st_size = 1024
+        mock_resolve.return_value = mock_resolved
+        
+        result = read_file("user", "repo", "image.png")
+        assert result["status"] == "success"
+        assert result["binary"] == True
+        assert result["content"] is None
 
 
 class TestDeleteRepo:
