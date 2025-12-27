@@ -1,8 +1,8 @@
 """
 ==============================================================================
-Branch Page Operations Module (page_ops.py)
+Branch Page Operations Module (page_ops.py) - MySQL Version
 ==============================================================================
-Description: Manages branch-specific pages stored locally in .gition directory
+Description: Manages branch-specific pages stored in MySQL database
 
 Main Features:
     - create_branch_page: Create a new page for a branch
@@ -10,13 +10,16 @@ Main Features:
     - update_branch_page: Update page content
     - list_branch_pages: List all pages for a repository
     - ensure_branch_page: Create page if not exists
+    - delete_branch_page: Delete a branch page
 
 Data Storage:
-    Pages are stored in: /repos/{user_id}/{repo_name}/.gition/pages/{branch_name}.json
+    Pages are stored in: branch_pages table
     
 Data Structure:
     {
         "id": "uuid",
+        "user_id": 1,
+        "repo_id": 1,
         "branch_name": "main",
         "title": "main",
         "content": "",
@@ -27,105 +30,48 @@ Data Structure:
             "branch_exists": true
         }
     }
-
-Note:
-    - .gition/ directory is in .gitignore, so pages are local-only
-    - Pages persist even after branch deletion (historical data)
 ==============================================================================
 """
 
-import os
 import json
 import uuid
 import logging
-from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
+import database
+import user_ops
+import repo_ops
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Base path for cloned repositories
-REPOS_BASE_PATH = os.getenv("REPOS_PATH", "/repos")
 
-# Page directory name
-GITION_DIR = ".gition"
-PAGES_DIR = "pages"
-
-
-def _get_gition_path(user_id: str, repo_name: str) -> Path:
+async def _resolve_ids(
+    user_login: str,
+    repo_name: str
+) -> tuple[Optional[int], Optional[int]]:
     """
-    Get the .gition directory path for a repository.
+    Resolve user_id and repo_id from login and repo_name.
     
     Args:
-        user_id: User's GitHub ID
+        user_login: GitHub login (username)
         repo_name: Repository name
         
     Returns:
-        Path: Path to .gition directory
+        Tuple of (user_id, repo_id) or (None, None) if not found
     """
-    if not user_id or not repo_name:
-        raise ValueError("Invalid user_id or repo_name")
+    user_id = await user_ops.get_user_id_by_login(user_login)
+    if not user_id:
+        return None, None
     
-    # Sanitize: Reject path separators in components
-    if any(sep in str(user_id) for sep in ('/', '\\', '..')):
-        raise ValueError(f"Invalid user_id: {user_id}")
-    if any(sep in repo_name for sep in ('/', '\\', '..')):
-        raise ValueError(f"Invalid repo_name: {repo_name}")
-    
-    base_path = Path(REPOS_BASE_PATH).resolve()
-    gition_path = (base_path / str(user_id) / repo_name / GITION_DIR).resolve()
-    
-    # Verify path is still within REPOS_BASE_PATH
-    if not gition_path.is_relative_to(base_path):
-        raise ValueError("Path traversal detected")
-    
-    return gition_path
+    repo_id = await repo_ops.get_repo_id(user_id, repo_name)
+    return user_id, repo_id
 
 
-def _get_page_path(user_id: str, repo_name: str, branch_name: str) -> Path:
-    """
-    Get the file path for a branch page.
-    
-    Args:
-        user_id: User's GitHub ID
-        repo_name: Repository name
-        branch_name: Branch name
-        
-    Returns:
-        Path: Path to the page JSON file
-    """
-    if not branch_name:
-        raise ValueError("Invalid branch_name")
-    
-    # Sanitize branch name for filesystem (replace / with _)
-    safe_branch = branch_name.replace('/', '_').replace('\\', '_')
-    if '..' in safe_branch:
-        raise ValueError(f"Invalid branch_name: {branch_name}")
-    
-    gition_path = _get_gition_path(user_id, repo_name)
-    return gition_path / PAGES_DIR / f"{safe_branch}.json"
-
-
-def _ensure_pages_dir(user_id: str, repo_name: str) -> Path:
-    """
-    Ensure the pages directory exists.
-    
-    Args:
-        user_id: User's GitHub ID
-        repo_name: Repository name
-        
-    Returns:
-        Path: Path to the pages directory
-    """
-    pages_path = _get_gition_path(user_id, repo_name) / PAGES_DIR
-    pages_path.mkdir(parents=True, exist_ok=True)
-    return pages_path
-
-
-def create_branch_page(
-    user_id: str,
-    repo_name: str,
+async def create_branch_page(
+    user_id: int,
+    repo_id: int,
     branch_name: str,
     title: Optional[str] = None,
     content: str = ""
@@ -134,8 +80,8 @@ def create_branch_page(
     Create a new page for a branch.
     
     Args:
-        user_id: User's GitHub ID
-        repo_name: Repository name
+        user_id: Internal user ID
+        repo_id: Internal repository ID
         branch_name: Branch name
         title: Page title (defaults to branch name)
         content: Initial content
@@ -147,43 +93,47 @@ def create_branch_page(
             - message: Status message
     """
     try:
-        page_path = _get_page_path(user_id, repo_name, branch_name)
-        
         # Check if page already exists
-        if page_path.exists():
+        existing = await database.fetchone(
+            """SELECT * FROM branch_pages 
+               WHERE user_id = %s AND repo_id = %s AND branch_name = %s""",
+            (user_id, repo_id, branch_name)
+        )
+        
+        if existing:
             return {
                 "status": "exists",
                 "message": f"Page for branch '{branch_name}' already exists",
-                "page": json.loads(page_path.read_text(encoding='utf-8'))
+                "page": _row_to_page(existing)
             }
         
-        # Ensure directory exists
-        _ensure_pages_dir(user_id, repo_name)
+        # Create page
+        page_id = str(uuid.uuid4())
+        metadata = json.dumps({
+            "created_from_branch": True,
+            "branch_exists": True
+        })
         
-        # Create page data
-        now = datetime.now(timezone.utc).isoformat()
-        page_data = {
-            "id": str(uuid.uuid4()),
-            "branch_name": branch_name,
-            "title": title or branch_name,
-            "content": content,
-            "created_at": now,
-            "updated_at": now,
-            "metadata": {
-                "created_from_branch": True,
-                "branch_exists": True
-            }
-        }
+        await database.execute(
+            """INSERT INTO branch_pages 
+               (id, user_id, repo_id, branch_name, title, content, metadata)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (page_id, user_id, repo_id, branch_name, title or branch_name, content, metadata)
+        )
         
-        # Write to file
-        page_path.write_text(json.dumps(page_data, indent=2, ensure_ascii=False), encoding='utf-8')
-        logger.info(f"Created page for branch '{branch_name}' in {repo_name}")
+        # Fetch created page
+        page = await database.fetchone(
+            "SELECT * FROM branch_pages WHERE id = %s", (page_id,)
+        )
+        
+        logger.info(f"Created page for branch '{branch_name}' (id={page_id})")
         
         return {
             "status": "success",
             "message": f"Page created for branch '{branch_name}'",
-            "page": page_data
+            "page": _row_to_page(page)
         }
+        
     except Exception as e:
         logger.exception(f"Failed to create page for branch '{branch_name}': {e}")
         return {
@@ -193,17 +143,17 @@ def create_branch_page(
         }
 
 
-def get_branch_page(
-    user_id: str,
-    repo_name: str,
+async def get_branch_page(
+    user_id: int,
+    repo_id: int,
     branch_name: str
 ) -> Dict[str, Any]:
     """
     Get a branch page.
     
     Args:
-        user_id: User's GitHub ID
-        repo_name: Repository name
+        user_id: Internal user ID
+        repo_id: Internal repository ID
         branch_name: Branch name
         
     Returns:
@@ -213,28 +163,25 @@ def get_branch_page(
             - message: Status message
     """
     try:
-        page_path = _get_page_path(user_id, repo_name, branch_name)
+        page = await database.fetchone(
+            """SELECT * FROM branch_pages 
+               WHERE user_id = %s AND repo_id = %s AND branch_name = %s""",
+            (user_id, repo_id, branch_name)
+        )
         
-        if not page_path.exists():
+        if not page:
             return {
                 "status": "not_found",
                 "message": f"Page for branch '{branch_name}' not found",
                 "page": None
             }
         
-        page_data = json.loads(page_path.read_text(encoding='utf-8'))
         return {
             "status": "success",
             "message": "Page retrieved successfully",
-            "page": page_data
+            "page": _row_to_page(page)
         }
-    except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in page file for '{branch_name}': {e}")
-        return {
-            "status": "error",
-            "message": "Page file is corrupted",
-            "page": None
-        }
+        
     except Exception as e:
         logger.exception(f"Failed to get page for branch '{branch_name}': {e}")
         return {
@@ -244,9 +191,9 @@ def get_branch_page(
         }
 
 
-def update_branch_page(
-    user_id: str,
-    repo_name: str,
+async def update_branch_page(
+    user_id: int,
+    repo_id: int,
     branch_name: str,
     title: Optional[str] = None,
     content: Optional[str] = None
@@ -255,8 +202,8 @@ def update_branch_page(
     Update a branch page.
     
     Args:
-        user_id: User's GitHub ID
-        repo_name: Repository name
+        user_id: Internal user ID
+        repo_id: Internal repository ID
         branch_name: Branch name
         title: New title (optional)
         content: New content (optional)
@@ -268,34 +215,62 @@ def update_branch_page(
             - message: Status message
     """
     try:
-        page_path = _get_page_path(user_id, repo_name, branch_name)
+        # Check if page exists
+        existing = await database.fetchone(
+            """SELECT * FROM branch_pages 
+               WHERE user_id = %s AND repo_id = %s AND branch_name = %s""",
+            (user_id, repo_id, branch_name)
+        )
         
-        if not page_path.exists():
+        if not existing:
             return {
                 "status": "not_found",
                 "message": f"Page for branch '{branch_name}' not found",
                 "page": None
             }
         
-        # Read existing page
-        page_data = json.loads(page_path.read_text(encoding='utf-8'))
+        # Build update query
+        updates = []
+        params = []
         
-        # Update fields
         if title is not None:
-            page_data["title"] = title
+            updates.append("title = %s")
+            params.append(title)
         if content is not None:
-            page_data["content"] = content
-        page_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+            updates.append("content = %s")
+            params.append(content)
         
-        # Write back
-        page_path.write_text(json.dumps(page_data, indent=2, ensure_ascii=False), encoding='utf-8')
-        logger.info(f"Updated page for branch '{branch_name}' in {repo_name}")
+        if not updates:
+            return {
+                "status": "success",
+                "message": "No changes made",
+                "page": _row_to_page(existing)
+            }
+        
+        # Add WHERE clause params
+        params.extend([user_id, repo_id, branch_name])
+        
+        await database.execute(
+            f"""UPDATE branch_pages SET {', '.join(updates)}
+                WHERE user_id = %s AND repo_id = %s AND branch_name = %s""",
+            tuple(params)
+        )
+        
+        # Fetch updated page
+        page = await database.fetchone(
+            """SELECT * FROM branch_pages 
+               WHERE user_id = %s AND repo_id = %s AND branch_name = %s""",
+            (user_id, repo_id, branch_name)
+        )
+        
+        logger.info(f"Updated page for branch '{branch_name}'")
         
         return {
             "status": "success",
             "message": "Page updated successfully",
-            "page": page_data
+            "page": _row_to_page(page)
         }
+        
     except Exception as e:
         logger.exception(f"Failed to update page for branch '{branch_name}': {e}")
         return {
@@ -305,13 +280,13 @@ def update_branch_page(
         }
 
 
-def list_branch_pages(user_id: str, repo_name: str) -> Dict[str, Any]:
+async def list_branch_pages(user_id: int, repo_id: int) -> Dict[str, Any]:
     """
     List all branch pages for a repository.
     
     Args:
-        user_id: User's GitHub ID
-        repo_name: Repository name
+        user_id: Internal user ID
+        repo_id: Internal repository ID
         
     Returns:
         Dict:
@@ -320,40 +295,22 @@ def list_branch_pages(user_id: str, repo_name: str) -> Dict[str, Any]:
             - total: Total count
     """
     try:
-        pages_dir = _get_gition_path(user_id, repo_name) / PAGES_DIR
-        
-        if not pages_dir.exists():
-            return {
-                "status": "success",
-                "pages": [],
-                "total": 0
-            }
-        
-        pages: List[Dict[str, Any]] = []
-        for page_file in pages_dir.glob("*.json"):
-            try:
-                page_data = json.loads(page_file.read_text(encoding='utf-8'))
-                pages.append({
-                    "id": page_data.get("id"),
-                    "branch_name": page_data.get("branch_name"),
-                    "title": page_data.get("title"),
-                    "updated_at": page_data.get("updated_at"),
-                    "created_at": page_data.get("created_at")
-                })
-            except json.JSONDecodeError:
-                logger.warning(f"Skipping corrupted page file: {page_file}")
-                continue
-        
-        # Sort by updated_at descending
-        pages.sort(key=lambda x: x.get("updated_at", ""), reverse=True)
+        pages = await database.fetchall(
+            """SELECT id, branch_name, title, created_at, updated_at
+               FROM branch_pages 
+               WHERE user_id = %s AND repo_id = %s
+               ORDER BY updated_at DESC""",
+            (user_id, repo_id)
+        )
         
         return {
             "status": "success",
-            "pages": pages,
+            "pages": [_row_to_page(p) for p in pages],
             "total": len(pages)
         }
+        
     except Exception as e:
-        logger.exception(f"Failed to list pages for {repo_name}: {e}")
+        logger.exception(f"Failed to list pages: {e}")
         return {
             "status": "error",
             "message": str(e),
@@ -362,9 +319,9 @@ def list_branch_pages(user_id: str, repo_name: str) -> Dict[str, Any]:
         }
 
 
-def ensure_branch_page(
-    user_id: str,
-    repo_name: str,
+async def ensure_branch_page(
+    user_id: int,
+    repo_id: int,
     branch_name: str
 ) -> Dict[str, Any]:
     """
@@ -373,8 +330,8 @@ def ensure_branch_page(
     This is the main function called during branch checkout.
     
     Args:
-        user_id: User's GitHub ID
-        repo_name: Repository name
+        user_id: Internal user ID
+        repo_id: Internal repository ID
         branch_name: Branch name
         
     Returns:
@@ -383,7 +340,7 @@ def ensure_branch_page(
             - page: Page data
             - created: True if newly created
     """
-    result = get_branch_page(user_id, repo_name, branch_name)
+    result = await get_branch_page(user_id, repo_id, branch_name)
     
     if result["status"] == "success":
         return {
@@ -393,7 +350,7 @@ def ensure_branch_page(
         }
     
     if result["status"] == "not_found":
-        create_result = create_branch_page(user_id, repo_name, branch_name)
+        create_result = await create_branch_page(user_id, repo_id, branch_name)
         if create_result["status"] in ("success", "exists"):
             return {
                 "status": "success",
@@ -405,9 +362,9 @@ def ensure_branch_page(
     return result
 
 
-def delete_branch_page(
-    user_id: str,
-    repo_name: str,
+async def delete_branch_page(
+    user_id: int,
+    repo_id: int,
     branch_name: str
 ) -> Dict[str, Any]:
     """
@@ -417,8 +374,8 @@ def delete_branch_page(
     Pages are NOT auto-deleted when branches are deleted.
     
     Args:
-        user_id: User's GitHub ID
-        repo_name: Repository name
+        user_id: Internal user ID
+        repo_id: Internal repository ID
         branch_name: Branch name
         
     Returns:
@@ -427,24 +384,168 @@ def delete_branch_page(
             - message: Status message
     """
     try:
-        page_path = _get_page_path(user_id, repo_name, branch_name)
+        # Check if page exists
+        existing = await database.fetchone(
+            """SELECT id FROM branch_pages 
+               WHERE user_id = %s AND repo_id = %s AND branch_name = %s""",
+            (user_id, repo_id, branch_name)
+        )
         
-        if not page_path.exists():
+        if not existing:
             return {
                 "status": "not_found",
                 "message": f"Page for branch '{branch_name}' not found"
             }
         
-        page_path.unlink()
-        logger.info(f"Deleted page for branch '{branch_name}' in {repo_name}")
+        await database.execute(
+            """DELETE FROM branch_pages 
+               WHERE user_id = %s AND repo_id = %s AND branch_name = %s""",
+            (user_id, repo_id, branch_name)
+        )
+        
+        logger.info(f"Deleted page for branch '{branch_name}'")
         
         return {
             "status": "success",
             "message": f"Page for branch '{branch_name}' deleted"
         }
+        
     except Exception as e:
         logger.exception(f"Failed to delete page for branch '{branch_name}': {e}")
         return {
             "status": "error",
             "message": str(e)
         }
+
+
+def _row_to_page(row: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Convert database row to page dict.
+    
+    Handles datetime serialization and metadata parsing.
+    """
+    if not row:
+        return None
+    
+    page = dict(row)
+    
+    # Convert datetime objects to ISO strings
+    for key in ("created_at", "updated_at"):
+        if key in page and page[key]:
+            if hasattr(page[key], "isoformat"):
+                page[key] = page[key].isoformat()
+    
+    # Parse metadata JSON
+    if "metadata" in page and isinstance(page["metadata"], str):
+        try:
+            page["metadata"] = json.loads(page["metadata"])
+        except json.JSONDecodeError:
+            page["metadata"] = {}
+    
+    return page
+
+
+# ==============================================================================
+# Legacy API Compatibility Layer
+# ==============================================================================
+# These functions accept user_login (str) and repo_name (str) like the old API
+# and resolve them to internal IDs internally.
+
+async def create_branch_page_by_login(
+    user_login: str,
+    repo_name: str,
+    branch_name: str,
+    title: Optional[str] = None,
+    content: str = ""
+) -> Dict[str, Any]:
+    """Legacy wrapper using login/repo_name instead of IDs."""
+    user_id, repo_id = await _resolve_ids(user_login, repo_name)
+    if not user_id or not repo_id:
+        return {
+            "status": "error",
+            "message": "User or repository not found in database",
+            "page": None
+        }
+    return await create_branch_page(user_id, repo_id, branch_name, title, content)
+
+
+async def get_branch_page_by_login(
+    user_login: str,
+    repo_name: str,
+    branch_name: str
+) -> Dict[str, Any]:
+    """Legacy wrapper using login/repo_name instead of IDs."""
+    user_id, repo_id = await _resolve_ids(user_login, repo_name)
+    if not user_id or not repo_id:
+        return {
+            "status": "not_found",
+            "message": "User or repository not found in database",
+            "page": None
+        }
+    return await get_branch_page(user_id, repo_id, branch_name)
+
+
+async def update_branch_page_by_login(
+    user_login: str,
+    repo_name: str,
+    branch_name: str,
+    title: Optional[str] = None,
+    content: Optional[str] = None
+) -> Dict[str, Any]:
+    """Legacy wrapper using login/repo_name instead of IDs."""
+    user_id, repo_id = await _resolve_ids(user_login, repo_name)
+    if not user_id or not repo_id:
+        return {
+            "status": "not_found",
+            "message": "User or repository not found in database",
+            "page": None
+        }
+    return await update_branch_page(user_id, repo_id, branch_name, title, content)
+
+
+async def list_branch_pages_by_login(
+    user_login: str,
+    repo_name: str
+) -> Dict[str, Any]:
+    """Legacy wrapper using login/repo_name instead of IDs."""
+    user_id, repo_id = await _resolve_ids(user_login, repo_name)
+    if not user_id or not repo_id:
+        return {
+            "status": "error",
+            "message": "User or repository not found in database",
+            "pages": [],
+            "total": 0
+        }
+    return await list_branch_pages(user_id, repo_id)
+
+
+async def ensure_branch_page_by_login(
+    user_login: str,
+    repo_name: str,
+    branch_name: str
+) -> Dict[str, Any]:
+    """Legacy wrapper using login/repo_name instead of IDs."""
+    user_id, repo_id = await _resolve_ids(user_login, repo_name)
+    if not user_id or not repo_id:
+        return {
+            "status": "error",
+            "message": "User or repository not found in database",
+            "page": None
+        }
+    return await ensure_branch_page(user_id, repo_id, branch_name)
+
+
+async def delete_branch_page_by_login(
+    user_login: str,
+    repo_name: str,
+    branch_name: str
+) -> Dict[str, Any]:
+    """Legacy wrapper using login/repo_name instead of IDs."""
+    user_id, repo_id = await _resolve_ids(user_login, repo_name)
+    if not user_id or not repo_id:
+        return {
+            "status": "not_found",
+            "message": "User or repository not found in database"
+        }
+    return await delete_branch_page(user_id, repo_id, branch_name)
+
