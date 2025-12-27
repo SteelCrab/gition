@@ -540,13 +540,18 @@ async def api_clone_repo(request: Request):
         # Register repository in database after successful clone
         if result.get("status") == "success":
             try:
+                github_repo_id = body.get("github_repo_id")
+                if not github_repo_id:
+                    logger.warning(f"Cannot register repo {repo_name}: missing github_repo_id.")
+                    return result  # Return success from clone, but skip DB registration
+
                 import user_ops, repo_ops
                 # Get user's internal DB ID from GitHub ID
                 db_user = await user_ops.get_user_by_github_id(int(user_id))
                 if db_user:
                     await repo_ops.ensure_repo(
                         user_id=db_user["id"],
-                        github_repo_id=body.get("github_repo_id", 0),
+                        github_repo_id=int(github_repo_id),
                         name=repo_name,
                         full_name=body.get("full_name", f"{db_user['login']}/{repo_name}"),
                         clone_url=clone_url,
@@ -557,7 +562,7 @@ async def api_clone_repo(request: Request):
                         default_branch=body.get("default_branch", "main"),
                     )
                     logger.info(f"Repository registered in database: {repo_name}")
-            except Exception as e:
+            except (Exception, ValueError) as e:
                 # Log error but don't fail the clone operation
                 logger.warning(f"Failed to register repository in database: {e}")
         
