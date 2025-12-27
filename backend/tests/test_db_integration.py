@@ -116,7 +116,10 @@ class TestOAuthDBIntegration:
                 )
                 
                 # Callback should redirect or return success
-                assert response.status_code in [200, 302, 307, 400, 500]
+                # Callback should redirect
+                assert response.status_code == 307
+                # Verify user data is NOT in URL (security fix)
+                assert "user=" not in response.headers["location"]
 
     @pytest.mark.asyncio
     async def test_oauth_callback_db_failure(self):

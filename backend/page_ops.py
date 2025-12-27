@@ -126,7 +126,7 @@ async def create_branch_page(
             "SELECT * FROM branch_pages WHERE id = %s", (page_id,)
         )
         
-        logger.info(f"Created page for branch '{branch_name}' (id={page_id})")
+        logger.info(f"Created page for branch '{branch_name}' (id={page_id}, user_id={user_id}, repo_id={repo_id})")
         
         return {
             "status": "success",
@@ -135,7 +135,7 @@ async def create_branch_page(
         }
         
     except Exception as e:
-        logger.exception(f"Failed to create page for branch '{branch_name}': {e}")
+        logger.exception(f"Failed to create page for branch '{branch_name}' (user_id={user_id}, repo_id={repo_id}): {e}")
         return {
             "status": "error",
             "message": "Failed to create page. Please try again.",
@@ -266,7 +266,7 @@ async def update_branch_page(
             (user_id, repo_id, branch_name)
         )
         
-        logger.info(f"Updated page for branch '{branch_name}'")
+        logger.info(f"Updated page for branch '{branch_name}' (user_id={user_id}, repo_id={repo_id})")
         
         return {
             "status": "success",
@@ -275,7 +275,7 @@ async def update_branch_page(
         }
         
     except Exception as e:
-        logger.exception(f"Failed to update page for branch '{branch_name}': {e}")
+        logger.exception(f"Failed to update page for branch '{branch_name}' (user_id={user_id}, repo_id={repo_id}): {e}")
         return {
             "status": "error",
             "message": "Failed to save page. Please try again.",
@@ -406,7 +406,7 @@ async def delete_branch_page(
             (user_id, repo_id, branch_name)
         )
         
-        logger.info(f"Deleted page for branch '{branch_name}'")
+        logger.info(f"Deleted page for branch '{branch_name}' (user_id={user_id}, repo_id={repo_id})")
         
         return {
             "status": "success",
@@ -414,7 +414,7 @@ async def delete_branch_page(
         }
         
     except Exception as e:
-        logger.exception(f"Failed to delete page for branch '{branch_name}': {e}")
+        logger.exception(f"Failed to delete page for branch '{branch_name}' (user_id={user_id}, repo_id={repo_id}): {e}")
         return {
             "status": "error",
             "message": "Failed to delete page. Please try again."
