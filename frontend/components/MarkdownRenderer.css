@@ -1,4 +1,5 @@
 /* MarkdownRenderer.css */
+@reference "tailwindcss";
 
 .markdown-body {
   @apply text-[#37352f] leading-relaxed;
