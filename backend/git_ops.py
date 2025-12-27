@@ -1,42 +1,27 @@
 """
 ==============================================================================
-Git Operations Module
+Git Operations Module (git_ops.py)
 ==============================================================================
-
-Git operation handlers for GitHub repositories using GitPython.
-
-.. module:: git_ops
-   :synopsis: Git operation handlers for cloned repositories
+Description: Git operation handlers for GitHub repositories
 
 Main Features:
-    - ``clone_repo``: Clone repository (with token authentication)
-    - ``pull_repo``: Pull latest changes
-    - ``list_files``: List files/directories
-    - ``read_file``: Read file content
-    - ``search_files``: Search filenames/content
-    - ``get_commits``: Get commit history
-    - ``get_branches``: Get branch list
-    - ``checkout_branch``: Switch branches
+    - clone_repo: Clone repository (with token authentication)
+    - pull_repo: Pull latest changes
+    - list_files: List files/directories
+    - read_file: Read file content
+    - search_files: Search filenames/content
+    - get_commits: Get commit history
+    - get_branches: Get branch list
+    - checkout_branch: Switch branches
 
 Dependencies:
     - GitPython: Python library for Git operations
-
+    
 Repository Path Structure:
-    ``/repos/{user_id}/{repo_name}/``
-
+    /repos/{user_id}/{repo_name}/
+    
 Environment Variables:
-    - ``REPOS_PATH``: Repository base path (default: /repos)
-
-Example:
-    >>> from git_ops import clone_repo, get_commits
-    >>> result = clone_repo(
-    ...     "https://github.com/user/repo.git",
-    ...     "ghp_xxx",
-    ...     "12345",
-    ...     "my-repo"
-    ... )
-    >>> commits = get_commits("12345", "my-repo", max_count=10)
-
+    - REPOS_PATH: Repository base path (default: /repos)
 ==============================================================================
 """
 
@@ -45,23 +30,16 @@ import shutil
 import logging
 from pathlib import Path
 from git import Repo, GitCommandError
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-#: Base path for cloned repositories.
-#: Loaded from REPOS_PATH environment variable.
-#:
-#: :type: str
-REPOS_BASE_PATH: str = os.getenv("REPOS_PATH", "/repos")
+# Base path for cloned repositories
+REPOS_BASE_PATH = os.getenv("REPOS_PATH", "/repos")
 
-#: Set of file extensions considered binary.
-#: These files are skipped during content search and
-#: not returned with content in read operations.
-#:
-#: :type: set[str]
-BINARY_EXTENSIONS: set = {
+# Standard binary extensions to skip/detect
+BINARY_EXTENSIONS = {
     '.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf', '.zip', '.tar', '.gz',
     '.exe', '.dll', '.so', '.dylib', '.woff', '.woff2', '.ttf', '.eot',
     '.mp3', '.mp4', '.avi', '.mov', '.webm', '.wav', '.pyc', '.o', '.a'
@@ -70,33 +48,7 @@ BINARY_EXTENSIONS: set = {
 
 def get_repo_path(user_id: str, repo_name: str) -> Path:
     """
-    Get local filesystem path for a repository.
-
-    Constructs the path with security validation to prevent
-    path traversal attacks.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-
-    :returns: Resolved path to the repository directory
-    :rtype: Path
-
-    :raises ValueError: If user_id or repo_name is invalid
-    :raises ValueError: If path traversal is detected
-
-    **Security:**
-
-    - Rejects path separators (/, \\\\) in components
-    - Rejects parent directory references (..)
-    - Validates resolved path is within REPOS_BASE_PATH
-
-    :Example:
-
-        >>> path = get_repo_path("12345", "my-repo")
-        >>> str(path)
-        '/repos/12345/my-repo'
+    Get local path for a repository with path traversal protection
     """
     if not user_id or not repo_name:
         raise ValueError("Invalid user_id or repo_name")
@@ -131,55 +83,24 @@ def clone_repo(
     repo_name: str
 ) -> Dict[str, Any]:
     """
-    Clone a GitHub repository to local storage.
-
-    Clones using HTTPS with token injection for authentication.
-    If repository already exists, returns existing path.
-
-    :param clone_url: GitHub HTTPS clone URL
-    :type clone_url: str
-    :param access_token: GitHub OAuth access token
-    :type access_token: str
-    :param user_id: User's GitHub ID (for path separation)
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-
-    :returns: Clone operation result dictionary
-    :rtype: Dict[str, Any]
-
-    **Return Dictionary Fields:**
-
-    - ``status`` (str): "success" | "exists" | "error"
-    - ``path`` (str | None): Local path where repo is cloned
-    - ``message`` (str): Status message
-
-    **Authentication Method:**
-
-    Token is injected into HTTPS URL::
-
-        https://github.com/user/repo.git
-        → https://TOKEN@github.com/user/repo.git
-
-    **Storage Path:**
-
-    ``{REPOS_BASE_PATH}/{user_id}/{repo_name}/``
-
-    :Example:
-
-        >>> result = clone_repo(
-        ...     "https://github.com/user/repo.git",
-        ...     "ghp_xxxxxxxxxxxx",
-        ...     "12345",
-        ...     "my-repo"
-        ... )
-        >>> result["status"]
-        'success'
-        >>> result["path"]
-        '/repos/12345/my-repo'
-
-    .. warning::
-        Access token is sanitized in error messages to prevent leakage.
+    Clone a GitHub repository to local storage
+    
+    Authentication Method:
+        - Inject token into HTTPS URL for authentication
+        - Format: https://TOKEN@github.com/user/repo.git
+    
+    Args:
+        clone_url: GitHub HTTPS clone URL
+        access_token: GitHub OAuth access token
+        user_id: User's GitHub ID (for path separation)
+        repo_name: Repository name
+        
+    Returns:
+        Dict:
+            - status: "success" | "exists" | "error"
+            - path: Cloned path (on success)
+            - message: Status message
+            - branches_created: Number of local branches created (on success)
     """
     repo_path = get_repo_path(user_id, repo_name)
     
@@ -200,10 +121,17 @@ def clone_repo(
     
     try:
         Repo.clone_from(auth_url, repo_path)
+        
+        # Create local branches for all remote branches
+        # Skip fetch since we just cloned - all refs are up-to-date
+        branches_created = create_local_branches_from_remotes(repo_path, skip_fetch=True)
+        logger.info(f"Created {branches_created} local branches from remotes")
+        
         return {
             "status": "success",
             "path": str(repo_path),
-            "message": f"Repository cloned successfully"
+            "message": f"Repository cloned successfully ({branches_created} branches created)",
+            "branches_created": branches_created
         }
     except GitCommandError as e:
         # Clean up partial clone on failure
@@ -219,31 +147,126 @@ def clone_repo(
         }
 
 
+def reclone_repo(
+    clone_url: str,
+    access_token: str,
+    user_id: str,
+    repo_name: str
+) -> Dict[str, Any]:
+    """
+    Delete existing repository and clone fresh.
+    
+    Useful when clone is corrupted or needs to be reset.
+    
+    Args:
+        clone_url: GitHub HTTPS clone URL
+        access_token: GitHub OAuth access token
+        user_id: User's GitHub ID
+        repo_name: Repository name
+        
+    Returns:
+        Dict:
+            - status: "success" | "error"
+            - path: Cloned path (on success)
+            - message: Status message
+            - branches_created: Number of local branches created (on success)
+    """
+    repo_path = get_repo_path(user_id, repo_name)
+    
+    # Delete existing repository if it exists
+    if repo_path.exists():
+        try:
+            shutil.rmtree(repo_path)
+            logger.info(f"Deleted existing repository at {repo_path}")
+        except OSError as e:
+            logger.error(f"Failed to delete repository at {repo_path}: {e}")
+            return {
+                "status": "error",
+                "path": None,
+                "message": f"Failed to delete existing repository: {str(e)}"
+            }
+    
+    # Clone fresh
+    result = clone_repo(clone_url, access_token, user_id, repo_name)
+    
+    # Update message to indicate reclone
+    if result["status"] == "success":
+        result["message"] = f"Repository re-cloned successfully ({result.get('branches_created', 0)} branches created)"
+    
+    return result
+
+
+def create_local_branches_from_remotes(
+    repo_path: Union[str, Path],
+    skip_fetch: bool = False
+) -> int:
+    """
+    Create local tracking branches for all remote branches.
+    
+    Args:
+        repo_path: Path to the repository
+        skip_fetch: If True, skip fetching remote refs (useful after fresh clone)
+        
+    Returns:
+        int: Number of local branches created
+    """
+    try:
+        repo = Repo(repo_path)
+        created_count = 0
+        
+        # Get existing local branch names
+        local_branch_names = {branch.name for branch in repo.branches}
+        
+        # Iterate over remote refs (fetch only if not skipped)
+        for remote in repo.remotes:
+            if not skip_fetch:
+                try:
+                    remote.fetch()
+                except GitCommandError as fetch_err:
+                    logger.warning(f"Fetch failed for remote {remote.name}: {fetch_err}")
+                    # Continue with cached refs
+                
+            for ref in remote.refs:
+                # Skip HEAD reference
+                if ref.name.endswith('/HEAD'):
+                    continue
+                    
+                # Extract branch name (remove remote prefix like 'origin/')
+                branch_name = ref.name.split('/', 1)[1] if '/' in ref.name else ref.name
+                
+                # Skip if local branch already exists
+                if branch_name in local_branch_names:
+                    continue
+                
+                try:
+                    # Create local branch tracking the remote
+                    local_branch = repo.create_head(branch_name, ref.commit)
+                    # Set up tracking to the remote branch
+                    local_branch.set_tracking_branch(ref)
+                    local_branch_names.add(branch_name)
+                    created_count += 1
+                    logger.info(f"Created local branch: {branch_name} (tracking {ref.name})")
+                except GitCommandError as e:
+                    logger.warning(f"Failed to create branch {branch_name}: {e}")
+                    
+        return created_count
+    except Exception as e:
+        logger.exception(f"Error creating local branches: {e}")
+        return 0
+
+
 def pull_repo(user_id: str, repo_name: str) -> Dict[str, Any]:
     """
-    Pull latest changes for a cloned repository.
-
-    Fetches and merges changes from the origin remote
-    using the current branch.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-
-    :returns: Pull operation result dictionary
-    :rtype: Dict[str, Any]
-
-    **Return Dictionary Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``message`` (str): Result message
-
-    :Example:
-
-        >>> result = pull_repo("12345", "my-repo")
-        >>> result["status"]
-        'success'
+    Pull latest changes for a cloned repository
+    
+    Args:
+        user_id: User's GitHub ID
+        repo_name: Repository name
+        
+    Returns:
+        Dict:
+            - status: "success" | "error"
+            - message: Result message
     """
     repo_path = get_repo_path(user_id, repo_name)
     
@@ -274,44 +297,22 @@ def pull_repo(user_id: str, repo_name: str) -> Dict[str, Any]:
 
 def list_files(user_id: str, repo_name: str, subpath: str = "") -> Dict[str, Any]:
     """
-    List files and directories in a repository.
-
-    Returns directory contents with metadata.
-    Directories are sorted before files, alphabetically.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-    :param subpath: Subdirectory path (empty string = root)
-    :type subpath: str
-
-    :returns: Directory listing result
-    :rtype: Dict[str, Any]
-
-    **Return Dictionary Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``path`` (str): Requested path
-    - ``files`` (list): List of file/directory objects
-
-    **File Object Fields:**
-
-    - ``name`` (str): File or directory name
-    - ``type`` (str): "file" | "directory"
-    - ``size`` (int | None): File size in bytes (None for directories)
-    - ``path`` (str): Relative path from repository root
-
-    .. note::
-        The ``.git`` directory and hidden git files are excluded.
-
-    :Example:
-
-        >>> result = list_files("12345", "my-repo", "src")
-        >>> for f in result["files"]:
-        ...     print(f["name"], f["type"])
-        components directory
-        App.tsx file
+    List files/directories in a repository
+    
+    Args:
+        user_id: User's GitHub ID
+        repo_name: Repository name
+        subpath: Subdirectory path (empty string = root)
+        
+    Returns:
+        Dict:
+            - status: "success" | "error"
+            - path: Requested path
+            - files: [{name, type, size, path}, ...]
+            
+    Note:
+        - .git directory is excluded
+        - Directories are sorted before files
     """
     repo_path = get_repo_path(user_id, repo_name)
     target_path = repo_path / subpath if subpath else repo_path
@@ -349,47 +350,22 @@ def list_files(user_id: str, repo_name: str, subpath: str = "") -> Dict[str, Any
 
 def read_file(user_id: str, repo_name: str, file_path: str) -> Dict[str, Any]:
     """
-    Read file content from a repository.
-
-    Returns file content for text files.
-    Binary files return metadata only with content set to None.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-    :param file_path: File path relative to repository root
-    :type file_path: str
-
-    :returns: File content result
-    :rtype: Dict[str, Any]
-
-    **Return Dictionary Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``path`` (str): File path
-    - ``binary`` (bool): Whether file is binary
-    - ``size`` (int): File size in bytes
-    - ``content`` (str | None): File content (None for binary files)
-
-    **Binary Detection:**
-
-    Files are considered binary if:
-
-    1. Extension is in BINARY_EXTENSIONS set
-    2. UTF-8 decoding fails
-
-    **Security:**
-
-    Path traversal protection ensures file is within repository.
-
-    :Example:
-
-        >>> result = read_file("12345", "my-repo", "README.md")
-        >>> result["binary"]
-        False
-        >>> result["content"][:50]
-        '# My Repository\\n\\nThis is a sample project...'
+    Read file content from a repository
+    
+    Args:
+        user_id: User's GitHub ID
+        repo_name: Repository name
+        file_path: File path (relative to repo root)
+        
+    Returns:
+        Dict:
+            - status: "success" | "error"
+            - content: File content (for text files)
+            - binary: Whether file is binary
+            - size: File size
+            
+    Note:
+        Binary files (images, PDF, etc.) have content set to None
     """
     repo_path = get_repo_path(user_id, repo_name)
     try:
@@ -435,24 +411,10 @@ def read_file(user_id: str, repo_name: str, file_path: str) -> Dict[str, Any]:
 
 def is_cloned(user_id: str, repo_name: str) -> bool:
     """
-    Check if a repository is already cloned.
-
-    Verifies the repository directory exists and contains a .git folder.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-
-    :returns: True if repository is cloned, False otherwise
-    :rtype: bool
-
-    :Example:
-
-        >>> is_cloned("12345", "my-repo")
-        True
-        >>> is_cloned("12345", "not-cloned")
-        False
+    Check if a repository is already cloned
+    
+    Returns:
+        bool: True if .git folder exists
     """
     repo_path = get_repo_path(user_id, repo_name)
     return repo_path.exists() and (repo_path / ".git").exists()
@@ -460,32 +422,17 @@ def is_cloned(user_id: str, repo_name: str) -> bool:
 
 def delete_repo(user_id: str, repo_name: str) -> Dict[str, Any]:
     """
-    Delete a cloned repository.
-
-    Removes the entire repository directory including all files and history.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-
-    :returns: Delete operation result
-    :rtype: Dict[str, Any]
-
-    **Return Dictionary Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``message`` (str): Result message
-
-    .. warning::
-        This operation is **irreversible**. All local changes,
-        uncommitted work, and history will be permanently deleted.
-
-    :Example:
-
-        >>> result = delete_repo("12345", "my-repo")
-        >>> result["status"]
-        'success'
+    Delete a cloned repository
+    
+    Args:
+        user_id: User's GitHub ID
+        repo_name: Repository name
+        
+    Returns:
+        Dict: {status, message}
+        
+    Warning:
+        This operation is irreversible
     """
     repo_path = get_repo_path(user_id, repo_name)
     
@@ -511,55 +458,23 @@ def search_files(
     max_results: int = 50
 ) -> Dict[str, Any]:
     """
-    Search filenames and content in a repository.
-
-    Performs case-insensitive search on filenames and optionally file content.
-    Binary files are automatically skipped for content search.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-    :param query: Search query string
-    :type query: str
-    :param search_content: Whether to search file content (default: True)
-    :type search_content: bool
-    :param max_results: Maximum number of results to return (default: 50)
-    :type max_results: int
-
-    :returns: Search results
-    :rtype: Dict[str, Any]
-
-    **Return Dictionary Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``query`` (str): Original search query
-    - ``total`` (int): Number of results found
-    - ``results`` (list): List of search result objects
-
-    **Result Object Fields:**
-
-    - ``type`` (str): "filename" | "content"
-    - ``path`` (str): File path relative to repo root
-    - ``name`` (str): File name
-    - ``match`` (str): Matched text
-    - ``line`` (int | None): Line number (for content matches)
-    - ``context`` (str | None): Context around match (for content matches)
-
-    **Search Behavior:**
-
-    1. First searches filenames (case-insensitive)
-    2. If content search enabled, searches inside text files
-    3. Long context lines are truncated with ellipsis
-    4. Stops when max_results is reached
-
-    :Example:
-
-        >>> result = search_files("12345", "my-repo", "import", max_results=10)
-        >>> for r in result["results"]:
-        ...     print(f"{r['type']}: {r['path']}:{r.get('line', '')}")
-        content: src/App.tsx:1
-        content: src/utils.ts:2
+    Search filenames/content in a repository
+    
+    Args:
+        user_id: User's GitHub ID
+        repo_name: Repository name
+        query: Search query
+        search_content: If True, search file content too
+        max_results: Maximum result count
+        
+    Returns:
+        Dict:
+            - status: "success" | "error"
+            - results: [{type, path, name, match, line, context}, ...]
+            
+    Result Types:
+        - filename: Filename match
+        - content: File content match (includes line, context)
     """
     repo_path = get_repo_path(user_id, repo_name)
     
@@ -649,52 +564,22 @@ def search_files(
 def get_commits(
     user_id: str,
     repo_name: str,
+    branch: str | None = None,
     max_count: int = 50
 ) -> Dict[str, Any]:
     """
-    Get commit history for a repository.
-
-    Returns a list of commits with author information, message, and statistics.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-    :param max_count: Maximum number of commits to return (default: 50)
-    :type max_count: int
-
-    :returns: Commit history result
-    :rtype: Dict[str, Any]
-
-    **Return Dictionary Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``total`` (int): Number of commits returned
-    - ``commits`` (list): List of commit objects
-
-    **Commit Object Fields:**
-
-    - ``sha`` (str): Abbreviated commit SHA (7 characters)
-    - ``full_sha`` (str): Full commit SHA (40 characters)
-    - ``message`` (str): First line of commit message
-    - ``author`` (str): Author name
-    - ``author_email`` (str): Author email
-    - ``date`` (str): Commit date (ISO 8601 format)
-    - ``stats`` (dict): Commit statistics
-
-    **Stats Object Fields:**
-
-    - ``files`` (int): Number of files changed
-    - ``insertions`` (int): Lines added
-    - ``deletions`` (int): Lines removed
-
-    :Example:
-
-        >>> result = get_commits("12345", "my-repo", max_count=5)
-        >>> for c in result["commits"]:
-        ...     print(f"{c['sha']} - {c['message']}")
-        a1b2c3d - Initial commit
-        e4f5g6h - Add README
+    Get commit history for a repository
+    
+    Args:
+        user_id: User's GitHub ID
+        repo_name: Repository name
+        branch: Branch name (optional, defaults to current branch)
+        max_count: Maximum commit count
+        
+    Returns:
+        Dict:
+            - status: "success" | "error"
+            - commits: [{sha, message, author, date, stats}, ...]
     """
     repo_path = get_repo_path(user_id, repo_name)
     
@@ -705,7 +590,26 @@ def get_commits(
         repo = Repo(repo_path)
         commits = []
         
-        for commit in repo.iter_commits(max_count=max_count):
+        # Validate branch if specified
+        if branch:
+            # Check if branch exists in local or remote refs
+            all_refs = [b.name for b in repo.branches]
+            all_refs.extend([ref.name.split('/', 1)[1] for ref in repo.remotes.origin.refs if '/' in ref.name])
+            if branch not in all_refs:
+                return {
+                    "status": "error", 
+                    "message": f"Branch '{branch}' not found",
+                    "commits": []
+                }
+            rev = branch
+        else:
+            # Handle detached HEAD case
+            if repo.head.is_detached:
+                rev = repo.head.commit.hexsha
+            else:
+                rev = repo.active_branch.name
+        
+        for commit in repo.iter_commits(rev=rev, max_count=max_count):
             commits.append({
                 "sha": commit.hexsha[:7],           # Abbreviated SHA
                 "full_sha": commit.hexsha,          # Full SHA
@@ -720,16 +624,20 @@ def get_commits(
                 }
             })
         
+        # Determine current branch name for response
+        current_branch = branch if branch else (
+            repo.active_branch.name if not repo.head.is_detached else "HEAD"
+        )
+        
         return {
             "status": "success",
             "total": len(commits),
+            "branch": current_branch,
             "commits": commits
         }
     except Exception as e:
-        print(f"Error getting commits for {user_id}/{repo_name}: {e}")
-        import traceback
-        traceback.print_exc()
-        return {"status": "error", "message": str(e), "commits": []}
+        logger.exception(f"[Internal] Error getting commits for {user_id}/{repo_name}")
+        return {"status": "error", "message": "Failed to retrieve commits. Please try again.", "commits": []}
 
 
 # ==============================================================================
@@ -738,51 +646,20 @@ def get_commits(
 
 def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
     """
-    Get branch list for a repository.
-
-    Returns both local and remote branches.
-    Performs a git fetch first to ensure remote branches are up to date.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-
-    :returns: Branch list result
-    :rtype: Dict[str, Any]
-
-    **Return Dictionary Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``current_branch`` (str | None): Currently checked out branch
-    - ``total`` (int): Total number of branches
-    - ``branches`` (list): List of branch objects
-
-    **Branch Object Fields:**
-
-    - ``name`` (str): Branch name
-    - ``type`` (str): "local" | "remote"
-    - ``is_current`` (bool): Whether this is the current branch
-    - ``commit_sha`` (str): Latest commit SHA (7 characters)
-    - ``commit_message`` (str): Latest commit message (first line)
-
-    **Behavior:**
-
-    1. Fetches from origin remote first (may fail silently)
-    2. Lists all local branches
-    3. Lists remote branches not already tracked locally
-    4. HEAD references are excluded
-
-    :Example:
-
-        >>> result = get_branches("12345", "my-repo")
-        >>> result["current_branch"]
-        'main'
-        >>> for b in result["branches"]:
-        ...     print(f"{b['name']} ({b['type']})")
-        main (local)
-        develop (local)
-        feature/new (remote)
+    Get branch list for a repository
+    
+    Note:
+        Performs a git fetch first to ensure remote branches are up to date.
+    
+    Returns:
+        Dict:
+            - status: "success" | "error"
+            - current_branch: Currently checked out branch
+            - branches: [{name, type, is_current, commit_sha}, ...]
+            
+    Branch Types:
+        - local: Local branch
+        - remote: Remote branch (origin/*)
     """
     repo_path = get_repo_path(user_id, repo_name)
     
@@ -802,8 +679,12 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
         
         current_branch = repo.active_branch.name if not repo.head.is_detached else None
         
+        # Collect local branch names for later reference
+        local_branch_names = set()
+        
         # Local branches
         for branch in repo.branches:
+            local_branch_names.add(branch.name)
             branches.append({
                 "name": branch.name,
                 "type": "local",
@@ -812,7 +693,8 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
                 "commit_message": branch.commit.message.strip().split('\n')[0]
             })
         
-        # Remote branches (from all remotes, not just origin)
+        # Remote branches (show all, indicate if also exists locally)
+        remote_branch_names = set()
         for remote in repo.remotes:
             try:
                 for ref in remote.refs:
@@ -821,17 +703,18 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
                         continue
                     # Extract branch name (remove remote prefix like 'origin/')
                     branch_name = ref.name.split('/', 1)[1] if '/' in ref.name else ref.name
-                    # Skip if already exists as local branch
-                    if not any(b['name'] == branch_name and b['type'] == 'local' for b in branches):
-                        # Also skip if already added as remote
-                        if not any(b['name'] == branch_name and b['type'] == 'remote' for b in branches):
-                            branches.append({
-                                "name": branch_name,
-                                "type": "remote",
-                                "is_current": False,
-                                "commit_sha": ref.commit.hexsha[:7],
-                                "commit_message": ref.commit.message.strip().split('\n')[0]
-                            })
+                    # Skip if already added as remote from another remote
+                    if branch_name in remote_branch_names:
+                        continue
+                    remote_branch_names.add(branch_name)
+                    branches.append({
+                        "name": branch_name,
+                        "type": "remote",
+                        "is_current": False,
+                        "has_local": branch_name in local_branch_names,
+                        "commit_sha": ref.commit.hexsha[:7],
+                        "commit_message": ref.commit.message.strip().split('\n')[0]
+                    })
             except Exception as ref_err:
                 logger.warning(f"Failed to get refs from {remote.name}: {ref_err}")
         
@@ -847,43 +730,21 @@ def get_branches(user_id: str, repo_name: str) -> Dict[str, Any]:
 
 def checkout_branch(user_id: str, repo_name: str, branch_name: str) -> Dict[str, Any]:
     """
-    Checkout (switch to) a branch.
-
-    Switches the working directory to the specified branch.
-    If the branch only exists on remote, creates a local tracking branch.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-    :param branch_name: Branch name to checkout
-    :type branch_name: str
-
-    :returns: Checkout operation result
-    :rtype: Dict[str, Any]
-
-    **Return Dictionary Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``message`` (str): Result message
-    - ``current_branch`` (str): Current branch after checkout
-
-    **Checkout Behavior:**
-
-    1. If local branch exists → checkout directly
-    2. If only remote exists → create local branch from origin/{branch}
-    3. If neither exists → error
-
-    :Example:
-
-        >>> result = checkout_branch("12345", "my-repo", "develop")
-        >>> result["status"]
-        'success'
-        >>> result["current_branch"]
-        'develop'
-
-    .. note::
-        Uncommitted changes may prevent checkout. Handle errors appropriately.
+    Checkout (switch to) a branch
+    
+    Args:
+        user_id: User's GitHub ID
+        repo_name: Repository name
+        branch_name: Branch name to checkout
+        
+    Returns:
+        Dict:
+            - status: "success" | "error"
+            - current_branch: Current branch after checkout
+            
+    Behavior:
+        1. If local branch exists, checkout directly
+        2. If not, create local branch from remote and checkout
     """
     repo_path = get_repo_path(user_id, repo_name)
     
@@ -904,10 +765,32 @@ def checkout_branch(user_id: str, repo_name: str, branch_name: str) -> Dict[str,
                 # May already exist, try direct checkout
                 repo.git.checkout(branch_name)
         
+        # Pull latest changes from remote after checkout (using tracking info)
+        pull_result = None
+        try:
+            active_branch = repo.active_branch
+            tracking_branch = active_branch.tracking_branch()
+            if tracking_branch:
+                remote_name = tracking_branch.remote_name
+                remote = repo.remotes[remote_name]
+                remote.pull()
+                pull_result = "synced"
+            else:
+                logger.warning(f"Branch '{active_branch.name}' has no upstream tracking. Skipping pull.")
+                pull_result = "no_tracking_info"
+        except GitCommandError as pull_err:
+            # Pull may fail due to conflicts
+            logger.warning(f"Pull after checkout failed: {pull_err}")
+            pull_result = "pull_failed"
+        except Exception as pull_err:
+            logger.warning(f"Unexpected pull error: {pull_err}")
+            pull_result = "pull_failed"
+        
         return {
             "status": "success",
             "message": f"Switched to branch '{branch_name}'",
-            "current_branch": repo.active_branch.name
+            "current_branch": repo.active_branch.name,
+            "pull_result": pull_result
         }
     except GitCommandError as e:
         return {"status": "error", "message": f"Checkout failed: {str(e)}"}

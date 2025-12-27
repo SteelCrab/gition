@@ -2,11 +2,7 @@
 ==============================================================================
 Gition Auth Server (FastAPI)
 ==============================================================================
-
-FastAPI-based authentication and API proxy server for GitHub integration.
-
-.. module:: main
-   :synopsis: GitHub OAuth authentication and API proxy server
+Description: GitHub OAuth authentication and API proxy server
 
 Main Features:
     - GitHub OAuth 2.0 authentication (login/logout)
@@ -14,18 +10,13 @@ Main Features:
     - Git operations API (clone, pull, files, commits, branches)
     - GitHub Issues/PRs API proxy
 
-Environment Variables:
-    - ``GITHUB_CLIENT_ID``: GitHub OAuth app client ID
-    - ``GITHUB_CLIENT_SECRET``: GitHub OAuth app client secret
-    - ``REPOS_PATH``: Cloned repository storage path (default: /repos)
-    - ``FRONTEND_URL``: Frontend URL for OAuth redirect (default: http://localhost)
-    - ``ALLOWED_ORIGINS``: CORS allowed origins (comma-separated)
+Environment Variables (.env):
+    - GITHUB_CLIENT_ID: GitHub OAuth app client ID
+    - GITHUB_CLIENT_SECRET: GitHub OAuth app client secret
+    - REPOS_PATH: Cloned repository storage path (default: /repos)
 
-Example:
-    Run the server with uvicorn::
-
-        $ uvicorn main:app --host 0.0.0.0 --port 3001 --reload
-
+Run Command:
+    uvicorn main:app --host 0.0.0.0 --port 3001 --reload
 ==============================================================================
 """
 
@@ -36,20 +27,21 @@ import httpx
 import asyncio
 import os
 import json
+import logging
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
-#: FastAPI application instance
-#:
-#: :type: FastAPI
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Create FastAPI app instance
 app = FastAPI(title="Gition Auth Server")
 
-#: List of allowed CORS origins, loaded from environment variable
-#:
-#: :type: list[str]
+# CORS middleware configuration
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost,http://localhost:80,http://localhost:5173").split(",")
 
 app.add_middleware(
@@ -60,46 +52,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#: GitHub OAuth application client ID
-#:
-#: :type: str | None
+# GitHub OAuth configuration (loaded from environment variables)
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
-
-#: GitHub OAuth application client secret
-#:
-#: :type: str | None
+#: :meta private:
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
-
-#: Frontend URL for OAuth redirect after authentication
-#:
-#: :type: str
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost")
+#: :meta private:
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost")  # Redirect URL after authentication
 
 
 # ==============================================================================
 # Health Check Endpoint
 # ==============================================================================
-
 @app.get("/health")
 async def health():
     """
-    Check server status and configuration.
-
-    Returns server health status and whether GitHub OAuth is properly configured.
-
-    :returns: Health status response
-    :rtype: dict
-
-    :Example:
-
-        >>> response = await client.get("/health")
-        >>> response.json()
-        {"status": "ok", "github_configured": True}
-
-    **Response Fields:**
-
-    - ``status`` (str): Server status, always "ok" if server is running
-    - ``github_configured`` (bool): Whether GitHub OAuth credentials are set
+    Server status and configuration check endpoint
+    
+    Returns:
+        - status: Server status ("ok")
+        - github_configured: Whether GitHub OAuth is configured
     """
     return {
         "status": "ok",
@@ -114,23 +85,13 @@ async def health():
 @app.get("/auth/github")
 async def github_auth():
     """
-    Initiate GitHub OAuth authentication flow.
-
-    Redirects the user to GitHub's authorization page to grant access.
-    After authorization, GitHub will redirect back to the callback endpoint.
-
-    :returns: Redirect response to GitHub OAuth authorization page
-    :rtype: RedirectResponse
-
-    **OAuth Scopes Requested:**
-
-    - ``read:user``: Read user profile information
-    - ``user:email``: Read user email addresses
-    - ``repo``: Full access to public and private repositories
-
-    :Example:
-
-        Navigate to ``/auth/github`` to start the OAuth flow.
+    Initiate GitHub OAuth authentication
+    - Redirects to GitHub login page when frontend navigates to this URL
+    
+    OAuth Scopes:
+        - read:user: Read user profile
+        - user:email: Read user email
+        - repo: Access public/private repositories (important!)
     """
     # Nginx proxies to port 80, so callback URL uses port 80
     redirect_uri = "http://localhost/auth/github/callback"
@@ -150,36 +111,17 @@ async def github_auth():
 @app.get("/auth/github/callback")
 async def github_callback(code: str = None, error: str = None):
     """
-    Handle GitHub OAuth callback after user authorization.
-
-    This endpoint is called by GitHub after the user grants/denies access.
-    It exchanges the authorization code for an access token, fetches user info,
-    and redirects to the frontend with user data.
-
-    :param code: Authorization code from GitHub (on success)
-    :type code: str | None
-    :param error: Error message from GitHub (on failure)
-    :type error: str | None
-
-    :returns: Redirect to frontend with user info or error
-    :rtype: RedirectResponse
-
-    **Authentication Flow:**
-
-    1. Receive authorization code from GitHub
-    2. Exchange code for access token via POST request
-    3. Fetch user profile and email with access token
-    4. Set secure HttpOnly cookie with access token
-    5. Redirect to frontend with user info in URL params
-
-    **Cookie Settings:**
-
-    - ``github_token``: Access token stored as HttpOnly cookie
-    - Max age: 7 days
-    - SameSite: Lax
-    - Secure: Based on FRONTEND_URL protocol
-
-    :raises: Redirects to ``/login?error=auth_failed`` on failure
+    Handle GitHub OAuth callback
+    
+    Flow:
+        1. Receive authorization code from GitHub
+        2. Exchange code for access token
+        3. Fetch user info/email with access token
+        4. Pass user info to frontend (via URL parameters)
+    
+    Args:
+        code: Authorization code from GitHub
+        error: Error message on auth failure
     """
     # Error handling
     if error or not code:
@@ -207,7 +149,8 @@ async def github_callback(code: str = None, error: str = None):
         # Step 2: Fetch user info
         headers = {
             "Authorization": f"Bearer {access_token}",
-            "Accept": "application/vnd.github.v3+json"
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "gition-auth-server",
         }
         
         user_response = await client.get("https://api.github.com/user", headers=headers)
@@ -248,35 +191,189 @@ async def github_callback(code: str = None, error: str = None):
         
         return response
 
+# ==============================================================================
+# Authentication Verification API
+# ==============================================================================
+
+@app.get("/api/auth/verify")
+async def verify_auth(request: Request):
+    """
+    Verify the current user's session by checking the GitHub token
+    - Used by frontend ProtectedRoute to prevent client-side bypass
+    """
+    token = get_token(request)
+    if not token:
+        return Response(
+            status_code=401,
+            media_type="application/json",
+            content=json.dumps({"status": "error", "authenticated": False, "message": "Not authenticated"}),
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            normalized = token
+            if normalized.startswith("Bearer "):
+                normalized = normalized.replace("Bearer ", "", 1)
+            if normalized.startswith("token "):
+                normalized = normalized.replace("token ", "", 1)
+
+            headers = {
+                "Authorization": f"token {normalized}",
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "gition-auth-server",
+            }
+            user_response = await client.get("https://api.github.com/user", headers=headers)
+
+            if user_response.status_code == 200:
+                user_data = user_response.json()
+                return {
+                    "status": "success",
+                    "authenticated": True,
+                    "user": {
+                        "id": user_data.get("id"),
+                        "login": user_data.get("login"),
+                        "name": user_data.get("name"),
+                    },
+                }
+
+            if user_response.status_code in (401,):
+                resp = Response(
+                    status_code=401,
+                    media_type="application/json",
+                    content=json.dumps({"status": "error", "authenticated": False, "message": "Invalid token"}),
+                    headers={"Cache-Control": "no-store"},
+                )
+                resp.delete_cookie("github_token", path="/")
+                return resp
+
+            # Treat rate limit / upstream issues as transient
+            return Response(
+                status_code=503,
+                media_type="application/json",
+                content=json.dumps({"status": "error", "authenticated": False, "message": "Auth verification unavailable"}),
+            )
+    except Exception:
+        logger.exception("Auth verification failed")
+        return Response(
+            status_code=503,
+            media_type="application/json",
+            content=json.dumps({"status": "error", "authenticated": False, "message": "Auth verification unavailable"}),
+        )
+
+
+# ==============================================================================
+# Audit Logging API
+# ==============================================================================
+
+@app.post("/api/audit/log")
+async def log_audit_event(request: Request):
+    """
+    Record a trusted, structured audit event
+    - Requires authentication
+    - Derives user/timestamp on server
+    - Validates event types and metadata
+    """
+    # 1. Authentication Check
+    token = get_token(request)
+    if not token:
+        return Response(
+            status_code=401,
+            media_type="application/json",
+            content=json.dumps({"status": "error", "message": "Authentication required for auditing"}),
+        )
+
+    try:
+        # Verify token and get user context
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            normalized = token
+            if normalized.startswith("Bearer "):
+                normalized = normalized.replace("Bearer ", "", 1)
+            if normalized.startswith("token "):
+                normalized = normalized.replace("token ", "", 1)
+
+            user_response = await client.get(
+                "https://api.github.com/user",
+                headers={
+                    "Authorization": f"token {normalized}",
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "gition-auth-server",
+                },
+            )
+            if user_response.status_code != 200:
+                return Response(
+                    status_code=401,
+                    media_type="application/json",
+                    content=json.dumps({"status": "error", "message": "Invalid session"}),
+                )
+            user_data = user_response.json()
+            user_id = user_data.get("login")
+
+        try:
+            body = await request.json()
+        except Exception:
+            return Response(
+                status_code=400,
+                media_type="application/json",
+                content=json.dumps({"status": "error", "message": "Invalid JSON body"}),
+            )
+
+        # 2. Validation: Event Type Allowlist
+        ALLOWED_EVENTS = {"COMMIT_INITIATED", "COMMIT_SUCCESS", "COMMIT_FAILURE"}
+        event_type = body.get("event_type")
+        if event_type not in ALLOWED_EVENTS:
+            return Response(
+                status_code=400,
+                media_type="application/json",
+                content=json.dumps({"status": "error", "message": "Invalid event type"}),
+            )
+
+        # 3. Validation: Metadata Filtering
+        # Only allow specific keys and ensure values are strings/primitives
+        ALLOWED_METADATA_KEYS = {"branch", "error", "file_count"}
+        raw_metadata = body.get("metadata") or {}
+        if not isinstance(raw_metadata, dict):
+            raw_metadata = {}
+
+        metadata = {
+            k: str(v)[:500]  # Sanitize/Truncate values
+            for k, v in raw_metadata.items()
+            if k in ALLOWED_METADATA_KEYS
+        }
+
+        # 4. Construct Trusted Log Entry
+        from datetime import datetime, timezone
+        repo_name = str(body.get("repo_name") or "")[:100]
+        status = str(body.get("status") or "info")[:20]
+
+        log_entry = {
+            "version": "1.1",
+            "event": event_type,
+            "user": user_id, # Derived from verified token
+            "repo": repo_name,
+            "status": status,
+            "metadata": metadata,
+            "timestamp": datetime.now(timezone.utc).isoformat() # Trusted server time
+        }
+        
+        # 5. Structured Logging
+        # Outputting pure JSON allows external log aggregators (ELK, Stackdriver, etc.)
+        # to automatically parse the fields without complex regex or pattern matching.
+        logger.info(json.dumps({
+            "audit_log": True,
+            "data": log_entry
+        }))
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Failed to record audit event: {e}")
+        return Response(status_code=500, content=json.dumps({"status": "error", "message": "Logging failed"}))
+
 
 # ==============================================================================
 # Repository List API
 # ==============================================================================
 
 def get_token(request: Request) -> str | None:
-    """
-    Extract GitHub access token from request.
-
-    Checks for token in Authorization header first, then falls back to cookie.
-
-    :param request: FastAPI request object
-    :type request: Request
-
-    :returns: Access token if found, None otherwise
-    :rtype: str | None
-
-    **Token Sources (in order of precedence):**
-
-    1. ``Authorization`` header: ``Bearer <token>``
-    2. ``github_token`` cookie (set during OAuth callback)
-
-    :Example:
-
-        >>> token = get_token(request)
-        >>> if token:
-        ...     # Use token for GitHub API calls
-        ...     pass
-    """
+    """Helper to extract token from header or cookie"""
     auth = request.headers.get("Authorization")
     if auth:
         return auth.replace("Bearer ", "") if auth.startswith("Bearer ") else auth
@@ -285,42 +382,6 @@ def get_token(request: Request) -> str | None:
 
 @app.get("/api/repos")
 async def get_repos(request: Request):
-    """
-    List all repositories accessible by the authenticated user.
-
-    Fetches repositories from GitHub API including public, private,
-    owned, and collaborated repositories.
-
-    :param request: FastAPI request object (contains auth token)
-    :type request: Request
-
-    :returns: Repository list response
-    :rtype: dict
-
-    **Response Fields:**
-
-    - ``total`` (int): Total repository count
-    - ``public`` (int): Public repository count
-    - ``private`` (int): Private repository count
-    - ``repos`` (list): List of repository objects
-
-    **Repository Object Fields:**
-
-    - ``id`` (int): Repository ID
-    - ``name`` (str): Repository name
-    - ``full_name`` (str): Full repository name (owner/repo)
-    - ``description`` (str | None): Repository description
-    - ``private`` (bool): Whether repository is private
-    - ``html_url`` (str): GitHub web URL
-    - ``clone_url`` (str): HTTPS clone URL
-    - ``ssh_url`` (str): SSH clone URL
-    - ``language`` (str | None): Primary programming language
-    - ``stargazers_count`` (int): Star count
-    - ``updated_at`` (str): Last update timestamp (ISO 8601)
-    - ``default_branch`` (str): Default branch name
-
-    :raises: Returns ``{"error": "Not authenticated", "repos": []}`` if no token
-    """
     token = get_token(request)
     if not token:
         return {"error": "Not authenticated", "repos": []}
@@ -328,7 +389,8 @@ async def get_repos(request: Request):
     async with httpx.AsyncClient(timeout=10.0) as client:
         headers = {
             "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github.v3+json"
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "gition-auth-server",
         }
         
         repos_response = await client.get(
@@ -379,57 +441,44 @@ async def get_repos(request: Request):
 # ==============================================================================
 # Import actual Git operation functions from git_ops.py
 from git_ops import (
-    clone_repo, pull_repo, list_files, read_file,
+    clone_repo, reclone_repo, pull_repo, list_files, read_file,
     is_cloned, delete_repo, search_files, get_commits,
     get_branches, checkout_branch
+)
+
+# Import page operations for branch pages
+from page_ops import (
+    create_branch_page, get_branch_page, update_branch_page,
+    list_branch_pages, ensure_branch_page, delete_branch_page
 )
 
 
 @app.post("/api/git/clone")
 async def api_clone_repo(request: Request):
     """
-    Clone a GitHub repository to local server storage.
-
-    Clones a repository using HTTPS with token authentication.
-    Repositories are stored at ``/repos/{user_id}/{repo_name}/``.
-
-    :param request: FastAPI request object containing JSON body
-    :type request: Request
-
-    :returns: Clone operation result
-    :rtype: dict
-
-    **Request Body (JSON):**
-
-    - ``clone_url`` (str): Repository HTTPS clone URL
-    - ``access_token`` (str): GitHub access token for authentication
-    - ``user_id`` (str): User's GitHub ID (for path separation)
-    - ``repo_name`` (str): Repository name
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "exists" | "error"
-    - ``path`` (str | None): Local path where repo is cloned
-    - ``message`` (str): Status message
-
-    :Example:
-
-        >>> response = await client.post("/api/git/clone", json={
-        ...     "clone_url": "https://github.com/user/repo.git",
-        ...     "access_token": "ghp_xxx",
-        ...     "user_id": "12345",
-        ...     "repo_name": "my-repo"
-        ... })
+    Clone a GitHub repository to the server
+    
+    Body (JSON):
+        - clone_url: Repository HTTPS clone URL
+        - access_token: GitHub access token (for private repo access)
+        - user_id: User ID (for path separation)
+        - repo_name: Repository name
+    
+    Storage Path: /repos/{user_id}/{repo_name}/
     """
     try:
         body = await request.json()
         clone_url = body.get("clone_url")
-        access_token = body.get("access_token")
         user_id = body.get("user_id")
         repo_name = body.get("repo_name")
         
-        if not all([clone_url, access_token, user_id, repo_name]):
+        # Get access_token from cookie instead of body
+        access_token = get_token(request)
+        
+        if not all([clone_url, user_id, repo_name]):
             return {"status": "error", "message": "Missing required fields"}
+        if not access_token:
+            return {"status": "error", "message": "Not authenticated"}
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(clone_repo, clone_url, access_token, str(user_id), repo_name)
@@ -438,28 +487,46 @@ async def api_clone_repo(request: Request):
         return {"status": "error", "message": str(e)}
 
 
+@app.post("/api/git/reclone")
+async def api_reclone_repo(request: Request):
+    """
+    Delete existing repository and clone fresh.
+    Useful for fixing corrupted clones or resetting local changes.
+    
+    Body (JSON):
+        - clone_url: Repository HTTPS clone URL
+        - access_token: GitHub access token
+        - user_id: User ID
+        - repo_name: Repository name
+    """
+    try:
+        body = await request.json()
+        clone_url = body.get("clone_url")
+        user_id = body.get("user_id")
+        repo_name = body.get("repo_name")
+        
+        # Get access_token from cookie instead of body
+        access_token = get_token(request)
+        
+        if not all([clone_url, user_id, repo_name]):
+            return {"status": "error", "message": "Missing required fields"}
+        if not access_token:
+            return {"status": "error", "message": "Not authenticated"}
+        
+        result = await asyncio.to_thread(reclone_repo, clone_url, access_token, str(user_id), repo_name)
+        return result
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 @app.post("/api/git/pull")
 async def api_pull_repo(request: Request):
     """
-    Pull latest changes from remote for a cloned repository.
-
-    Fetches and merges changes from the origin remote.
-
-    :param request: FastAPI request object containing JSON body
-    :type request: Request
-
-    :returns: Pull operation result
-    :rtype: dict
-
-    **Request Body (JSON):**
-
-    - ``user_id`` (str): User's GitHub ID
-    - ``repo_name`` (str): Repository name
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``message`` (str): Result message
+    Pull latest changes from a cloned repository
+    
+    Body (JSON):
+        - user_id: User ID
+        - repo_name: Repository name
     """
     try:
         body = await request.json()
@@ -479,36 +546,15 @@ async def api_pull_repo(request: Request):
 @app.get("/api/git/files")
 async def api_list_files(user_id: str, repo_name: str, path: str = ""):
     """
-    List files and directories in a cloned repository.
-
-    Returns directory contents with file metadata.
-    Directories are sorted before files, alphabetically.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-    :param path: Subdirectory path (empty string for root)
-    :type path: str
-
-    :returns: File listing result
-    :rtype: dict
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``path`` (str): Requested path
-    - ``files`` (list): List of file/directory objects
-
-    **File Object Fields:**
-
-    - ``name`` (str): File or directory name
-    - ``type`` (str): "file" | "directory"
-    - ``size`` (int | None): File size in bytes (None for directories)
-    - ``path`` (str): Relative path from repository root
-
-    .. note::
-        The ``.git`` directory is excluded from listings.
+    List files/directories in a cloned repository
+    
+    Query Params:
+        - user_id: User ID
+        - repo_name: Repository name
+        - path: Path to browse (empty string for root)
+    
+    Returns:
+        - files: [{name, type, size, path}, ...]
     """
     # Performance: Use to_thread for blocking Git operations
     result = await asyncio.to_thread(list_files, user_id, repo_name, path)
@@ -518,33 +564,16 @@ async def api_list_files(user_id: str, repo_name: str, path: str = ""):
 @app.get("/api/git/file")
 async def api_read_file(user_id: str, repo_name: str, path: str):
     """
-    Read file content from a cloned repository.
-
-    Returns file content for text files. Binary files return
-    metadata only with content set to None.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-    :param path: File path relative to repository root
-    :type path: str
-
-    :returns: File content result
-    :rtype: dict
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``path`` (str): File path
-    - ``binary`` (bool): Whether file is binary
-    - ``size`` (int): File size in bytes
-    - ``content`` (str | None): File content (None for binary files)
-
-    **Binary Detection:**
-
-    Files with extensions like .png, .jpg, .pdf, .exe are
-    treated as binary and content is not returned.
+    Read file content from a cloned repository
+    
+    Query Params:
+        - user_id: User ID
+        - repo_name: Repository name
+        - path: File path
+    
+    Returns:
+        - content: File content (for text files)
+        - binary: Whether file is binary
     """
     # Performance: Use to_thread for blocking Git operations
     result = await asyncio.to_thread(read_file, user_id, repo_name, path)
@@ -553,21 +582,7 @@ async def api_read_file(user_id: str, repo_name: str, path: str):
 
 @app.get("/api/git/status")
 async def api_repo_status(user_id: str, repo_name: str):
-    """
-    Check if a repository is cloned locally.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-
-    :returns: Clone status
-    :rtype: dict
-
-    **Response Fields:**
-
-    - ``cloned`` (bool): Whether repository exists locally with .git folder
-    """
+    """Check if a repository is cloned"""
     cloned = await asyncio.to_thread(is_cloned, user_id, repo_name)
     return {
         "cloned": cloned
@@ -577,28 +592,11 @@ async def api_repo_status(user_id: str, repo_name: str):
 @app.delete("/api/git/repo")
 async def api_delete_repo(request: Request):
     """
-    Delete a cloned repository from local storage.
-
-    Removes the entire repository directory including all files.
-
-    :param request: FastAPI request object containing JSON body
-    :type request: Request
-
-    :returns: Delete operation result
-    :rtype: dict
-
-    **Request Body (JSON):**
-
-    - ``user_id`` (str): User's GitHub ID
-    - ``repo_name`` (str): Repository name
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``message`` (str): Result message
-
-    .. warning::
-        This operation is irreversible. All local changes will be lost.
+    Delete a cloned repository
+    
+    Body (JSON):
+        - user_id: User ID
+        - repo_name: Repository name
     """
     try:
         body = await request.json()
@@ -624,40 +622,14 @@ async def api_search_files(
     max_results: int = 50
 ):
     """
-    Search files and content within a repository.
-
-    Searches both filenames and file content (optionally).
-    Binary files are skipped for content search.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-    :param query: Search query (minimum 2 characters)
-    :type query: str
-    :param content: Whether to search file content (default: True)
-    :type content: bool
-    :param max_results: Maximum result count (max: 100)
-    :type max_results: int
-
-    :returns: Search results
-    :rtype: dict
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``query`` (str): Original search query
-    - ``total`` (int): Total result count
-    - ``results`` (list): List of search result objects
-
-    **Result Object Fields:**
-
-    - ``type`` (str): "filename" | "content"
-    - ``path`` (str): File path relative to repo root
-    - ``name`` (str): File name
-    - ``match`` (str): Matched text
-    - ``line`` (int | None): Line number (for content matches)
-    - ``context`` (str | None): Context around match (for content matches)
+    Search files/content within a repository
+    
+    Query Params:
+        - user_id: User ID
+        - repo_name: Repository name
+        - query: Search query (minimum 2 characters)
+        - content: Whether to search file content (default: true)
+        - max_results: Maximum result count (max: 100)
     """
     if not query or len(query) < 2:
         return {"status": "error", "message": "Query must be at least 2 characters", "results": []}
@@ -671,41 +643,20 @@ async def api_search_files(
 async def api_get_commits(
     user_id: str,
     repo_name: str,
+    branch: str | None = None,
     max_count: int = 50
 ):
     """
-    Get commit history for a repository.
-
-    Returns a list of commits with author, message, and stats.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-    :param max_count: Maximum commit count (max: 100, default: 50)
-    :type max_count: int
-
-    :returns: Commit history
-    :rtype: dict
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``total`` (int): Number of commits returned
-    - ``commits`` (list): List of commit objects
-
-    **Commit Object Fields:**
-
-    - ``sha`` (str): Abbreviated commit SHA (7 characters)
-    - ``full_sha`` (str): Full commit SHA
-    - ``message`` (str): First line of commit message
-    - ``author`` (str): Author name
-    - ``author_email`` (str): Author email
-    - ``date`` (str): Commit date (ISO 8601)
-    - ``stats`` (dict): Commit statistics (files, insertions, deletions)
+    Get commit history for a repository
+    
+    Query Params:
+        - user_id: User ID
+        - repo_name: Repository name
+        - branch: Branch name (optional, defaults to current branch)
+        - max_count: Maximum commit count (max: 100)
     """
     # Performance: Use to_thread for blocking Git operations
-    result = await asyncio.to_thread(get_commits, user_id, repo_name, min(max_count, 100))
+    result = await asyncio.to_thread(get_commits, user_id, repo_name, branch, min(max_count, 100))
     return result
 
 
@@ -715,33 +666,11 @@ async def api_get_branches(
     repo_name: str
 ):
     """
-    Get branch list for a repository.
-
-    Returns both local and remote branches with current branch indicator.
-    Performs a git fetch first to ensure remote branches are up to date.
-
-    :param user_id: User's GitHub ID
-    :type user_id: str
-    :param repo_name: Repository name
-    :type repo_name: str
-
-    :returns: Branch list
-    :rtype: dict
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``current_branch`` (str | None): Currently checked out branch
-    - ``total`` (int): Total branch count
-    - ``branches`` (list): List of branch objects
-
-    **Branch Object Fields:**
-
-    - ``name`` (str): Branch name
-    - ``type`` (str): "local" | "remote"
-    - ``is_current`` (bool): Whether this is the current branch
-    - ``commit_sha`` (str): Latest commit SHA (7 characters)
-    - ``commit_message`` (str): Latest commit message (first line)
+    Get branch list for a repository
+    
+    Returns:
+        - current_branch: Currently checked out branch
+        - branches: [{name, type, is_current, commit_sha}, ...]
     """
     # Performance: Use to_thread for blocking Git operations
     result = await asyncio.to_thread(get_branches, user_id, repo_name)
@@ -751,33 +680,12 @@ async def api_get_branches(
 @app.post("/api/git/checkout")
 async def api_checkout_branch(request: Request):
     """
-    Checkout (switch to) a branch.
-
-    Switches the working directory to the specified branch.
-    If the branch only exists on remote, creates a local tracking branch.
-
-    :param request: FastAPI request object containing JSON body
-    :type request: Request
-
-    :returns: Checkout result
-    :rtype: dict
-
-    **Request Body (JSON):**
-
-    - ``user_id`` (str): User's GitHub ID
-    - ``repo_name`` (str): Repository name
-    - ``branch_name`` (str): Branch name to checkout
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``message`` (str): Result message
-    - ``current_branch`` (str): Current branch after checkout
-
-    **Checkout Behavior:**
-
-    1. If local branch exists, checkout directly
-    2. If only remote exists, create local branch tracking origin/{branch}
+    Checkout (switch to) a branch
+    
+    Body (JSON):
+        - user_id: User ID
+        - repo_name: Repository name
+        - branch_name: Branch name to checkout
     """
     try:
         body = await request.json()
@@ -790,9 +698,185 @@ async def api_checkout_branch(request: Request):
         
         # Performance: Use to_thread for blocking Git operations
         result = await asyncio.to_thread(checkout_branch, user_id, repo_name, branch_name)
+        
+        # Auto-create page for this branch if checkout was successful
+        if result.get("status") == "success":
+            try:
+                await asyncio.to_thread(ensure_branch_page, user_id, repo_name, branch_name)
+            except Exception as e:
+                logger.warning(f"Auto-create page failed for {branch_name}: {e}")
+        
         return result
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+# ==============================================================================
+# Branch Page API
+# ==============================================================================
+# CRUD operations for branch-specific pages stored in .gition directory
+
+@app.get("/api/pages/{user_id}/{repo_name}")
+async def api_list_pages(request: Request, user_id: str, repo_name: str):
+    """
+    List all branch pages for a repository
+    
+    Path Params:
+        - user_id: User's GitHub ID
+        - repo_name: Repository name
+    
+    Returns:
+        - status: success | error
+        - pages: List of page summaries
+        - total: Total count
+    """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "pages": [], "total": 0}
+    
+    try:
+        result = await asyncio.to_thread(list_branch_pages, user_id, repo_name)
+        return result
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to list pages for {repo_name}: {e}")
+        return {"status": "error", "message": "Failed to list pages. Please try again.", "pages": [], "total": 0}
+
+
+@app.get("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
+async def api_get_page(request: Request, user_id: str, repo_name: str, branch_name: str):
+    """
+    Get a branch page
+    
+    Path Params:
+        - user_id: User's GitHub ID
+        - repo_name: Repository name
+        - branch_name: Branch name (supports slashes like feature/auth)
+    
+    Returns:
+        - status: success | not_found | error
+        - page: Page data (on success)
+    """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "page": None}
+    
+    try:
+        result = await asyncio.to_thread(get_branch_page, user_id, repo_name, branch_name)
+        return result
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to get page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to load page. Please try again.", "page": None}
+
+
+@app.post("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
+async def api_create_page(request: Request, user_id: str, repo_name: str, branch_name: str):
+    """
+    Create a new branch page
+    
+    Path Params:
+        - user_id: User's GitHub ID
+        - repo_name: Repository name
+        - branch_name: Branch name
+    
+    Body (optional JSON):
+        - title: Page title (defaults to branch name)
+        - content: Initial content
+    
+    Returns:
+        - status: success | exists | error
+        - page: Page data (on success)
+    """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "page": None}
+    
+    try:
+        body = {}
+        try:
+            body = await request.json()
+        except Exception:
+            pass  # Body is optional
+        
+        title = body.get("title")
+        content = body.get("content", "")
+        
+        result = await asyncio.to_thread(
+            create_branch_page, user_id, repo_name, branch_name, title, content
+        )
+        return result
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to create page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to create page. Please try again.", "page": None}
+
+
+@app.put("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
+async def api_update_page(request: Request, user_id: str, repo_name: str, branch_name: str):
+    """
+    Update a branch page
+    
+    Path Params:
+        - user_id: User's GitHub ID
+        - repo_name: Repository name
+        - branch_name: Branch name
+    
+    Body (JSON):
+        - title: New title (optional)
+        - content: New content (optional)
+    
+    Returns:
+        - status: success | not_found | error
+        - page: Updated page data (on success)
+    """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated", "page": None}
+    
+    try:
+        body = await request.json()
+        title = body.get("title")
+        content = body.get("content")
+        
+        result = await asyncio.to_thread(
+            update_branch_page, user_id, repo_name, branch_name, title, content
+        )
+        return result
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to update page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to save page. Please try again.", "page": None}
+
+
+@app.delete("/api/pages/{user_id}/{repo_name}/{branch_name:path}")
+async def api_delete_page(request: Request, user_id: str, repo_name: str, branch_name: str):
+    """
+    Delete a branch page
+    
+    Note: Pages are NOT auto-deleted when branches are deleted.
+    This endpoint is for manual cleanup only.
+    
+    Path Params:
+        - user_id: User's GitHub ID
+        - repo_name: Repository name
+        - branch_name: Branch name
+    
+    Returns:
+        - status: success | not_found | error
+        - message: Status message
+    """
+    # Auth check
+    token = get_token(request)
+    if not token:
+        return {"status": "error", "message": "Not authenticated"}
+    
+    try:
+        result = await asyncio.to_thread(delete_branch_page, user_id, repo_name, branch_name)
+        return result
+    except Exception as e:
+        logger.exception(f"[Internal] Failed to delete page for {branch_name}: {e}")
+        return {"status": "error", "message": "Failed to delete page. Please try again."}
 
 
 # ==============================================================================
@@ -804,44 +888,17 @@ async def api_checkout_branch(request: Request):
 @app.get("/api/github/issues")
 async def api_get_issues(request: Request, owner: str, repo: str, state: str = "open"):
     """
-    Get issues for a GitHub repository.
-
-    Fetches issues directly from GitHub API (no clone required).
-    Pull Requests are filtered out (they appear in issues endpoint).
-
-    :param request: FastAPI request object (contains auth token)
-    :type request: Request
-    :param owner: Repository owner (username or organization)
-    :type owner: str
-    :param repo: Repository name
-    :type repo: str
-    :param state: Issue state filter ("open", "closed", "all")
-    :type state: str
-
-    :returns: Issues list
-    :rtype: dict
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``total`` (int): Number of issues returned
-    - ``issues`` (list): List of issue objects
-
-    **Issue Object Fields:**
-
-    - ``id`` (int): Issue ID
-    - ``number`` (int): Issue number
-    - ``title`` (str): Issue title
-    - ``state`` (str): Issue state ("open" | "closed")
-    - ``user`` (dict): Author info (login, avatar_url)
-    - ``labels`` (list): List of label objects (name, color)
-    - ``comments`` (int): Comment count
-    - ``created_at`` (str): Creation timestamp (ISO 8601)
-    - ``updated_at`` (str): Last update timestamp (ISO 8601)
-    - ``html_url`` (str): GitHub web URL
-
-    .. note::
-        Requires Authorization header with valid GitHub token.
+    Get issues for a GitHub repository
+    
+    Query Params:
+        - owner: Repository owner (username or organization)
+        - repo: Repository name
+        - state: Issue state (open, closed, all)
+    
+    Headers:
+        Authorization: Bearer <access_token>
+    
+    Note: Pull Requests also appear in Issues API, so filtering is needed
     """
     token = get_token(request)
     if not token:
@@ -853,7 +910,8 @@ async def api_get_issues(request: Request, owner: str, repo: str, state: str = "
                 f"https://api.github.com/repos/{owner}/{repo}/issues",
                 headers={
                     "Authorization": f"Bearer {token}",
-                    "Accept": "application/vnd.github.v3+json"
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "gition-auth-server",
                 },
                 params={
                     "state": state,
@@ -901,45 +959,15 @@ async def api_get_issues(request: Request, owner: str, repo: str, state: str = "
 @app.get("/api/github/pulls")
 async def api_get_pulls(request: Request, owner: str, repo: str, state: str = "open"):
     """
-    Get pull requests for a GitHub repository.
-
-    Fetches pull requests directly from GitHub API (no clone required).
-
-    :param request: FastAPI request object (contains auth token)
-    :type request: Request
-    :param owner: Repository owner (username or organization)
-    :type owner: str
-    :param repo: Repository name
-    :type repo: str
-    :param state: PR state filter ("open", "closed", "all")
-    :type state: str
-
-    :returns: Pull requests list
-    :rtype: dict
-
-    **Response Fields:**
-
-    - ``status`` (str): "success" | "error"
-    - ``total`` (int): Number of PRs returned
-    - ``pulls`` (list): List of pull request objects
-
-    **Pull Request Object Fields:**
-
-    - ``id`` (int): PR ID
-    - ``number`` (int): PR number
-    - ``title`` (str): PR title
-    - ``state`` (str): PR state ("open" | "closed" | "merged")
-    - ``user`` (dict): Author info (login, avatar_url)
-    - ``head`` (dict): Source branch info (ref, sha)
-    - ``base`` (dict): Target branch info (ref)
-    - ``draft`` (bool): Whether PR is a draft
-    - ``mergeable_state`` (str | None): Merge status
-    - ``created_at`` (str): Creation timestamp (ISO 8601)
-    - ``updated_at`` (str): Last update timestamp (ISO 8601)
-    - ``html_url`` (str): GitHub web URL
-
-    .. note::
-        Requires Authorization header with valid GitHub token.
+    Get pull requests for a GitHub repository
+    
+    Query Params:
+        - owner: Repository owner
+        - repo: Repository name
+        - state: PR state (open, closed, all)
+    
+    Headers:
+        Authorization: Bearer <access_token>
     """
     token = get_token(request)
     if not token:
@@ -951,7 +979,8 @@ async def api_get_pulls(request: Request, owner: str, repo: str, state: str = "o
                 f"https://api.github.com/repos/{owner}/{repo}/pulls",
                 headers={
                     "Authorization": f"Bearer {token}",
-                    "Accept": "application/vnd.github.v3+json"
+                    "Accept": "application/vnd.github.v3+json",
+                    "User-Agent": "gition-auth-server",
                 },
                 params={
                     "state": state,

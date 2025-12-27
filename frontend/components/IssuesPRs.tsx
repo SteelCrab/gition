@@ -89,15 +89,9 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
         setLoading(prev => ({ ...prev, issues: true }));
         setError(null);
         try {
-            const token = localStorage.getItem('github_token');
-            const headers: HeadersInit = {
-                'Accept': 'application/vnd.github.v3+json',
-            };
-            if (token) headers['Authorization'] = `token ${token}`;
-
             const response = await fetch(
-                `https://api.github.com/repos/${owner}/${repoName}/issues?state=open&per_page=10`,
-                { headers }
+                `/api/github/issues?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repoName)}`,
+                { credentials: 'include' }
             );
 
             if (!response.ok) {
@@ -106,8 +100,11 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
             }
 
             const data = await response.json();
-            if (Array.isArray(data)) {
-                setIssues(data.filter((issue: Issue) => !issue.pull_request));
+            if (data.status === 'success' && Array.isArray(data.issues)) {
+                setIssues(data.issues);
+            } else {
+                setIssues([]);
+                if (data.message) throw new Error(data.message);
             }
         } catch (err: unknown) {
             console.error('Failed to fetch issues:', err);
@@ -126,15 +123,9 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
         setLoading(prev => ({ ...prev, pulls: true }));
         setError(null);
         try {
-            const token = localStorage.getItem('github_token');
-            const headers: HeadersInit = {
-                'Accept': 'application/vnd.github.v3+json',
-            };
-            if (token) headers['Authorization'] = `token ${token}`;
-
             const response = await fetch(
-                `https://api.github.com/repos/${owner}/${repoName}/pulls?state=open&per_page=10`,
-                { headers }
+                `/api/github/pulls?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repoName)}`,
+                { credentials: 'include' }
             );
 
             if (!response.ok) {
@@ -143,8 +134,11 @@ const IssuesPRs = ({ owner, repoName }: IssuesPRsProps) => {
             }
 
             const data = await response.json();
-            if (Array.isArray(data)) {
-                setPRs(data);
+            if (data.status === 'success' && Array.isArray(data.pulls)) {
+                setPRs(data.pulls);
+            } else {
+                setPRs([]);
+                if (data.message) throw new Error(data.message);
             }
         } catch (err: unknown) {
             console.error('Failed to fetch pulls:', err);

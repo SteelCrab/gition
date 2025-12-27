@@ -32,9 +32,7 @@ export { default as PipelineStep } from './PipelineStep';
 export { default as PipelineBlock } from './PipelineBlock';
 export { default as LogStep } from './LogStep';
 
-// Authentication components
-export { default as LoginPage } from './LoginPage';
-export { default as AuthCallback } from './AuthCallback';
+
 
 // Repository management components
 export { default as RepoList } from './RepoList';
@@ -44,3 +42,4 @@ export { default as FileBrowser } from './FileBrowser';
 export { default as CommitHistory } from './CommitHistory';
 export { default as BranchSelector } from './BranchSelector';
 export { default as IssuesPRs } from './IssuesPRs';
+export { default as BranchPage } from './BranchPage';

@@ -12,19 +12,19 @@
 - [x] Repository cloning to server
 - [x] Branch listing and switching
 - [x] Git fetch for remote branch sync
-- [x] Show hidden branch list
+- [x] Show hidden branch list (local + remote)
 - [x] File browser with directory navigation
+- [x] Auto-pull on branch checkout (uses tracking branch)
 
 ### ✏️ Editor
 - [x] Notion-style block editor
 - [ ] Code blocks with syntax highlighting
 - [x] Text blocks with inline editing
-- [ ] Pipeline blocks execution
 - [x] `.gition` local page storage (branch-specific, git-ignored)
 - [ ] Markdown rendering (#8)
 
 ### 🔄 Git Operations
-- [x] Commit history viewer
+- [x] Commit history viewer (branch-aware)
 - [x] File content viewer/editor
 - [x] Search within repository (code search)
 - [ ] Commit/Push from UI
@@ -44,12 +44,40 @@
 - [ ] PR block - Display Pull Requests inline
 - [ ] Commit block - Display GitHub commits inline
 - [ ] Commit link block - Display Git commits inline
+- [ ] Heading block - H1/H2/H3 inline
+- [ ] List block - Bulleted/Numbered list inline
+- [ ] Quote block - Blockquote inline
+- [ ] Callout block - Highlighted callout inline
+- [ ] Divider block - Horizontal divider inline
+- [ ] Toggle block - Collapsible toggle inline
+- [ ] Table block - Table inline
 
 ### 📄 Pages
 - [ ] Landing/Promotion page
-- [ ] Branch page navigation (click branch → new page)
+- [x] Branch page auto-creation on checkout
+- [x] Branch page navigation (tabbed UI: Notes / README)
 
+### 🗄️ Database
+- [ ] MySQL + PipeSQL dual DB architecture
+- [x] **MySQL Schema**: User/Repository/Pages tables defined
+  - Users (id, login, email, avatar_url, access_token)
+  - Repositories (id, name, owner, clone_url, default_branch)
+  - Sessions (user_id, token_hash, expires_at)
+  - Documents (user_id, repo_id, title, content)
+  - Pipelines (user_id, repo_id, name, config, status)
+  - BranchPages (user_id, repo_id, branch_name, title, content)
+- [ ] **PipeSQL**: Page/Block data management
+  - Pages (id, repo_id, branch, title, created_at)
+  - Blocks (id, page_id, type, content, order)
+  - BlockLinks (block_id, target_type, target_id)
 
+### 📊 Graph
+- [ ] Graph visualization
+
+### ☸️ Kubernetes (Basic)
+- [ ] Docker Compose dev environment
+- [ ] Basic Kubernetes manifests (Deployment, Service)
+- [ ] Single namespace deployment
 
 ---
 
@@ -71,9 +99,9 @@
 - [ ] Script blocks → Click to run in terminal
 - [ ] Real-time output streaming (xterm.js + WebSocket)
 - [ ] Recording feature (GIF for ≤5s, MP4 for >5s)
----
 
-## v0.3 - Collaboration 🔵
+### 🧱 Blocks
+- [ ] Pipeline blocks execution
 
 ### ⚡ Real-time Features
 - [ ] Real-time document editing
@@ -85,30 +113,28 @@
 - [ ] Pipeline execution logs
 - [ ] Deployment status tracking
 
----
+### ☸️ Kubernetes (Advanced)
 
-## v1.0 - Kubernetes Deployment 🔵
-
-### 🏗️ Infrastructure
+#### 🏗️ Infrastructure
 - [ ] Helm chart structure (`k8s/charts/gition/`)
 - [ ] Namespace configuration (dev/staging/prod)
 - [ ] Ingress with TLS (cert-manager)
 
-### ⚙️ Workloads
+#### ⚙️ Workloads
 - [ ] Frontend Deployment (replicas: 2+)
 - [ ] API Deployment (replicas: 3+)
 - [ ] MySQL StatefulSet (Primary-Replica)
 
-### 💾 Storage
+#### 💾 Storage
 - [ ] Multi-PVC sharding strategy
 - [ ] Hash-based workspace routing
 - [ ] PVC per shard (`repos-pvc-1`, `repos-pvc-2`, ...)
 
-### 📈 Scaling
-- [ ] HPA for Frontend (CPU 70%)
-- [ ] HPA for API (CPU 70%, Memory 80%)
+#### 📈 Scaling
+- [ ] Frontend HPA (CPU 70%)
+- [ ] API HPA (CPU 70%, Memory 80%)
 
-### 🔄 GitOps
+#### 🔄 GitOps
 - [ ] ArgoCD application configuration
 - [ ] GitHub Actions → Registry → ArgoCD pipeline
 
@@ -118,7 +144,7 @@
 - [ ] Block → Markdown conversion
 - [ ] .gitignore integration
 
-### 🕸️ Graph View
+### 🕸️ Graph View (Advanced)
 - [ ] `[[link]]` syntax parser
 - [ ] `doc_links` table schema
 - [ ] Link API (`/api/links/*`)

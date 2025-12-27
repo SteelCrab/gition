@@ -39,9 +39,10 @@ interface Commit {
 interface CommitHistoryProps {
     userId: string | null;    // User ID
     repoName: string;         // Repository name
+    branchName?: string;      // Current branch (optional)
 }
 
-const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
+const CommitHistory = ({ userId, repoName, branchName }: CommitHistoryProps) => {
     // State management
     const [commits, setCommits] = useState<Commit[]>([]);
     const [loading, setLoading] = useState(false);
@@ -50,18 +51,28 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
 
     /**
      * Fetch commit history API call
-     * - Re-fetches when userId or repoName changes
+     * - Re-fetches when userId, repoName, or branchName changes
      */
     const fetchCommits = useCallback(async () => {
-        console.log('Fetching commits for:', userId, repoName);
         if (!userId || !repoName) {
-            console.warn('Missing userId or repoName');
+            console.warn('Unable to fetch commits: Missing repository context');
             return;
         }
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/git/commits?user_id=${userId}&repo_name=${repoName}`);
+            // Include branch in the API request if available
+            const params = new URLSearchParams({
+                user_id: userId,
+                repo_name: repoName,
+            });
+            if (branchName) {
+                params.append('branch', branchName);
+            }
+            const url = `/api/git/commits?${params.toString()}`;
+            const response = await fetch(url, {
+                credentials: 'include'
+            });
             const data = await response.json();
             if (data.status === 'success') {
                 setCommits(data.commits || []);
@@ -75,7 +86,7 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
         } finally {
             setLoading(false);
         }
-    }, [userId, repoName]);
+    }, [userId, repoName, branchName]);
 
     // Fetch commits on component mount
     useEffect(() => {
@@ -93,6 +104,7 @@ const CommitHistory = ({ userId, repoName }: CommitHistoryProps) => {
             const response = await fetch('/api/git/pull', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ user_id: userId, repo_name: repoName })
             });
 

@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS repositories (
 -- Sessions table for JWT/session management
 CREATE TABLE IF NOT EXISTS sessions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    user_id INT NOT NULL,     
     token_hash VARCHAR(255) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -83,6 +83,26 @@ CREATE TABLE IF NOT EXISTS pipelines (
     FOREIGN KEY (repo_id) REFERENCES repositories(id) ON DELETE SET NULL,
     INDEX idx_user_id (user_id),
     INDEX idx_repo_id (repo_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Branch Pages table for storing Notion-style pages per branch
+-- Currently stored as JSON files in .gition/pages/, but can migrate to DB
+CREATE TABLE IF NOT EXISTS branch_pages (
+    id CHAR(36) PRIMARY KEY,  -- UUID
+    user_id INT NOT NULL,
+    repo_id INT NOT NULL,
+    branch_name VARCHAR(255) NOT NULL,
+    title VARCHAR(500) DEFAULT '',
+    content LONGTEXT,
+    metadata JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (repo_id) REFERENCES repositories(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_repo_branch (user_id, repo_id, branch_name),
+    INDEX idx_user_id (user_id),
+    INDEX idx_repo_id (repo_id),
+    INDEX idx_branch_name (branch_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Grant permissions to ***REMOVED*** user
