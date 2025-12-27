@@ -14,15 +14,27 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Test placeholder - not a real key, just satisfies the env var check
+TEST_ENV = {
+    "MYSQL_PASSWORD": "test_password",
+    "ENCRYPTION_KEY": "dGVzdF9rZXlfZm9yX3VuaXRfdGVzdHNfb25seQ=="  # "test_key_for_unit_tests_only" base64
+}
+
 
 @pytest.fixture
 def mock_db():
     """Mock database module."""
-    with patch.dict(os.environ, {
-        "MYSQL_PASSWORD": "test_password",
-        "ENCRYPTION_KEY": "test_key_32_chars_long_for_fernet"
-    }):
+    with patch.dict(os.environ, TEST_ENV):
         yield
+
+
+@pytest.fixture
+def mock_user_ops():
+    """Mock user_ops with encryption disabled."""
+    with patch.dict(os.environ, TEST_ENV):
+        with patch("user_ops._encrypt_token", return_value=b"encrypted_token"):
+            with patch("user_ops._decrypt_token", return_value="decrypted_token"):
+                yield
 
 
 class TestGetOrCreateUser:
@@ -40,10 +52,8 @@ class TestGetOrCreateUser:
         }
         
         with patch("database.fetchone", AsyncMock(side_effect=[None, mock_user])), \
-             patch("database.execute", AsyncMock(return_value=1)), \
-             patch.dict(os.environ, {"ENCRYPTION_KEY": "mXkSNeYPLVVfXB9QZnQwZXpYbWF2Y1Znb0pPYXNkZjE="}):
+             patch("database.execute", AsyncMock(return_value=1)):
             
-            # Need to reimport to get fresh state with env vars
             import user_ops
             
             # Mock the fernet encryption
@@ -68,9 +78,7 @@ class TestGetOrCreateUser:
             "login": "testuser"
         }
         
-        with patch("database.fetchone", AsyncMock(return_value=mock_user)), \
-             patch.dict(os.environ, {"ENCRYPTION_KEY": "mXkSNeYPLVVfXB9QZnQwZXpYbWF2Y1Znb0pPYXNkZjE="}):
-            
+        with patch("database.fetchone", AsyncMock(return_value=mock_user)):
             import user_ops
             
             result = await user_ops.get_or_create_user(
@@ -90,8 +98,7 @@ class TestGetUserByLogin:
         """Test finding user by login."""
         mock_user = {"id": 1, "login": "testuser"}
         
-        with patch("database.fetchone", AsyncMock(return_value=mock_user)), \
-             patch.dict(os.environ, {"ENCRYPTION_KEY": "mXkSNeYPLVVfXB9QZnQwZXpYbWF2Y1Znb0pPYXNkZjE="}):
+        with patch("database.fetchone", AsyncMock(return_value=mock_user)):
             import user_ops
             
             result = await user_ops.get_user_by_login("testuser")
@@ -100,8 +107,7 @@ class TestGetUserByLogin:
     @pytest.mark.asyncio
     async def test_user_not_found(self, mock_db):
         """Test user not found."""
-        with patch("database.fetchone", AsyncMock(return_value=None)), \
-             patch.dict(os.environ, {"ENCRYPTION_KEY": "mXkSNeYPLVVfXB9QZnQwZXpYbWF2Y1Znb0pPYXNkZjE="}):
+        with patch("database.fetchone", AsyncMock(return_value=None)):
             import user_ops
             
             result = await user_ops.get_user_by_login("nonexistent")
@@ -116,8 +122,7 @@ class TestGetUserByGithubId:
         """Test finding user by GitHub ID."""
         mock_user = {"id": 1, "github_id": 12345}
         
-        with patch("database.fetchone", AsyncMock(return_value=mock_user)), \
-             patch.dict(os.environ, {"ENCRYPTION_KEY": "mXkSNeYPLVVfXB9QZnQwZXpYbWF2Y1Znb0pPYXNkZjE="}):
+        with patch("database.fetchone", AsyncMock(return_value=mock_user)):
             import user_ops
             
             result = await user_ops.get_user_by_github_id(12345)
@@ -130,8 +135,7 @@ class TestGetUserIdByLogin:
     @pytest.mark.asyncio
     async def test_returns_id(self, mock_db):
         """Test returning user ID."""
-        with patch("database.fetchone", AsyncMock(return_value={"id": 42})), \
-             patch.dict(os.environ, {"ENCRYPTION_KEY": "mXkSNeYPLVVfXB9QZnQwZXpYbWF2Y1Znb0pPYXNkZjE="}):
+        with patch("database.fetchone", AsyncMock(return_value={"id": 42})):
             import user_ops
             
             result = await user_ops.get_user_id_by_login("testuser")
@@ -140,9 +144,9 @@ class TestGetUserIdByLogin:
     @pytest.mark.asyncio
     async def test_returns_none(self, mock_db):
         """Test returning None when not found."""
-        with patch("database.fetchone", AsyncMock(return_value=None)), \
-             patch.dict(os.environ, {"ENCRYPTION_KEY": "mXkSNeYPLVVfXB9QZnQwZXpYbWF2Y1Znb0pPYXNkZjE="}):
+        with patch("database.fetchone", AsyncMock(return_value=None)):
             import user_ops
             
             result = await user_ops.get_user_id_by_login("nonexistent")
             assert result is None
+
