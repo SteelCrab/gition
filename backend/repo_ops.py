@@ -72,7 +72,7 @@ async def sync_user_repos(user_id: int, repos: List[Dict[str, Any]]) -> Dict[str
         return {"status": "success", "synced": synced}
         
     except Exception as e:
-        logger.exception(f"Failed to sync_user_repos: {e}")
+        logger.exception("Failed to sync_user_repos")
         raise
 
 
@@ -137,6 +137,7 @@ async def ensure_repo(
     """
     Ensure repository exists in database, create if not.
     Returns the repository internal ID.
+    Uses INSERT ON DUPLICATE KEY UPDATE for atomicity.
     
     Args:
         user_id: Internal user ID
@@ -148,21 +149,17 @@ async def ensure_repo(
     Returns:
         Repository internal ID
     """
-    existing = await database.fetchone(
-        "SELECT id FROM repositories WHERE user_id = %s AND github_repo_id = %s",
-        (user_id, github_repo_id)
-    )
-    
-    if existing:
-        return existing["id"]
-    
-    # Insert new repository
-    repo_id = await database.execute(
+    # Use INSERT ON DUPLICATE KEY UPDATE to avoid race conditions
+    await database.execute(
         """INSERT INTO repositories 
            (user_id, github_repo_id, name, full_name, description,
             is_private, html_url, clone_url, ssh_url, language,
             stargazers_count, default_branch)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+           ON DUPLICATE KEY UPDATE
+           name = VALUES(name),
+           full_name = VALUES(full_name),
+           clone_url = VALUES(clone_url)""",
         (
             user_id,
             github_repo_id,
@@ -179,5 +176,13 @@ async def ensure_repo(
         )
     )
     
-    logger.info(f"Created repository: {full_name} (id={repo_id})")
+    # Fetch the ID (either newly inserted or existing)
+    result = await database.fetchone(
+        "SELECT id FROM repositories WHERE user_id = %s AND github_repo_id = %s",
+        (user_id, github_repo_id)
+    )
+    
+    repo_id = result["id"]
+    logger.info(f"Ensured repository: {full_name} (id={repo_id})")
     return repo_id
+

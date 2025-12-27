@@ -34,6 +34,8 @@ from dotenv import load_dotenv
 
 # Database module
 import database
+import user_ops
+import repo_ops
 
 # Load environment variables from .env file
 load_dotenv()

@@ -421,7 +421,7 @@ async def delete_branch_page(
         }
 
 
-def _row_to_page(row: Dict[str, Any]) -> Dict[str, Any]:
+def _row_to_page(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """
     Convert database row to page dict.
     

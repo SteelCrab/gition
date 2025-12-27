@@ -101,7 +101,7 @@ async def get_or_create_user(
         return {"user": user, "created": True}
         
     except Exception as e:
-        logger.exception(f"Failed to get_or_create_user: {e}")
+        logger.exception("Failed to get_or_create_user")
         raise
 
 
