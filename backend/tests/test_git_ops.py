@@ -25,7 +25,6 @@ from git_ops import (
     checkout_branch
 )
 
-
 class TestGetRepoPath:
     """Test get_repo_path function"""
     
@@ -41,6 +40,20 @@ class TestGetRepoPath:
         result = get_repo_path("user123", "my-repo")
         assert "user123" in str(result)
         assert "my-repo" in str(result)
+
+    @patch("git_ops.REPOS_BASE_PATH", "/tmp/repos")
+    def test_invalid_params(self):
+        with pytest.raises(ValueError, match="Invalid user_id or repo_name"):
+            get_repo_path("", "repo")
+        with pytest.raises(ValueError, match="Invalid user_id or repo_name"):
+            get_repo_path("user", "")
+
+    @patch("git_ops.REPOS_BASE_PATH", "/tmp/repos")
+    def test_traversal_detection(self):
+        with pytest.raises(ValueError, match="Invalid user_id"):
+            get_repo_path("../user", "repo")
+        with pytest.raises(ValueError, match="Invalid repo_name"):
+            get_repo_path("user", "repo/../../etc")
 
 
 class TestCloneRepo:
@@ -127,6 +140,8 @@ class TestListFiles:
         # Mock resolve to return a path that passes the security check
         mock_path = MagicMock(spec=Path)
         mock_path.is_relative_to.return_value = True
+        mock_path.resolve.return_value = mock_path
+        mock_path.__truediv__.return_value = mock_path
         mock_resolve.return_value = mock_path
         
         # Mock directory entries
@@ -169,8 +184,6 @@ class TestReadFile:
     def test_read_text_success(self, mock_exists, mock_is_file, mock_read_text, mock_stat, mock_resolve):
         mock_exists.return_value = True
         mock_is_file.return_value = True
-        mock_read_text.return_value = "hello world"
-        mock_stat.return_value.st_size = 11
         
         # Mock resolve to return a path that passes the security check
         mock_resolved = MagicMock(spec=Path)
@@ -178,6 +191,8 @@ class TestReadFile:
         mock_resolved.suffix = ".txt"
         mock_resolved.stat.return_value.st_size = 11
         mock_resolved.read_text.return_value = "hello world"
+        mock_resolved.resolve.return_value = mock_resolved
+        mock_resolved.__truediv__.return_value = mock_resolved
         mock_resolve.return_value = mock_resolved
         
         result = read_file("user", "repo", "file.txt")
@@ -198,12 +213,30 @@ class TestReadFile:
         mock_resolved.is_relative_to.return_value = True
         mock_resolved.suffix = ".png"
         mock_resolved.stat.return_value.st_size = 1024
+        mock_resolved.resolve.return_value = mock_resolved
+        mock_resolved.__truediv__.return_value = mock_resolved
         mock_resolve.return_value = mock_resolved
         
         result = read_file("user", "repo", "image.png")
         assert result["status"] == "success"
         assert result["binary"] == True
         assert result["content"] is None
+
+
+class TestIsCloned:
+    """Test is_cloned function"""
+    
+    @patch("git_ops.Path.exists")
+    def test_is_cloned_true(self, mock_exists):
+        # Mock both repo_path and .git folder existence
+        mock_exists.side_effect = [True, True]
+        assert is_cloned("user", "repo") is True
+
+    @patch("git_ops.Path.exists")
+    def test_is_cloned_false(self, mock_exists):
+        mock_exists.return_value = False
+        assert is_cloned("user", "repo") is False
+
 
 
 class TestDeleteRepo:
