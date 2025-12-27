@@ -14,10 +14,11 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Test placeholder - not a real key, just satisfies the env var check
+# Test environment - uses env vars if set, otherwise uses mock placeholders
+# These are NOT real credentials - just satisfies the env var check in tests
 TEST_ENV = {
-    "MYSQL_PASSWORD": "test_password",
-    "ENCRYPTION_KEY": "dGVzdF9rZXlfZm9yX3VuaXRfdGVzdHNfb25seQ=="  # "test_key_for_unit_tests_only" base64
+    "MYSQL_PASSWORD": os.getenv("MYSQL_PASSWORD", "mock"),
+    "ENCRYPTION_KEY": os.getenv("ENCRYPTION_KEY", "mock"),
 }
 
 
