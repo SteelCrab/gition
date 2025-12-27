@@ -10,3 +10,4 @@ sphinx>=8.2.3
 sphinx-rtd-theme>=3.0.2
 aiomysql==0.3.0
 cryptography>=44.0.0
+pytest-asyncio>=0.23.0
