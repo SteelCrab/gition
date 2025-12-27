@@ -27,6 +27,7 @@ from contextlib import asynccontextmanager
 import httpx
 import asyncio
 import os
+import re
 import json
 import logging
 from urllib.parse import urlencode
@@ -45,12 +46,24 @@ class JsonFormatter(logging.Formatter):
     """
     JSON log formatter for structured logging compliance.
     Outputs logs as a JSON string with timestamp, level, message, and metadata.
+    Redacts sensitive information to prevent leakage.
     """
+    def _sanitize(self, text: str) -> str:
+        if not text:
+            return ""
+        # Redact GitHub tokens (ghp_, gho_, ghu_, ghs_, ghr_)
+        text = re.sub(r'gh[pousr]_[A-Za-z0-9_]+', '[REDACTED_GITHUB_TOKEN]', text)
+        # Redact Bearer tokens
+        text = re.sub(r'(Bearer\s+)[a-zA-Z0-9\-\._~+/]+', r'\1[REDACTED_BEARER]', text)
+        # Redact access_token parameters in URLs/queries
+        text = re.sub(r'(access_token=)[^&\s]+', r'\1[REDACTED_TOKEN]', text)
+        return text
+
     def format(self, record):
         log_entry = {
             "timestamp": self.formatTime(record, self.datefmt),
             "level": record.levelname,
-            "message": record.getMessage(),
+            "message": self._sanitize(record.getMessage()),
             "logger": record.name,
             "module": record.module,
             "function": record.funcName,
@@ -62,7 +75,8 @@ class JsonFormatter(logging.Formatter):
             
         # Add exception info if present
         if record.exc_info:
-            log_entry["exception"] = self.formatException(record.exc_info)
+            exc_text = self.formatException(record.exc_info)
+            log_entry["exception"] = self._sanitize(exc_text)
         
         return json.dumps(log_entry)
 
