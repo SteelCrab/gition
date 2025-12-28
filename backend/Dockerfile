@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the app
 COPY . .
 
-# Expose port 
+# Expose port
 EXPOSE 3001
 
 # Run the app 
