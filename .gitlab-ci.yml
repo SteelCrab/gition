@@ -25,7 +25,8 @@ variables:
     - mz-win-vm
   image: docker:24.0.5
   services:
-    - docker:24.0.5-dind
+    - name: docker:24.0.5-dind
+      command: ["--insecure-registry=172.100.100.8:5050"]
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   only:
