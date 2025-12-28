@@ -112,6 +112,9 @@
 - [ ] 코드 블록 댓글
 
 ### 🚀 CI/CD
+- [x] GitLab CI/CD 파이프라인 (`.gitlab-ci.example.yml`)
+  - Path 기반 Docker 빌드 (frontend/backend)
+  - 수동 배포 트리거
 - [ ] 커스텀 파이프라인 설정
 - [ ] 파이프라인 실행 로그
 - [ ] 배포 상태 추적

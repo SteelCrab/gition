@@ -1,0 +1,92 @@
+# ==============================================================================
+# GitLab CI/CD Pipeline
+# ==============================================================================
+# Description: Gition project's GitLab CI/CD pipeline
+#
+# Pipeline structure:
+#   1. Build Frontend -> main branch frontend changes -> Docker image build
+#   2. Build Backend  -> main branch backend changes -> Docker image build
+#   3. Deploy         -> manual trigger
+# ==============================================================================
+
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+# ==============================================================================
+# Docker build template
+# ==============================================================================
+.docker-build:
+  tags:
+    - mz-win-vm
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  only:
+    refs:
+      - main
+
+# ==============================================================================
+# Frontend Docker Build
+# ==============================================================================
+build-frontend:
+  extends: .docker-build
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA -t $CI_REGISTRY_IMAGE/frontend:latest ./frontend
+    - docker push $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE/frontend:latest
+  only:
+    refs:
+      - main
+    changes:
+      - frontend/**/*
+      - package*.json
+      - vite.config.ts
+      - tsconfig*.json
+
+# ==============================================================================
+# Backend Docker Build
+# ==============================================================================
+build-backend:
+  extends: .docker-build
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA -t $CI_REGISTRY_IMAGE/backend:latest ./backend
+    - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE/backend:latest
+  only:
+    refs:
+      - main
+    changes:
+      - backend/**/*
+
+# ==============================================================================
+# Deploy (manual trigger)
+# ==============================================================================
+deploy-production:
+  stage: deploy
+  tags:
+    - mz-win-vm
+  script:
+    - echo "🚀 Deploying to production..."
+    - echo "Frontend image: $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA"
+    - echo "Backend image: $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA"
+    # TODO: deployment commands
+    # - kubectl set image deployment/frontend frontend=$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
+    # - kubectl set image deployment/backend backend=$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
+  only:
+    refs:
+      - main
+  when: manual  # manual trigger
+  needs:
+    - job: build-frontend
+      optional: true
+    - job: build-backend
+      optional: true
