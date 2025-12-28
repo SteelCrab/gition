@@ -21,23 +21,20 @@
 - [ ] Code blocks with syntax highlighting
 - [x] Text blocks with inline editing
 - [x] `.gition` local page storage (branch-specific, git-ignored)
-- [ ] Markdown rendering (#8)
+- [x] Markdown rendering (MarkdownRenderer component)
 
 ### 🔄 Git Operations
 - [x] Commit history viewer (branch-aware)
 - [x] File content viewer/editor
 - [x] Search within repository (code search)
-- [ ] Commit/Push from UI
-- [ ] Automatic commit fetch for current repository
+
+- [x] Automatic commit fetch for current repository
 - [x] Fix: Commit history overflow hides repo/search panels
 - [ ] Automatic commit for workspaces with pending changes
 
 ### 🔗 Integrations
 - [x] GitHub Issues display
 - [x] Pull Requests display
-- [ ] Issue/PR creation from UI
-- [ ] GitHub Actions status display (#2)
-- [ ] Bi-directional sync (GitHub ↔ Gition) (#9)
 
 ### 🧱 Blocks
 - [ ] Issue block - Display GitHub issues inline
@@ -58,7 +55,7 @@
 - [x] Branch page navigation (tabbed UI: Notes / README)
 
 ### 🗄️ Database
-- [ ] MySQL + PipeSQL dual DB architecture
+- [x] MySQL + Branch Pages DB architecture
 - [x] **MySQL Schema**: User/Repository/Pages tables defined
   - Users (id, login, email, avatar_url, access_token)
   - Repositories (id, name, owner, clone_url, default_branch)
@@ -66,7 +63,12 @@
   - Documents (user_id, repo_id, title, content)
   - Pipelines (user_id, repo_id, name, config, status)
   - BranchPages (user_id, repo_id, branch_name, title, content)
-- [ ] **PipeSQL**: Page/Block data management
+- [x] **MySQL Operations**: Async database layer
+  - database.py: Connection pool management
+  - user_ops.py: User CRUD operations
+  - repo_ops.py: Repository sync + auto-registration
+  - page_ops.py: Branch page CRUD with login-based API
+- [ ] **PipeSQL**: Page/Block data management (future)
   - Pages (id, repo_id, branch, title, created_at)
   - Blocks (id, page_id, type, content, order)
   - BlockLinks (block_id, target_type, target_id)
@@ -74,20 +76,23 @@
 ### 📊 Graph
 - [ ] Graph visualization
 
-### ☸️ Kubernetes (Basic)
-- [ ] Docker Compose dev environment
-- [ ] Basic Kubernetes manifests (Deployment, Service)
-- [ ] Single namespace deployment
-
 ---
 
-## v0.2 - Visualization 🔵
+## v0.2 - Visualization and features 🔵
+
+### 🔄 Git Operations
+- [ ] Commit/Push from UI
 
 ### 📊 Graph View
 - [ ] Commit graph visualization (tree structure)
 - [ ] Branch merge visualization
 - [ ] Interactive node selection
 - [ ] Diff viewer from graph
+
+### 🔗 Integrations
+- [ ] Issue/PR creation from UI
+- [ ] GitHub Actions status display (#2)
+- [ ] Bi-directional sync (GitHub ↔ Gition) (#9)
 
 ### 🎨 UI/UX Enhancements
 - [ ] Dark mode toggle
@@ -113,9 +118,14 @@
 - [ ] Pipeline execution logs
 - [ ] Deployment status tracking
 
-### ☸️ Kubernetes (Advanced)
+### ☸️ Kubernetes
 
-#### 🏗️ Infrastructure
+#### 🏗️ Basic Setup
+- [ ] Docker Compose dev environment
+- [ ] Basic Kubernetes manifests (Deployment, Service)
+- [ ] Single namespace deployment
+
+#### 🏗️ Infrastructure (Advanced)
 - [ ] Helm chart structure (`k8s/charts/gition/`)
 - [ ] Namespace configuration (dev/staging/prod)
 - [ ] Ingress with TLS (cert-manager)

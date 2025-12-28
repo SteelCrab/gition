@@ -14,29 +14,25 @@
 - [x] 원격 브랜치 동기화 (git fetch)
 - [x] 숨겨진 브랜치 목록 보기
 - [x] 디렉토리 탐색 파일 브라우저
+- [x] 브랜치 체크아웃 시 자동 풀 (tracking branch 사용)
 
 ### ✏️ 에디터
 - [x] Notion 스타일 블록 에디터
 - [ ] 코드 블록 신택스 하이라이팅
 - [x] 텍스트 블록 인라인 편집
 - [x] `.gition` 로컬 페이지 저장 (브랜치별, Git 무시)
-- [ ] 마크다운 렌더링 (#8)
+- [x] 마크다운 렌더링 (MarkdownRenderer 컴포넌트)
 
 ### 🔄 Git 작업
 - [x] 커밋 히스토리 뷰어
 - [x] 파일 내용 뷰어/에디터
 - [x] 저장소 내 검색 (코드 검색)
-- [ ] UI에서 커밋/푸시
-- [ ] 현재 저장소의 커밋 자동 불러오기
+- [x] 현재 저장소의 커밋 자동 불러오기
 - [x] 버그 수정: 커밋 히스토리 오버플로우로 레포/검색 패널 가림
-- [ ] 변경 사항이 있는 작업 공간 자동 커밋
 
 ### 🔗 연동
 - [x] GitHub Issues 표시
 - [x] Pull Requests 표시
-- [ ] UI에서 Issue/PR 생성
-- [ ] GitHub Actions 상태 표시 (#2)
-- [ ] 양방향 동기화 (GitHub ↔ Gition) (#9)
 
 ### 🧱 블록
 - [ ] 이슈 블록 (Issue block) - GitHub 이슈를 인라인으로 표시
@@ -53,16 +49,24 @@
 
 ### 📄 페이지
 - [ ] 랜딩/프로모션 페이지
-- [ ] 브랜치 페이지 네비게이션 (브랜치 클릭 → 새 페이지)
+- [x] 브랜치 체크아웃 시 페이지 자동 생성
+- [x] 브랜치 페이지 네비게이션 (탭 UI: Notes / README)
 
 ### 🗄️ 데이터베이스
-- [ ] MySQL + PipeSQL 듀얼 DB 구조
-- [ ] **MySQL**: 사용자/저장소 메타데이터
+- [x] MySQL + Branch Pages DB 구조
+- [x] **MySQL 스키마**: 사용자/저장소/페이지 테이블 정의
   - Users (id, login, email, avatar_url, access_token)
   - Repositories (id, name, owner, clone_url, default_branch)
-  - Branches (repo_id, name, commit_sha, is_current)
-  - Commits (sha, repo_id, message, author, date)
-- [ ] **PipeSQL**: 페이지/블록 데이터 관리
+  - Sessions (user_id, token_hash, expires_at)
+  - Documents (user_id, repo_id, title, content)
+  - Pipelines (user_id, repo_id, name, config, status)
+  - BranchPages (user_id, repo_id, branch_name, title, content)
+- [x] **MySQL 운영**: 비동기 데이터베이스 레이어
+  - database.py: 커넥션 풀 관리
+  - user_ops.py: 사용자 CRUD 작업
+  - repo_ops.py: 저장소 동기화 + 자동 등록
+  - page_ops.py: 브랜치 페이지 CRUD (로그인 기반 API)
+- [ ] **PipeSQL**: 페이지/블록 데이터 관리 (향후)
   - Pages (id, repo_id, branch, title, created_at)
   - Blocks (id, page_id, type, content, order)
   - BlockLinks (block_id, target_type, target_id)
@@ -70,14 +74,17 @@
 ### 📊 그래프
 - [ ] 그래프 시각화
 
-### ☸️ Kubernetes (기본)
-- [ ] Docker Compose 개발 환경
-- [ ] 기본 Kubernetes 매니페스트 (Deployment, Service)
-- [ ] 단일 네임스페이스 배포
-
 ---
 
-## v0.2 - 시각화 🔵
+## v0.2 - 시각화 및 기능 개선 🔵
+
+### 🔄 Git 작업
+- [ ] UI에서 커밋/푸시
+
+### 🔗 연동
+- [ ] UI에서 Issue/PR 생성
+- [ ] GitHub Actions 상태 표시 (#2)
+- [ ] 양방향 동기화 (GitHub ↔ Gition) (#9)
 
 ### 📊 Graph View
 - [ ] 커밋 그래프 시각화 (트리 구조)
@@ -109,9 +116,14 @@
 - [ ] 파이프라인 실행 로그
 - [ ] 배포 상태 추적
 
-### ☸️ Kubernetes (확장)
+### ☸️ Kubernetes
 
-#### 🏗️ 인프라
+#### 🏗️ 기본 설정
+- [ ] Docker Compose 개발 환경
+- [ ] 기본 Kubernetes 매니페스트 (Deployment, Service)
+- [ ] 단일 네임스페이스 배포
+
+#### 🏗️ 인프라 (확장)
 - [ ] Helm 차트 구조 (`k8s/charts/gition/`)
 - [ ] 네임스페이스 설정 (dev/staging/prod)
 - [ ] TLS 포함 Ingress (cert-manager)
