@@ -1,6 +1,7 @@
 # Build stage
 FROM node:25-alpine AS builder
 
+# Set working directory
 WORKDIR /app
 
 # Copy package files

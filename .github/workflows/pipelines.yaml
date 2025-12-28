@@ -244,8 +244,8 @@ jobs:
         if: steps.changes.outputs.frontend == 'true'
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./frontend
+          file: ./frontend/Dockerfile
           push: true
           tags: ghcr.io/${{ steps.lowercase.outputs.owner }}/${{ steps.lowercase.outputs.repo }}-frontend:${{ github.sha }}
           cache-from: type=gha      # GitHub Actions 캐시 사용
