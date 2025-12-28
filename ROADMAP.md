@@ -27,17 +27,14 @@
 - [x] Commit history viewer (branch-aware)
 - [x] File content viewer/editor
 - [x] Search within repository (code search)
-- [ ] Commit/Push from UI
-- [ ] Automatic commit fetch for current repository
+
+- [x] Automatic commit fetch for current repository
 - [x] Fix: Commit history overflow hides repo/search panels
 - [ ] Automatic commit for workspaces with pending changes
 
 ### 🔗 Integrations
 - [x] GitHub Issues display
 - [x] Pull Requests display
-- [ ] Issue/PR creation from UI
-- [ ] GitHub Actions status display (#2)
-- [ ] Bi-directional sync (GitHub ↔ Gition) (#9)
 
 ### 🧱 Blocks
 - [ ] Issue block - Display GitHub issues inline
@@ -79,20 +76,23 @@
 ### 📊 Graph
 - [ ] Graph visualization
 
-### ☸️ Kubernetes (Basic)
-- [ ] Docker Compose dev environment
-- [ ] Basic Kubernetes manifests (Deployment, Service)
-- [ ] Single namespace deployment
-
 ---
 
-## v0.2 - Visualization 🔵
+## v0.2 - Visualization and features 🔵
+
+### 🔄 Git Operations
+- [ ] Commit/Push from UI
 
 ### 📊 Graph View
 - [ ] Commit graph visualization (tree structure)
 - [ ] Branch merge visualization
 - [ ] Interactive node selection
 - [ ] Diff viewer from graph
+
+### 🔗 Integrations
+- [ ] Issue/PR creation from UI
+- [ ] GitHub Actions status display (#2)
+- [ ] Bi-directional sync (GitHub ↔ Gition) (#9)
 
 ### 🎨 UI/UX Enhancements
 - [ ] Dark mode toggle
@@ -118,9 +118,14 @@
 - [ ] Pipeline execution logs
 - [ ] Deployment status tracking
 
-### ☸️ Kubernetes (Advanced)
+### ☸️ Kubernetes
 
-#### 🏗️ Infrastructure
+#### 🏗️ Basic Setup
+- [ ] Docker Compose dev environment
+- [ ] Basic Kubernetes manifests (Deployment, Service)
+- [ ] Single namespace deployment
+
+#### 🏗️ Infrastructure (Advanced)
 - [ ] Helm chart structure (`k8s/charts/gition/`)
 - [ ] Namespace configuration (dev/staging/prod)
 - [ ] Ingress with TLS (cert-manager)

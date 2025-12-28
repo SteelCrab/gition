@@ -27,17 +27,12 @@
 - [x] 커밋 히스토리 뷰어
 - [x] 파일 내용 뷰어/에디터
 - [x] 저장소 내 검색 (코드 검색)
-- [ ] UI에서 커밋/푸시
-- [ ] 현재 저장소의 커밋 자동 불러오기
+- [x] 현재 저장소의 커밋 자동 불러오기
 - [x] 버그 수정: 커밋 히스토리 오버플로우로 레포/검색 패널 가림
-- [ ] 변경 사항이 있는 작업 공간 자동 커밋
 
 ### 🔗 연동
 - [x] GitHub Issues 표시
 - [x] Pull Requests 표시
-- [ ] UI에서 Issue/PR 생성
-- [ ] GitHub Actions 상태 표시 (#2)
-- [ ] 양방향 동기화 (GitHub ↔ Gition) (#9)
 
 ### 🧱 블록
 - [ ] 이슈 블록 (Issue block) - GitHub 이슈를 인라인으로 표시
@@ -79,14 +74,17 @@
 ### 📊 그래프
 - [ ] 그래프 시각화
 
-### ☸️ Kubernetes (기본)
-- [ ] Docker Compose 개발 환경
-- [ ] 기본 Kubernetes 매니페스트 (Deployment, Service)
-- [ ] 단일 네임스페이스 배포
-
 ---
 
-## v0.2 - 시각화 🔵
+## v0.2 - 시각화 및 기능 개선 🔵
+
+### 🔄 Git 작업
+- [ ] UI에서 커밋/푸시
+
+### 🔗 연동
+- [ ] UI에서 Issue/PR 생성
+- [ ] GitHub Actions 상태 표시 (#2)
+- [ ] 양방향 동기화 (GitHub ↔ Gition) (#9)
 
 ### 📊 Graph View
 - [ ] 커밋 그래프 시각화 (트리 구조)
@@ -118,9 +116,14 @@
 - [ ] 파이프라인 실행 로그
 - [ ] 배포 상태 추적
 
-### ☸️ Kubernetes (확장)
+### ☸️ Kubernetes
 
-#### 🏗️ 인프라
+#### 🏗️ 기본 설정
+- [ ] Docker Compose 개발 환경
+- [ ] 기본 Kubernetes 매니페스트 (Deployment, Service)
+- [ ] 단일 네임스페이스 배포
+
+#### 🏗️ 인프라 (확장)
 - [ ] Helm 차트 구조 (`k8s/charts/gition/`)
 - [ ] 네임스페이스 설정 (dev/staging/prod)
 - [ ] TLS 포함 Ingress (cert-manager)
