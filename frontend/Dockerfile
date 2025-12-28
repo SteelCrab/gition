@@ -19,7 +19,7 @@ RUN npm run build
 # Production stage
 FROM nginx:alpine
 
-# Copy custom nginx config  
+# Copy custom nginx config
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built assets from builder 
