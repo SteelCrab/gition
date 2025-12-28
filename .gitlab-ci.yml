@@ -39,7 +39,7 @@ build-frontend:
   extends: .docker-build
   stage: build
   script:
-    - docker build -t $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA -t $CI_REGISTRY_IMAGE/frontend:latest ./frontend
+    - docker build -f frontend/Dockerfile -t $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA -t $CI_REGISTRY_IMAGE/frontend:latest .
     - docker push $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE/frontend:latest
   only:
@@ -76,15 +76,12 @@ deploy-production:
     - mz-win-vm
   script:
     - echo "🚀 Deploying to production..."
-    - echo "Frontend image: $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA"
-    - echo "Backend image: $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA"
-    # TODO: deployment commands
-    # - kubectl set image deployment/frontend frontend=$CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA
-    # - kubectl set image deployment/backend backend=$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA
+    - echo "Frontend image - $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHA"
+    - echo "Backend image - $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHA"
   only:
     refs:
       - main
-  when: manual  # manual trigger
+  when: manual
   needs:
     - job: build-frontend
       optional: true
