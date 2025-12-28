@@ -134,7 +134,19 @@ The backend documentation is built using Sphinx.
    # Output will be in backend/docs/_build/html/
    ```
 
+## 🤝 Join Us
+
+> **Currently, our team uses a private GitLab repository.**  
+> If you're interested in contributing or learning more, feel free to reach out via email or open an issue—we'd be happy to invite you!  
+> We're open to AI-assisted contributions at the maintenance level. 🙂
+
+📧 Contact: Open an issue or reach out via GitHub
+
+---
+
 ## Contributing
+
+> 📝 Check out our [ROADMAP](ROADMAP.md) for a checklist of features you can contribute to! :)
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 

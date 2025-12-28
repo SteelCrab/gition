@@ -115,7 +115,19 @@ docker-compose up --build -d
 open http://localhost
 ```
 
+## 🤝 함께하기
+
+> **현재 저희 팀은 private GitLab을 사용하고 있습니다.**  
+> 기여 또는 관심이 있으시면 이메일 문의나 이슈를 남겨주세요—언제든지 초대해 드립니다!  
+> 저희는 유지보수 수준의 AI 기여에 관대합니다. 🙂
+
+📧 연락: GitHub 이슈 또는 이메일로 문의
+
+---
+
 ## 기여하기
+
+> 📝 저희 [ROADMAP](ROADMAP_kr.md)을 보시면 다양한 기능의 기여 체크리스트가 있습니다. 참고해주세요! :)
 
 1. 이 저장소를 Fork
 2. Feature 브랜치 생성 (`git checkout -b feature/amazing-feature`)
