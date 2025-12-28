@@ -8,7 +8,7 @@
 #   2. Frontend       -> Node.js 빌드/테스트/린트
 #   3. Backend        -> Python 린트/테스트 (70% 커버리지)
 #   4. Docker Build   -> 프론트엔드/백엔드 이미지 빌드 & 푸시
-#   5. Deploy         -> 프로덕션 배포 (main 브랜치만)
+#   (Deploy는 GitLab CI/CD에서 처리)
 #
 # 트리거:
 #   - main 브랜치에 push 시
@@ -223,9 +223,25 @@ jobs:
             type=sha,prefix=
             type=raw,value=latest,enable={{is_default_branch}}
 
+      # 변경된 파일 감지
+      - name: 🔍 Detect changed files
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - 'Dockerfile'
+              - 'package*.json'
+              - 'vite.config.ts'
+              - 'tsconfig*.json'
+            backend:
+              - 'backend/**'
+
       # 프론트엔드 이미지 빌드 & 푸시
       # 태그: ghcr.io/owner/repo-frontend:sha
       - name: 🏗️ Build and push Frontend
+        if: steps.changes.outputs.frontend == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -238,6 +254,7 @@ jobs:
       # 백엔드 이미지 빌드 & 푸시
       # 태그: ghcr.io/owner/repo-backend:sha
       - name: 🏗️ Build and push Backend
+        if: steps.changes.outputs.backend == 'true'
         uses: docker/build-push-action@v6
         with:
           context: ./backend
@@ -247,32 +264,3 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ============================================
-  # Job 5: Deploy (프로덕션 배포)
-  # ============================================
-  # main 브랜치에서만 실행되는 배포 단계
-  # TODO: 실제 배포 명령어 추가 필요
-  deploy:
-    name: 🚀 Deploy
-    runs-on: ubuntu-latest
-    needs: [docker]          # Docker 빌드 성공 후 실행
-    if: github.ref == 'refs/heads/main'  # main 브랜치만
-    
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v6
-
-      # 배포 명령어 실행
-      # TODO: 실제 환경에 맞게 수정 필요
-      # 예: kubectl apply, docker-compose pull, SSH 배포 등
-      - name: 🚀 Deploy to server
-        run: |
-          echo "🚀 Deploying to production..."
-          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
-          # 아래에 실제 배포 명령어 추가
-          # 예시:
-          # - kubectl set image deployment/frontend frontend=ghcr.io/...
-          # - ssh user@server 'docker-compose pull && docker-compose up -d'
-
-      - name: ✅ Deployment complete
-        run: echo "✅ Deployment successful!"
