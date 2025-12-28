@@ -146,6 +146,8 @@ The backend documentation is built using Sphinx.
 
 ## Contributing
 
+> 📝 Check out our [ROADMAP](ROADMAP.md) for a checklist of features you can contribute to! :)
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License

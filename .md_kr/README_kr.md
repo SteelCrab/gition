@@ -127,6 +127,8 @@ open http://localhost
 
 ## 기여하기
 
+> 📝 저희 [ROADMAP](ROADMAP_kr.md)을 보시면 다양한 기능의 기여 체크리스트가 있습니다. 참고해주세요! :)
+
 1. 이 저장소를 Fork
 2. Feature 브랜치 생성 (`git checkout -b feature/amazing-feature`)
 3. 변경사항 커밋 (`git commit -m 'Add amazing feature'`)
