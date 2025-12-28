@@ -31,6 +31,8 @@ variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
+    - mkdir -p /etc/docker
+    - echo '{"insecure-registries":["172.100.100.8:5050"]}' > /etc/docker/daemon.json
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   only:
     refs:
@@ -54,6 +56,7 @@ build-frontend:
       - package*.json
       - vite.config.ts
       - tsconfig*.json
+  when: manual
 
 # ==============================================================================
 # Backend Docker Build
@@ -70,6 +73,7 @@ build-backend:
       - main
     changes:
       - backend/**/*
+  when: manual
 
 # ==============================================================================
 # Deploy (manual trigger)
