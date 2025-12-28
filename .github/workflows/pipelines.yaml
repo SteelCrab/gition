@@ -228,7 +228,7 @@ jobs:
       - name: 🏗️ Build and push Frontend
         uses: docker/build-push-action@v6
         with:
-          context: ./frontend
+          context: .
           file: ./frontend/Dockerfile
           push: true
           tags: ghcr.io/${{ steps.lowercase.outputs.owner }}/${{ steps.lowercase.outputs.repo }}-frontend:${{ github.sha }}
