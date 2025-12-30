@@ -23,7 +23,7 @@ variables:
 .docker-build:
   tags:
     - mz-win-vm
-    - msi-gitlab
+    - msi-gition
   image: docker:24.0.5
   services:
     - name: docker:24.0.5-dind
