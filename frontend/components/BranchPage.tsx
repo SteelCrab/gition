@@ -19,7 +19,7 @@
  * API:
  *   - GET /api/pages/{user_id}/{repo_name}/{branch_name}
  *   - PUT /api/pages/{user_id}/{repo_name}/{branch_name}
- *   - POST /api/pages/{user_id}/{repo_name}/{branch_name}
+ *   - POST /api/pages/{user_id}/{repo_name}/{branch_name} 
  * 
  * Storage:
  *   - Pages are stored in .gition/pages/{branch_name}.json
