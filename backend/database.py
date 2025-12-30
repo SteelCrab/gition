@@ -19,7 +19,7 @@ Environment Variables:
     - MYSQL_DATABASE: Database name (default: gition)
 ==============================================================================
 """
-
+ 
 import os
 import logging
 from contextlib import asynccontextmanager
