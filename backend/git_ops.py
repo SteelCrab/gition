@@ -13,7 +13,7 @@ Main Features:
     - get_commits: Get commit history
     - get_branches: Get branch list
     - checkout_branch: Switch branches
-
+ 
 Dependencies:
     - GitPython: Python library for Git operations
     
