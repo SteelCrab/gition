@@ -18,7 +18,7 @@ Environment Variables:
     - MYSQL_PASSWORD: Database password
     - MYSQL_DATABASE: Database name (default: gition)
 ==============================================================================
-"""
+""" 
  
 import os
 import logging
