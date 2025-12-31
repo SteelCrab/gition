@@ -24,15 +24,7 @@ variables:
   tags:
     - msi-gition
   image: docker:24.0.5
-  services:
-    - name: docker:24.0.5-dind
-      command: ["--insecure-registry=192.168.5.8:5050"]
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
   before_script:
-    - mkdir -p /etc/docker
-    - echo '{"insecure-registries":["192.168.5.8:5050"]}' > /etc/docker/daemon.json
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   only:
     refs:
