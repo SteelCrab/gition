@@ -43,11 +43,11 @@ build-frontend:
   only:
     refs:
       - main
-    changes:
-      - frontend/**/*
-      - package*.json
-      - vite.config.ts
-      - tsconfig*.json
+    # changes:
+    #   - frontend/**/*
+    #   - package*.json
+    #   - vite.config.ts
+    #   - tsconfig*.json
 
 # ==============================================================================
 # Backend Docker Build
@@ -62,8 +62,8 @@ build-backend:
   only:
     refs:
       - main
-    changes:
-      - backend/**/*
+    # changes:
+    #   - backend/**/*
 
 # ==============================================================================
 # Deploy (manual trigger)
