@@ -60,7 +60,8 @@ async def get_or_create_user(
                 # Refetch updated user
                 existing = await database.fetchone(
                     "SELECT * FROM users WHERE github_id = %s",
-                    (github_id,)
+                    (github_id,),
+                    use_write_pool=True
                 )
             return {"user": existing, "created": False}
         
@@ -72,7 +73,8 @@ async def get_or_create_user(
         )
         
         user = await database.fetchone(
-            "SELECT * FROM users WHERE id = %s", (user_id,)
+            "SELECT * FROM users WHERE id = %s", (user_id,),
+            use_write_pool=True
         )
         
         logger.info(f"Created new user: {login} (id={user_id})")
