@@ -31,9 +31,8 @@ import aiomysql
 logger = logging.getLogger(__name__)
 
 # Database configuration from environment
+# Database configuration from environment
 DB_CONFIG = {
-    "host": os.getenv("MYSQL_HOST", "mysql"),
-    "port": int(os.getenv("MYSQL_PORT", "3306")),
     "user": os.getenv("MYSQL_USER", "pista"),
     "password": os.getenv("MYSQL_PASSWORD", "pista"),
     "db": os.getenv("MYSQL_DATABASE", "gition"),
@@ -41,97 +40,129 @@ DB_CONFIG = {
     "autocommit": True,
 }
 
-# Global connection pool
-_pool: Optional[aiomysql.Pool] = None
+DB_READ_HOST = os.getenv("MYSQL_READ_HOST", "mysql")
+DB_WRITE_HOST = os.getenv("MYSQL_WRITE_HOST", "mysql")
+DB_PORT = int(os.getenv("MYSQL_PORT", "3306"))
+
+# Global connection pools
+_read_pool: Optional[aiomysql.Pool] = None
+_write_pool: Optional[aiomysql.Pool] = None
 
 
-async def init_pool(min_size: int = 1, max_size: int = 10) -> aiomysql.Pool:
+async def init_pool(min_size: int = 1, max_size: int = 10) -> None:
     """
-    Initialize the database connection pool.
+    Initialize the database connection pools (Read and Write).
     
     Args:
         min_size: Minimum number of connections in pool
         max_size: Maximum number of connections in pool
-        
-    Returns:
-        aiomysql.Pool: The connection pool
     """
-    global _pool
+    global _read_pool, _write_pool
     
-    if _pool is not None:
-        logger.warning("Pool already initialized")
-        return _pool
+    if _read_pool is not None or _write_pool is not None:
+        logger.warning("Pools already initialized")
+        return
     
     try:
-        _pool = await aiomysql.create_pool(
+        # Initialize Write Pool
+        _write_pool = await aiomysql.create_pool(
+            host=DB_WRITE_HOST,
+            port=DB_PORT,
             minsize=min_size,
             maxsize=max_size,
             **DB_CONFIG
         )
-        logger.info(f"Database pool initialized: {DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['db']}")
-        return _pool
+        logger.info(f"Write pool initialized: {DB_WRITE_HOST}:{DB_PORT}/{DB_CONFIG['db']}")
+
+        # Initialize Read Pool
+        _read_pool = await aiomysql.create_pool(
+            host=DB_READ_HOST,
+            port=DB_PORT,
+            minsize=min_size,
+            maxsize=max_size,
+            **DB_CONFIG
+        )
+        logger.info(f"Read pool initialized: {DB_READ_HOST}:{DB_PORT}/{DB_CONFIG['db']}")
+        
     except Exception as e:
-        logger.error(f"Failed to initialize database pool: {e}")
+        logger.error(f"Failed to initialize database pools: {e}")
+        # Clean up if one failed
+        if _write_pool:
+            _write_pool.close()
+            await _write_pool.wait_closed()
+        if _read_pool:
+            _read_pool.close()
+            await _read_pool.wait_closed()
         raise
 
 
 async def close_pool() -> None:
     """
-    Close the database connection pool.
+    Close the database connection pools.
     """
-    global _pool
+    global _read_pool, _write_pool
     
-    if _pool is None:
-        logger.warning("Pool not initialized")
-        return
-    
-    _pool.close()
-    await _pool.wait_closed()
-    _pool = None
-    logger.info("Database pool closed")
+    if _read_pool:
+        _read_pool.close()
+        await _read_pool.wait_closed()
+        _read_pool = None
+        logger.info("Read pool closed")
+
+    if _write_pool:
+        _write_pool.close()
+        await _write_pool.wait_closed()
+        _write_pool = None
+        logger.info("Write pool closed")
 
 
-def get_pool() -> aiomysql.Pool:
+def get_pool(write: bool = False) -> aiomysql.Pool:
     """
     Get the connection pool.
     
+    Args:
+        write: If True, returns the Write pool. Otherwise, returns the Read pool.
+
     Returns:
         aiomysql.Pool: The connection pool
         
     Raises:
         RuntimeError: If pool is not initialized
     """
-    if _pool is None:
-        raise RuntimeError("Database pool not initialized. Call init_pool() first.")
-    return _pool
+    pool = _write_pool if write else _read_pool
+    if pool is None:
+        raise RuntimeError(f"{'Write' if write else 'Read'} database pool not initialized. Call init_pool() first.")
+    return pool
 
 
 @asynccontextmanager
-async def get_connection():
+async def get_connection(write: bool = False):
     """
     Context manager for acquiring a database connection.
     
+    Args:
+        write: If True, acquires a connection from the Write pool.
+
     Usage:
-        async with get_connection() as conn:
+        async with get_connection(write=True) as conn:
             async with conn.cursor() as cur:
-                await cur.execute("SELECT * FROM users")
-                result = await cur.fetchall()
+                await cur.execute("INSERT INTO users ...")
     
     Yields:
         aiomysql.Connection: Database connection
     """
-    pool = get_pool()
+    pool = get_pool(write)
     async with pool.acquire() as conn:
         yield conn
 
 
 @asynccontextmanager
-async def get_cursor(dict_cursor: bool = True):
+async def get_cursor(dict_cursor: bool = True, write: bool = False):
     """
     Context manager for acquiring a database cursor.
     
     Args:
         dict_cursor: If True, use DictCursor for dict-like results
+        write: If True, uses the Write pool.
     
     Usage:
         async with get_cursor() as cur:
@@ -142,7 +173,7 @@ async def get_cursor(dict_cursor: bool = True):
         aiomysql.Cursor: Database cursor
     """
     cursor_class = aiomysql.DictCursor if dict_cursor else aiomysql.Cursor
-    async with get_connection() as conn:
+    async with get_connection(write) as conn:
         async with conn.cursor(cursor_class) as cur:
             yield cur
 
@@ -150,20 +181,26 @@ async def get_cursor(dict_cursor: bool = True):
 async def execute(
     query: str, 
     args: Optional[Tuple] = None,
-    fetch: Optional[str] = None
+    fetch: Optional[str] = None,
+    use_write_pool: bool = True
 ) -> Any:
     """
     Execute a query and optionally fetch results.
+    Defaults to Write pool for safety unless it's a pure fetch operation.
     
     Args:
         query: SQL query string
         args: Query parameters
         fetch: "one" for fetchone, "all" for fetchall, None for no fetch
+        use_write_pool: Whether to use the write pool (default: True for generic execute)
         
     Returns:
         Query result based on fetch parameter
     """
-    async with get_cursor() as cur:
+    # If explicitly fetching, default to read pool usually, but allow override
+    # If just executing (INSERT/UPDATE), default to write pool
+    
+    async with get_cursor(write=use_write_pool) as cur:
         await cur.execute(query, args or ())
         
         if fetch == "one":
@@ -174,29 +211,33 @@ async def execute(
             return cur.lastrowid
 
 
-async def fetchone(query: str, args: Optional[Tuple] = None) -> Optional[Dict[str, Any]]:
+async def fetchone(query: str, args: Optional[Tuple] = None, use_write_pool: bool = False) -> Optional[Dict[str, Any]]:
     """
     Execute a query and fetch one result.
+    Defaults to Read pool.
     
     Args:
         query: SQL query string
         args: Query parameters
+        use_write_pool: Force use of write pool (e.g. for read-after-write consistency)
         
     Returns:
         Dict result or None
     """
-    return await execute(query, args, fetch="one")
+    return await execute(query, args, fetch="one", use_write_pool=use_write_pool)
 
 
-async def fetchall(query: str, args: Optional[Tuple] = None) -> List[Dict[str, Any]]:
+async def fetchall(query: str, args: Optional[Tuple] = None, use_write_pool: bool = False) -> List[Dict[str, Any]]:
     """
     Execute a query and fetch all results.
+    Defaults to Read pool.
     
     Args:
         query: SQL query string
         args: Query parameters
+        use_write_pool: Force use of write pool (e.g. for read-after-write consistency)
         
     Returns:
         List of dict results
     """
-    return await execute(query, args, fetch="all")
+    return await execute(query, args, fetch="all", use_write_pool=use_write_pool)
