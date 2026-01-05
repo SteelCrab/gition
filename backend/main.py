@@ -125,7 +125,7 @@ async def github_auth():
         - repo: Access public/private repositories (important!)
     """
     # Nginx proxies to port 80, so callback URL uses port 80
-    redirect_uri = "http://localhost/auth/github/callback"
+    redirect_uri = f"{FRONTEND_URL}/auth/github/callback"
     
     # 'repo' scope grants access to private repositories
     scope = "read:user user:email repo"
