@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { repoService } from '../services/repoService';
 
 export const useRepoContent = (
@@ -11,7 +11,10 @@ export const useRepoContent = (
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || owner;
+  const userId = useMemo(() => 
+    localStorage.getItem('userLogin') || localStorage.getItem('userId') || owner,
+    [owner]
+  );
   const currentBranch = branchName || 'main';
 
   useEffect(() => {
