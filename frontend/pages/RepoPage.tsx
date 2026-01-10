@@ -3,21 +3,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, FileText, BookOpen, StickyNote } from 'lucide-react';
 import BranchPage from '../components/BranchPage';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import { useRepoContent } from '../hooks/useRepoContent';
 
 type ViewMode = 'page' | 'readme';
 
 const RepoPage = () => {
     const { owner, repoName, branchName, "*": filePath } = useParams();
     const navigate = useNavigate();
-
-    const [content, setContent] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('page');
 
+    const { content, loading, error, userId, currentBranch } = useRepoContent(
+        owner, repoName, branchName, filePath
+    );
+
     const isFile = !!filePath;
-    const currentBranch = branchName || 'main'; // Default to main if not present
-    const userId = localStorage.getItem('userLogin') || localStorage.getItem('userId') || owner;
 
     // Redirect to include default branch if missing in URL
     useEffect(() => {
@@ -28,76 +27,6 @@ const RepoPage = () => {
             navigate(`/repo/${safeOwner}/${safeRepo}/main`, { replace: true });
         }
     }, [branchName, owner, repoName, navigate]);
-
-    useEffect(() => {
-        const fetchContent = async () => {
-            if (!owner || !repoName) return;
-            // Avoid fetching if branchName is missing (will redirect)
-            if (!branchName) return;
-            // Only fetch README for repo root view
-            if (filePath) {
-                // Fetching specific file
-                setLoading(true);
-                setError(null);
-                setContent(null);
-
-                try {
-                    const response = await fetch(
-                        `/api/git/file?user_id=${encodeURIComponent(userId || '')}&repo_name=${encodeURIComponent(repoName)}&path=${encodeURIComponent(filePath)}&branch=${encodeURIComponent(currentBranch)}`,
-                        { credentials: 'include' }
-                    );
-
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch file');
-                    }
-
-                    const data = await response.json();
-
-                    if (data.status === 'success') {
-                        if (data.binary) {
-                            setContent('[Binary file - cannot display]');
-                        } else {
-                            setContent(data.content);
-                        }
-                    } else {
-                        throw new Error(data.message || 'Error loading content');
-                    }
-                } catch (err: unknown) {
-                    console.error("[Internal] Failed to fetch file content");
-                    setError("Failed to load content. The file might be missing or there's a connection issue.");
-                } finally {
-                    setLoading(false);
-                }
-            } else {
-                // Repo root - fetch README for the readme tab
-                setLoading(true);
-                try {
-                    const response = await fetch(
-                        `/api/git/file?user_id=${encodeURIComponent(userId || '')}&repo_name=${encodeURIComponent(repoName)}&path=${encodeURIComponent('README.md')}&branch=${encodeURIComponent(currentBranch)}`,
-                        { credentials: 'include' }
-                    );
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.status === 'success' && !data.binary) {
-                            setContent(data.content);
-                        } else {
-                            setContent(null);
-                        }
-                    } else {
-                        setContent(null);
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch README.md:', err);
-                    setContent(null);
-                } finally {
-                    setLoading(false);
-                }
-            }
-        };
-
-        fetchContent();
-    }, [owner, repoName, filePath, branchName, currentBranch, userId]);
 
     if (!branchName) return null; // Waiting for redirect
 
