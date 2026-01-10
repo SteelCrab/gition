@@ -104,7 +104,3 @@ CREATE TABLE IF NOT EXISTS branch_pages (
     INDEX idx_repo_id (repo_id),
     INDEX idx_branch_name (branch_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Grant permissions to ***REMOVED*** user
-GRANT ALL PRIVILEGES ON gition.* TO '***REMOVED***'@'%';
-FLUSH PRIVILEGES;
