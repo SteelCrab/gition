@@ -93,7 +93,7 @@ See [ROADMAP.md](ROADMAP.md) for detailed progress.
 1. GitHub Settings → Developer settings → OAuth Apps → New
 2. Configure:
    - **Homepage URL**: `http://localhost`
-   - **Callback URL**: `http://localhost/api/auth/github/callback`
+   - **Callback URL**: `http://localhost/auth/github/callback`
 3. Copy Client ID & Secret
 
 ### 2. Environment
@@ -103,6 +103,8 @@ See [ROADMAP.md](ROADMAP.md) for detailed progress.
 GITHUB_CLIENT_ID=your_client_id
 GITHUB_CLIENT_SECRET=your_client_secret
 MYSQL_ROOT_PASSWORD=your_password
+MYSQL_USER=your_user
+MYSQL_PASSWORD=your_password
 ```
 
 ### 3. Run
