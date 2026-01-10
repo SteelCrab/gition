@@ -59,7 +59,7 @@ export const useRepoContent = (
     };
 
     fetchContent();
-  }, [owner, repoName, filePath, branchName, currentBranch, userId]);
+  }, [owner, repoName, filePath, branchName, userId]);
 
   return {
     content,
