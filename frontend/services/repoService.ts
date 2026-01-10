@@ -18,10 +18,14 @@ export const repoService = {
     );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch file');
+      return { status: 'error', message: `Failed to fetch file (${response.status})` };
     }
 
-    return response.json();
+    try {
+      return await response.json();
+    } catch {
+      return { status: 'error', message: 'Invalid response format' };
+    }
   },
 
   async fetchReadme(
@@ -35,9 +39,13 @@ export const repoService = {
     );
 
     if (!response.ok) {
-      return { status: 'error', message: 'README not found' };
+      return { status: 'error', message: `README not found (${response.status})` };
     }
 
-    return response.json();
+    try {
+      return await response.json();
+    } catch {
+      return { status: 'error', message: 'Invalid response format' };
+    }
   }
 };
