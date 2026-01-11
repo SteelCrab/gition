@@ -3,10 +3,12 @@
  * BranchPage Component
  * =============================================================================
  * 
- * Description: Notion-style page editor for each branch
+ * Description: Notion-style page editor for each branch with block support
  * 
  * Features:
  *   - Display page title and content
+ *   - Block-based editing (Heading, Text blocks)
+ *   - Markdown header recognition (#, ##, ###)
  *   - Auto-save on content change (debounced)
  *   - Loading and error states
  *   - Create page if not exists
@@ -29,6 +31,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { FileText, Save, Loader2, Check, AlertCircle } from 'lucide-react';
+import HeadingBlock from './HeadingBlock';
+import TextBlock from './TextBlock';
+import { parseTextToBlocks, blocksToText, updateBlock, Block } from '../utils/blockParser';
 
 // Page data interface
 interface PageData {
@@ -59,6 +64,7 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
     const [page, setPage] = useState<PageData | null>(null);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [blocks, setBlocks] = useState<Block[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
@@ -98,6 +104,7 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
                 setPage(data.page);
                 setTitle(data.page.title);
                 setContent(data.page.content);
+                setBlocks(parseTextToBlocks(data.page.content));
                 lastSavedContentRef.current = data.page.content;
                 lastSavedTitleRef.current = data.page.title;
             } else {
@@ -130,6 +137,7 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
                 setPage(data.page);
                 setTitle(data.page.title);
                 setContent(data.page.content);
+                setBlocks(parseTextToBlocks(data.page.content));
                 lastSavedContentRef.current = data.page.content;
                 lastSavedTitleRef.current = data.page.title;
             } else if (data.status === 'not_found') {
@@ -198,10 +206,34 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
     }, [userId, repoName, branchName]);
 
     /**
-     * Debounced save handler
+     * Handle block content update
+     */
+    const handleBlockUpdate = (blockId: string, newContent: string) => {
+        const updatedBlocks = updateBlock(blocks, blockId, newContent);
+        setBlocks(updatedBlocks);
+        
+        // Convert blocks back to text and trigger save
+        const newTextContent = blocksToText(updatedBlocks);
+        setContent(newTextContent);
+        currentContentRef.current = newTextContent;
+
+        // Clear previous timeout
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+
+        // Set new timeout for auto-save (1.5 seconds)
+        saveTimeoutRef.current = setTimeout(() => {
+            savePage(currentTitleRef.current, newTextContent);
+        }, 1500);
+    };
+
+    /**
+     * Debounced save handler (legacy for direct textarea)
      */
     const handleContentChange = (newContent: string) => {
         setContent(newContent);
+        setBlocks(parseTextToBlocks(newContent));
         currentContentRef.current = newContent;
 
         // Clear previous timeout
@@ -371,12 +403,43 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
                     )}
                 </div>
 
-                {/* Content textarea */}
+                {/* Block-based content */}
+                <div className="flex-1 w-full px-6 pb-8 overflow-y-auto">
+                    {blocks.length === 0 ? (
+                        <p className="text-[15px] text-[#c4c4c4] italic">
+                            Start writing here... Use # for headings. Your notes will be saved automatically.
+                        </p>
+                    ) : (
+                        blocks.map((block) => {
+                            if (block.type === 'heading' && block.level) {
+                                return (
+                                    <HeadingBlock
+                                        key={block.id}
+                                        id={block.id}
+                                        level={block.level}
+                                        content={block.content}
+                                        onUpdate={handleBlockUpdate}
+                                    />
+                                );
+                            }
+                            return (
+                                <TextBlock
+                                    key={block.id}
+                                    id={block.id}
+                                    content={block.content}
+                                    onUpdate={handleBlockUpdate}
+                                />
+                            );
+                        })
+                    )}
+                </div>
+
+                {/* Legacy textarea for backward compatibility (hidden but functional) */}
                 <textarea
                     value={content}
                     onChange={(e) => handleContentChange(e.target.value)}
-                    placeholder="Start writing here... Your notes will be saved automatically."
-                    className="flex-1 w-full px-6 pb-8 text-[15px] text-[#37352f] leading-relaxed border-none outline-none bg-transparent placeholder-[#c4c4c4] resize-none overflow-y-auto"
+                    placeholder="Or type here in plain text mode..."
+                    className="hidden w-full px-6 pb-8 text-[15px] text-[#37352f] leading-relaxed border-none outline-none bg-transparent placeholder-[#c4c4c4] resize-none"
                     style={{ lineHeight: '1.75' }}
                 />
             </div>
