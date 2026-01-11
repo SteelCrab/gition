@@ -5,7 +5,12 @@
 
 An open-source platform that integrates Git repositories, block-based documentation, and CI/CD into one seamless workflow.
 
-![Gition Mockup](docs/images/mockup.png)
+## Demo page gif
+
+![Gition Branch Management](docs/images/gition_branch.gif)
+
+---
+> **this is mockup image**
 
 <div style="display: flex; gap: 10px;">
   <img src="docs/images/mockup_branch.png" alt="Gition branch management UI mockup" width="48%" />
