@@ -211,7 +211,7 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
     const handleBlockUpdate = (blockId: string, newContent: string) => {
         const updatedBlocks = updateBlock(blocks, blockId, newContent);
         setBlocks(updatedBlocks);
-        
+
         // Convert blocks back to text and trigger save
         const newTextContent = blocksToText(updatedBlocks);
         setContent(newTextContent);
@@ -327,6 +327,29 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
         );
     }
 
+    // Render individual block based on type
+    const renderBlock = (block: Block) => {
+        if (block.type === 'heading') {
+            return (
+                <HeadingBlock
+                    key={block.id}
+                    id={block.id}
+                    level={block.level ?? 1}
+                    content={block.content}
+                    onUpdate={handleBlockUpdate}
+                />
+            );
+        }
+        return (
+            <TextBlock
+                key={block.id}
+                id={block.id}
+                content={block.content}
+                onUpdate={handleBlockUpdate}
+            />
+        );
+    };
+
     // Render save status indicator
     const renderSaveStatus = () => {
         switch (saveStatus) {
@@ -410,27 +433,7 @@ const BranchPage = ({ userId, repoName, branchName }: BranchPageProps) => {
                             Start writing here... Use # for headings. Your notes will be saved automatically.
                         </p>
                     ) : (
-                        blocks.map((block) => {
-                            if (block.type === 'heading' && block.level) {
-                                return (
-                                    <HeadingBlock
-                                        key={block.id}
-                                        id={block.id}
-                                        level={block.level}
-                                        content={block.content}
-                                        onUpdate={handleBlockUpdate}
-                                    />
-                                );
-                            }
-                            return (
-                                <TextBlock
-                                    key={block.id}
-                                    id={block.id}
-                                    content={block.content}
-                                    onUpdate={handleBlockUpdate}
-                                />
-                            );
-                        })
+                        blocks.map(renderBlock)
                     )}
                 </div>
 

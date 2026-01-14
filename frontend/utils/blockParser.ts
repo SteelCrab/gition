@@ -45,6 +45,24 @@ export interface Block {
  * @param text - Raw text content
  * @returns Array of block objects
  */
+/**
+ * Parse a line to determine if it's a heading
+ * @param line - Line to parse
+ * @returns Heading level and content, or null if not a heading
+ */
+function parseHeading(line: string): { level: 1 | 2 | 3; content: string } | null {
+    const h3Match = line.match(/^###\s+(.+)$/);
+    if (h3Match) return { level: 3, content: h3Match[1] };
+
+    const h2Match = line.match(/^##\s+(.+)$/);
+    if (h2Match) return { level: 2, content: h2Match[1] };
+
+    const h1Match = line.match(/^#\s+(.+)$/);
+    if (h1Match) return { level: 1, content: h1Match[1] };
+
+    return null;
+}
+
 export function parseTextToBlocks(text: string): Block[] {
     if (!text || text.trim() === '') {
         // Return single empty text block for empty content
@@ -62,37 +80,14 @@ export function parseTextToBlocks(text: string): Block[] {
 
     for (const line of lines) {
         const trimmedLine = line.trim();
-        
-        // Check for heading patterns
-        const h3Match = trimmedLine.match(/^###\s+(.+)$/);
-        const h2Match = !h3Match && trimmedLine.match(/^##\s+(.+)$/);
-        const h1Match = !h3Match && !h2Match && trimmedLine.match(/^#\s+(.+)$/);
+        const heading = parseHeading(trimmedLine);
 
-        if (h1Match) {
-            // H1 heading
+        if (heading) {
             blocks.push({
                 id: generateBlockId(),
                 type: 'heading',
-                level: 1,
-                content: h1Match[1],
-                position: position++
-            });
-        } else if (h2Match) {
-            // H2 heading
-            blocks.push({
-                id: generateBlockId(),
-                type: 'heading',
-                level: 2,
-                content: h2Match[1],
-                position: position++
-            });
-        } else if (h3Match) {
-            // H3 heading
-            blocks.push({
-                id: generateBlockId(),
-                type: 'heading',
-                level: 3,
-                content: h3Match[1],
+                level: heading.level,
+                content: heading.content,
                 position: position++
             });
         } else {
@@ -147,9 +142,9 @@ function generateBlockId(): string {
  * @returns Updated blocks array
  */
 export function updateBlock(blocks: Block[], blockId: string, content: string): Block[] {
-    return blocks.map(block => 
-        block.id === blockId 
-            ? { ...block, content } 
+    return blocks.map(block =>
+        block.id === blockId
+            ? { ...block, content }
             : block
     );
 }
