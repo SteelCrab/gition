@@ -90,7 +90,8 @@ async def create_branch_page(
     repo_id: int,
     branch_name: str,
     title: Optional[str] = None,
-    content: str = ""
+    content: str = "", 
+    icon: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Create a new page for a branch.
@@ -125,11 +126,16 @@ async def create_branch_page(
         
         # Create page
         page_id = str(uuid.uuid4())
-        metadata = json.dumps({
+        metadata_dict = {
             "created_from_branch": True,
-            "branch_exists": True
-        })
-        
+            "branch_exists": True,
+            "icon": None
+        }
+
+        if icon is not None:
+            metadata_dict["icon"] = icon
+
+        metadata = json.dumps(metadata_dict)
         await database.execute(
             """INSERT INTO branch_pages 
                (id, user_id, repo_id, branch_name, title, content, metadata)
