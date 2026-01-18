@@ -17,6 +17,7 @@
 // Editor blocks
 export { default as CodeBlock } from './CodeBlock';
 export { default as TextBlock } from './TextBlock';
+export { default as HeadingBlock } from './HeadingBlock';
 export { default as CodeSpan } from './CodeSpan';
 
 // Menu components
