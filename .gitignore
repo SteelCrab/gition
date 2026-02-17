@@ -33,6 +33,7 @@ coverage/
 
 # Gition workspace (branch-specific pages)
 .gition/
+.worktrees/
 
 # Python
 __pycache__/

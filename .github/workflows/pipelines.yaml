@@ -8,7 +8,7 @@
 #   2. Frontend       -> Node.js 빌드/테스트/린트
 #   3. Backend        -> Python 린트/테스트 (70% 커버리지)
 #   4. Docker Build   -> 프론트엔드/백엔드 이미지 빌드 & 푸시
-#   (Deploy는 GitLab CI/CD에서 처리)
+#   (Deploy는 외부 파이프라인에서 처리)
 #
 # 트리거:
 #   - main 브랜치에 push 시
@@ -263,4 +263,3 @@ jobs:
           tags: ghcr.io/${{ steps.lowercase.outputs.owner }}/${{ steps.lowercase.outputs.repo }}-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
