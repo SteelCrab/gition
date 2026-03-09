@@ -242,7 +242,7 @@ jobs:
       # 태그: ghcr.io/owner/repo-frontend:sha
       - name: 🏗️ Build and push Frontend
         if: steps.changes.outputs.frontend == 'true'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./frontend/Dockerfile
@@ -255,7 +255,7 @@ jobs:
       # 태그: ghcr.io/owner/repo-backend:sha
       - name: 🏗️ Build and push Backend
         if: steps.changes.outputs.backend == 'true'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend
           file: ./backend/Dockerfile
