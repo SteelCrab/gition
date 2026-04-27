@@ -5,7 +5,7 @@ python-dotenv==1.2.2
 GitPython==3.1.46
 requests>=2.32.3
 urllib3>=2.6.0
-zipp>=3.19.1
+zipp>=3.23.1
 sphinx>=8.2.3
 sphinx-rtd-theme>=3.0.2
 aiomysql>=0.3.0
