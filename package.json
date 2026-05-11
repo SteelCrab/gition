@@ -15,7 +15,7 @@
     "isomorphic-git": "^1.37.6",
     "lucide-react": "0.577.0",
     "react": "^19.0.0",
-    "react-dom": "^19.2.5",
+    "react-dom": "^19.2.6",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.14.2",
     "rehype-highlight": "^7.0.2",
