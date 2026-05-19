@@ -12,7 +12,7 @@
   "dependencies": {
     "@isomorphic-git/lightning-fs": "^4.6.2",
     "buffer": "^6.0.3",
-    "isomorphic-git": "^1.37.6",
+    "isomorphic-git": "^1.38.1",
     "lucide-react": "0.577.0",
     "react": "^19.0.0",
     "react-dom": "^19.2.6",
