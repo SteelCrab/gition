@@ -202,7 +202,7 @@ jobs:
 
       # Docker Buildx 설정 (멀티플랫폼 빌드 지원)
       - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # GHCR 로그인
       - name: 🔐 Login to Container Registry
